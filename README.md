@@ -119,3 +119,30 @@ Para ejecutar el pipeline completo de forma desatendida y sincronizada:
   ```
 
 El pipeline ejecutará automáticamente la validación de bases, renderizado de las 9 infografías vectoriales a 300 DPI con diseño de banca privada, compilación de los 3 niveles de informes en Word y ReportLab (14 páginas editoriales), exportación oficial a PDF vía Microsoft Word COM (`win32com.client`) y consolidación de entregables ejecutivos tanto localmente como en el espejo canónico de Google Drive (`C:\Users\fedea\Google Drive\coyuntura-macro`).
+
+---
+
+## 4. Feeds en Vivo (SecondBrain) y Dashboard Web de Acompañamiento
+
+Para el consumo entre informes (lunes a jueves), ademas del ciclo editorial
+de PDFs, el ecosistema expone:
+
+- **Conector de feeds en vivo** (`src/sync_secondbrain_macro.py`): antes de
+  cada corrida del pipeline (Paso 0), sincroniza `01_Bases_Datos/
+  datos_del_dia.json` con el registro macro vivo de SecondBrain
+  (`C:\Users\fedea\SecondBrain\core\macro_coyuntura\
+  live_macro_views_registry.json`) -- solo los campos con equivalencia
+  exacta (dolar oficial, CCL, brecha, vistas tacticas Black-Litterman). El
+  resto del contrato sigue siendo carga manual por diseno; ver
+  `implementation_plan.md` para el detalle campo a campo.
+
+- **Dashboard web** (`dashboard/`): terminal fintech (FastAPI + Tailwind +
+  Alpine.js + Apache ECharts) que sirve en vivo el contenido vigente de
+  `datos_del_dia.json`, re-sincronizando con SecondBrain en cada request.
+  Arranque local:
+  ```powershell
+  pip install -r dashboard/requirements.txt
+  uvicorn dashboard.api:app --reload --port 8420
+  ```
+  Luego abrir `http://127.0.0.1:8420`. Los campos con borde verde en las
+  tarjetas KPI indican dato vivo de SecondBrain; el resto es carga manual.

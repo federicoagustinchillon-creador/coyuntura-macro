@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coyuntura Macro | Terminal de Acompañamiento</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] } } }
+  }
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+<style>
+  body { background:#08090C; }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body class="bg-[#08090C] text-zinc-100 font-sans antialiased selection:bg-indigo-500/30 selection:text-indigo-300 min-h-screen">
+
+<div x-data="terminal()" x-init="init()" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <!-- Barra superior -->
+  <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-white/[0.08] gap-4">
+    <div>
+      <div class="flex items-center space-x-3">
+        <div class="w-2.5 h-2.5 rounded-full" :class="ok ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></div>
+        <span class="text-xs font-semibold uppercase tracking-widest" :class="ok ? 'text-emerald-400' : 'text-rose-400'" x-text="ok ? 'Feed en vivo -- SecondBrain conectado' : 'Feed sin sincronizar'"></span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-1">Coyuntura Macro &amp; Mercado de Capitales</h1>
+      <p class="text-xs text-zinc-400 mt-0.5">Terminal de acompañamiento entre informes · Federico Agustín Chillón · UNCUYO / OERU</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 text-xs font-mono">
+      <div class="bg-zinc-900/60 border border-white/10 px-3 py-1.5 rounded-xl">
+        <span class="text-zinc-400">Fecha datos:</span>
+        <span class="text-white ml-1" x-text="datos.fecha || 's/d'"></span>
+      </div>
+      <div class="bg-zinc-900/60 border border-white/10 px-3 py-1.5 rounded-xl">
+        <span class="text-zinc-400">Último refresh:</span>
+        <span class="text-white ml-1" x-text="lastRefresh"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- KPI Cards: Dólar -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Cambiario</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <template x-for="k in ['oficial_bna','mayorista','mep','ccl','blue','brecha_ccl_oficial_pct']" :key="k">
+        <div class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-4 rounded-2xl"
+             :class="camposSincronizados.includes('dolar.'+k) ? 'border-emerald-500/30' : ''">
+          <p class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400" x-text="labelDolar(k)"></p>
+          <p class="mt-2 text-xl font-bold font-mono text-white tabular-nums" x-text="fmtDolar(k)"></p>
+          <p class="mt-1 text-[10px] font-mono" :class="camposSincronizados.includes('dolar.'+k) ? 'text-emerald-400' : 'text-zinc-500'"
+             x-text="camposSincronizados.includes('dolar.'+k) ? 'SecondBrain (vivo)' : 'carga manual'"></p>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <!-- KPI Cards: Tasas / Inflación / Actividad -->
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Tasas en Pesos</h3>
+      <dl class="space-y-2 text-sm font-mono tabular-nums">
+        <div class="flex justify-between"><dt class="text-zinc-400">Lecap corta TEM</dt><dd class="text-white" x-text="pct(datos.tasas_ars?.lecap_corta_tem)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Lecap larga TEM</dt><dd class="text-white" x-text="pct(datos.tasas_ars?.lecap_larga_tem)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Boncer TZX27 TIR real</dt><dd class="text-white" x-text="pct(datos.tasas_ars?.boncer_tzx27_tir_real)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Breakeven inflación TEM</dt><dd class="text-white" x-text="pct(datos.tasas_ars?.breakeven_inflacion_tem)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Premio tasa fija</dt><dd class="text-emerald-400" x-text="(datos.tasas_ars?.premio_tasa_fija_pbs ?? 's/d') + ' pbs'"></dd></div>
+      </dl>
+    </div>
+    <div class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Inflación (INDEC / DEIE Mza)</h3>
+      <dl class="space-y-2 text-sm font-mono tabular-nums">
+        <div class="flex justify-between"><dt class="text-zinc-400">General MoM</dt><dd class="text-white" x-text="pct(datos.inflacion?.indec_general_mom)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Núcleo MoM</dt><dd class="text-white" x-text="pct(datos.inflacion?.indec_nucleo_mom)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Regulados MoM</dt><dd class="text-white" x-text="pct(datos.inflacion?.indec_regulados_mom)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">DEIE Mendoza MoM</dt><dd class="text-white" x-text="pct(datos.inflacion?.deie_mendoza_mom)"></dd></div>
+      </dl>
+    </div>
+    <div class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Actividad (EMAE / ISARC)</h3>
+      <dl class="space-y-2 text-sm font-mono tabular-nums">
+        <div class="flex justify-between"><dt class="text-zinc-400">EMAE i.a.</dt><dd class="text-white" x-text="pct(datos.actividad?.emae_interanual_pct)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">EMAE desest. MoM</dt><dd class="text-white" x-text="pct(datos.actividad?.emae_desestacionalizado_mom_pct)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">ISARC Mendoza i.a.</dt><dd class="text-white" x-text="pct(datos.actividad?.isarc_mendoza_ia_pct)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">ISARC San Juan i.a.</dt><dd class="text-white" x-text="pct(datos.actividad?.isarc_san_juan_ia_pct)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">ISARC San Luis i.a.</dt><dd class="text-white" x-text="pct(datos.actividad?.isarc_san_luis_ia_pct)"></dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- Curva soberana USD (Nelson-Siegel) -->
+  <section class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-6 rounded-2xl space-y-4">
+    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+      <div>
+        <h2 class="text-lg font-semibold text-white tracking-tight">Curva Soberana USD (Nelson-Siegel)</h2>
+        <p class="text-xs text-zinc-400" x-text="'β0=' + fmt(datos.soberano_usd?.nelson_siegel?.beta0) + '  β1=' + fmt(datos.soberano_usd?.nelson_siegel?.beta1) + '  β2=' + fmt(datos.soberano_usd?.nelson_siegel?.beta2) + '  τ=' + fmt(datos.soberano_usd?.nelson_siegel?.tau) + '  R²=' + fmt(datos.soberano_usd?.nelson_siegel?.r2)"></p>
+      </div>
+      <div class="text-xs font-mono text-amber-400" x-text="'EMBI+ Riesgo País: ' + (datos.soberano_usd?.embi_riesgo_pais_pbs ?? 's/d') + ' pbs'"></div>
+    </div>
+    <div id="nsChart" class="w-full h-64"></div>
+  </section>
+
+  <!-- Vistas Black-Litterman -->
+  <section class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-6 rounded-2xl">
+    <h2 class="text-lg font-semibold text-white tracking-tight mb-1">Vistas Tácticas Black-Litterman (SecondBrain)</h2>
+    <p class="text-xs text-zinc-400 mb-4">Régimen y tesis vigentes, consumidas en vivo desde el registro macro de SecondBrain.</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="text-xs uppercase text-zinc-400 border-b border-white/[0.08]">
+          <tr>
+            <th class="py-2 px-3">Activo</th>
+            <th class="py-2 px-3">Tipo</th>
+            <th class="py-2 px-3 text-right">Retorno esperado anual</th>
+            <th class="py-2 px-3">Tesis</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/[0.04]">
+          <template x-for="v in (datos.black_litterman_tactical_views || [])" :key="v.asset">
+            <tr class="hover:bg-white/[0.02] transition-colors align-top">
+              <td class="py-3 px-3 font-bold font-mono text-white" x-text="v.asset"></td>
+              <td class="py-3 px-3 text-zinc-400" x-text="v.view_type === 'RELATIVE_TO_BENCHMARK' ? ('vs ' + v.relative_benchmark) : 'Absoluta'"></td>
+              <td class="py-3 px-3 text-right font-mono tabular-nums text-emerald-400" x-text="pct((v.view_return_annual ?? v.excess_return_annual) * 100)"></td>
+              <td class="py-3 px-3 text-zinc-300 text-xs max-w-md" x-text="v.thesis"></td>
+            </tr>
+          </template>
+          <tr x-show="!(datos.black_litterman_tactical_views || []).length">
+            <td colspan="4" class="py-6 text-center text-zinc-500 text-xs">Sin vistas activas en el último sync.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Equity líderes -->
+  <section class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-6 rounded-2xl">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-semibold text-white tracking-tight">Renta Variable Líder</h2>
+      <div class="text-xs font-mono text-zinc-400" x-text="'Merval: ' + fmt(datos.equity?.merval_ars) + ' ARS  ·  USD CCL ' + fmt(datos.equity?.merval_usd_ccl)"></div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="text-xs uppercase text-zinc-400 border-b border-white/[0.08]">
+          <tr><th class="py-2 px-3">Ticker</th><th class="py-2 px-3 text-right">EV/EBITDA</th><th class="py-2 px-3 text-right">Margen EBITDA</th><th class="py-2 px-3">Recomendación</th></tr>
+        </thead>
+        <tbody class="divide-y divide-white/[0.04] font-mono text-xs tabular-nums">
+          <template x-for="l in (datos.equity?.lideres || [])" :key="l.ticker">
+            <tr class="hover:bg-white/[0.02] transition-colors">
+              <td class="py-3 px-3 font-bold text-white" x-text="l.ticker"></td>
+              <td class="py-3 px-3 text-right text-zinc-300" x-text="fmt(l.ev_ebitda) + 'x'"></td>
+              <td class="py-3 px-3 text-right text-zinc-300" x-text="pct(l.margen_ebitda)"></td>
+              <td class="py-3 px-3">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                      :class="l.recom === 'SOBREPONDERAR' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : (l.recom === 'SUBPONDERAR' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-sky-500/10 text-sky-400 border border-sky-500/20')"
+                      x-text="l.recom"></span>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="text-center text-[10px] text-zinc-600 font-mono pt-4">
+    Auto-refresh cada 60s · Campos con borde verde = feed vivo SecondBrain · Resto = carga manual del contrato datos_del_dia.json
+  </footer>
+
+</div>
+
+<script>
+function terminal() {
+  return {
+    datos: {},
+    camposSincronizados: [],
+    ok: false,
+    lastRefresh: '--:--:--',
+    nsChart: null,
+
+    init() {
+      lucide.createIcons();
+      this.refresh();
+      setInterval(() => this.refresh(), 60000);
+    },
+
+    async refresh() {
+      try {
+        const res = await fetch('/api/live');
+        const body = await res.json();
+        this.datos = body.datos || {};
+        this.camposSincronizados = body.sync_secondbrain?.campos_actualizados || [];
+        this.ok = !!body.sync_secondbrain?.ok;
+        this.lastRefresh = new Date().toLocaleTimeString('es-AR');
+        this.$nextTick(() => { lucide.createIcons(); this.renderCurve(); });
+      } catch (e) {
+        this.ok = false;
+        console.error('Fallo al refrescar /api/live', e);
+      }
+    },
+
+    labelDolar(k) {
+      return { oficial_bna: 'Oficial BNA', mayorista: 'Mayorista', mep: 'MEP', ccl: 'CCL', blue: 'Blue', brecha_ccl_oficial_pct: 'Brecha CCL/Of.' }[k];
+    },
+    fmtDolar(k) {
+      const v = this.datos.dolar ? this.datos.dolar[k] : undefined;
+      if (v === undefined || v === null) return 's/d';
+      return k.includes('pct') ? this.pct(v) : this.fmt(v);
+    },
+    fmt(v) {
+      if (v === undefined || v === null || Number.isNaN(v)) return 's/d';
+      return Number(v).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+    },
+    pct(v) {
+      if (v === undefined || v === null || Number.isNaN(v)) return 's/d';
+      return Number(v).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + '%';
+    },
+
+    renderCurve() {
+      const ns = this.datos.soberano_usd?.nelson_siegel;
+      const dom = document.getElementById('nsChart');
+      if (!dom) return;
+      if (!this.nsChart) {
+        this.nsChart = echarts.init(dom);
+        activeCharts.push(this.nsChart);
+      }
+      this.nsChart.resize();
+      if (!ns) { this.nsChart.clear(); return; }
+
+      const tenores = [1, 2, 3, 5, 8, 12, 16, 20];
+      const yields = tenores.map(t => {
+        const x = t / ns.tau;
+        const decay = (1 - Math.exp(-x)) / x;
+        return ns.beta0 + ns.beta1 * decay + ns.beta2 * (decay - Math.exp(-x));
+      });
+
+      this.nsChart.setOption({
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(18,18,21,0.95)',
+          borderColor: 'rgba(255,255,255,0.12)',
+          textStyle: { color: '#fafafa', fontSize: 12, fontFamily: 'JetBrains Mono' },
+          valueFormatter: (v) => v.toFixed(2) + '%'
+        },
+        grid: { top: 20, right: 20, bottom: 30, left: 55 },
+        xAxis: { type: 'category', data: tenores.map(t => t + 'y'), axisLine: { lineStyle: { color: '#3f3f46' } }, axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono' } },
+        yAxis: { type: 'value', axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },
+        series: [{
+          name: 'TIR Nelson-Siegel', type: 'line', data: yields, smooth: true,
+          lineStyle: { color: '#6366F1', width: 3 },
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(99,102,241,0.25)' }, { offset: 1, color: 'rgba(99,102,241,0.0)' }
+          ]) }
+        }]
+      });
+    }
+  }
+}
+
+const activeCharts = [];
+let resizeRaf = null;
+window.addEventListener('resize', () => {
+  if (resizeRaf) cancelAnimationFrame(resizeRaf);
+  resizeRaf = requestAnimationFrame(() => activeCharts.forEach(c => c && c.resize()));
+});
+</script>
+</body>
+</html>
