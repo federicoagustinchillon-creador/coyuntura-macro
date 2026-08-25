@@ -4,7 +4,7 @@ COMPILADOR MAESTRO DE INFORME MENSUAL REPORTLAB (14 PÁGINAS EDITORIALES)
 ================================================================================
 Autor: Federico Agustín Chillón
 Facultad de Ciencias Económicas — Universidad Nacional de Cuyo
-Estándar: Institutional Tier / Zero-Whitespace Editorial & Financial Vector Layout
+Estándar: Tier-1 Institutional Research (Goldman Sachs GIR / Bridgewater Standard)
 ================================================================================
 """
 
@@ -118,11 +118,11 @@ class ZeroWhitespaceCanvas(canvas.Canvas):
 
 PRIMARY    = colors.HexColor("#0B3C5D")
 SECONDARY  = colors.HexColor("#328CC1")
-DARK_TEXT  = colors.HexColor("#1E293B")
+DARK_TEXT  = colors.HexColor("#0F172A")
 SLATE      = colors.HexColor("#334155")
 MUTED      = colors.HexColor("#64748B")
 BG_CARD    = colors.HexColor("#F8FAFC")
-BORDER     = colors.HexColor("#CBD5E1")
+BORDER     = colors.HexColor("#E2E8F0")
 POS        = colors.HexColor("#15803D")
 NEG        = colors.HexColor("#991B1B")
 
@@ -207,125 +207,129 @@ def generar_informe_mensual_reportlab():
     elements = []
 
     # =============================================================
-    # PÁGINA 1: PORTADA INSTITUCIONAL PROGRAMÁTICA (VECTORIAL PURA)
+    # PÁGINA 1: PORTADA INSTITUCIONAL DE ALTA GAMA (TIER-1 MASTERPIECE)
     # =============================================================
-    elements.append(Paragraph("<font color='#64748B' size=8.5><b>FACULTAD DE CIENCIAS ECONÓMICAS — UNIVERSIDAD NACIONAL DE CUYO</b></font>", ParagraphStyle('CoverSubTop', fontName='Georgia', alignment=TA_CENTER, spaceAfter=2)))
-    elements.append(Paragraph("<font color='#0B3C5D' size=9.5><b>INVESTIGACIÓN MACROECONÓMICA CUANTITATIVA & ESTRATEGIA FINANCIERA</b></font>", ParagraphStyle('CoverTop', fontName='Georgia-Bold', alignment=TA_CENTER, spaceAfter=8)))
-    elements.append(HRFlowable(width="100%", thickness=2.5, color=PRIMARY, spaceBefore=0, spaceAfter=12))
-
-    elements.append(Paragraph("INFORME DE COYUNTURA MACROECONÓMICA", ParagraphStyle('CoverTitle', fontName='Georgia-Bold', fontSize=22, leading=26, alignment=TA_CENTER, textColor=PRIMARY, spaceAfter=5)))
-    elements.append(Paragraph("Análisis Integral de Precios, Política Monetaria, Deuda Soberana, Microestructura Cambiaria y Actividad Regional en Cuyo", ParagraphStyle('CoverSub', fontName='Georgia-Italic', fontSize=10.5, leading=14, alignment=TA_CENTER, textColor=SLATE, spaceAfter=12)))
-
-    badge_data = [
+    # 1. Masthead Superior Institucional
+    elements.append(HRFlowable(width="100%", thickness=1.5, color=PRIMARY, spaceBefore=0, spaceAfter=6))
+    
+    masthead_table = Table([
         [
-            Paragraph("<b>EDICIÓN: AGOSTO 2026</b>", ParagraphStyle('Badge1', fontName='Georgia-Bold', fontSize=8.5, textColor=colors.white, alignment=TA_CENTER)),
-            Paragraph("<b>ESTÁNDAR: INSTITUTIONAL RESEARCH</b>", ParagraphStyle('Badge2', fontName='Georgia-Bold', fontSize=8.5, textColor=colors.white, alignment=TA_CENTER)),
-            Paragraph("<b>PUBLICACIÓN: MENSUAL (Nº 32)</b>", ParagraphStyle('Badge3', fontName='Georgia-Bold', fontSize=8.5, textColor=colors.white, alignment=TA_CENTER))
+            Paragraph("<font color='#0B3C5D' size=7.8><b>UNIVERSIDAD NACIONAL DE CUYO</b></font><br/><font color='#64748B' size=6.8>FACULTAD DE CIENCIAS ECONÓMICAS</font>", ParagraphStyle('MH_L', fontName='Georgia', alignment=TA_LEFT, leading=9.5)),
+            Paragraph("<font color='#0B3C5D' size=7.8><b>MACROECONOMIC RESEARCH & STRATEGY</b></font><br/><font color='#64748B' size=6.8>DIVISIÓN DE ECONOMÍA APLICADA Y MERCADOS</font>", ParagraphStyle('MH_R', fontName='Georgia', alignment=TA_RIGHT, leading=9.5))
+        ]
+    ], colWidths=[266, 266])
+    masthead_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+    ]))
+    elements.append(masthead_table)
+    elements.append(HRFlowable(width="100%", thickness=0.6, color=BORDER, spaceBefore=3, spaceAfter=14))
+
+    # 2. Bloque Central: Título y Subtítulo de Alto Impacto
+    elements.append(Paragraph("<font color='#64748B' size=8.5><b>INFORME MENSUAL DE COYUNTURA ECONÓMICA · EDICIÓN Nº 32</b></font>", ParagraphStyle('PreTitle', fontName='Georgia', alignment=TA_LEFT, spaceAfter=4)))
+    elements.append(Paragraph("ESTABILIZACIÓN MACRO, ANCLAS NOMINALES Y ASIGNACIÓN ESTRATÉGICA DE ACTIVOS", ParagraphStyle('MainTitle', fontName='Georgia-Bold', fontSize=18.5, leading=22.5, textColor=PRIMARY, alignment=TA_LEFT, spaceAfter=6)))
+    elements.append(Paragraph("Evaluación cuantitativa del sendero de desinflación, saneamiento del balance del BCRA, curvas de rendimientos soberanos y dinámica productiva de la región de Cuyo al cierre de agosto de 2026.", ParagraphStyle('MainSub', fontName='Georgia-Italic', fontSize=9.5, leading=13.5, textColor=SLATE, alignment=TA_JUSTIFY, spaceAfter=12)))
+
+    # 3. Metadatos Clave en Barra Horizontal Limpia (Sin ruido de badges)
+    meta_data = [
+        [
+            Paragraph("<b>FECHA:</b> Agosto 2026", ParagraphStyle('MetaC', fontName='Georgia', fontSize=7.2, textColor=DARK_TEXT, alignment=TA_CENTER)),
+            Paragraph("<b>FRECUENCIA:</b> Mensual", ParagraphStyle('MetaC', fontName='Georgia', fontSize=7.2, textColor=DARK_TEXT, alignment=TA_CENTER)),
+            Paragraph("<b>COBERTURA:</b> Nacional & Regional Cuyo", ParagraphStyle('MetaC', fontName='Georgia', fontSize=7.2, textColor=DARK_TEXT, alignment=TA_CENTER)),
+            Paragraph("<b>TARGET:</b> Comités & Tesorerías", ParagraphStyle('MetaC', fontName='Georgia', fontSize=7.2, textColor=DARK_TEXT, alignment=TA_CENTER))
         ]
     ]
-    t_badge = Table(badge_data, colWidths=[177, 178, 177])
-    t_badge.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 4.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4.5),
-        ('BOX', (0,0), (-1,-1), 0.5, SECONDARY),
-    ]))
-    elements.append(t_badge)
-    elements.append(Spacer(1, 10))
-
-    box_tasas = (
-        "<b>1. ARBITRAJE EN ARS & TASAS REALES</b><br/>"
-        "• Lecaps cortas con TEM del 2,95% (S31O6) rinden +95 pb reales sobre el REM (2,00% MoM).<br/>"
-        "• Breakeven inflacionario en 2,86% convalida sobreponderar tasa fija vs. títulos indexados CER.<br/>"
-        "• Recomendación: Sobreponderar tramo corto (S31O6/S28N6) y neutral en Boncer largo (TZX27)."
-    )
-    box_precios = (
-        "<b>2. DINÁMICA DE PRECIOS & SALARIOS</b><br/>"
-        "• IPC Nacional en 2,2% MoM (Mendoza DEIE: 2,3% MoM) traccionado por regulados (3,0% MoM).<br/>"
-        "• Canasta Básica Total en Mendoza alcanza $963.000; salario formal RIPTE avanza +2,4% en 2026.<br/>"
-        "• Pass-through controlado por estabilidad cambiaria y ancla salarial del sector público."
-    )
-    box_soberano = (
-        "<b>3. DEUDA SOBERANA & NELSON-SIEGEL</b><br/>"
-        "• Curva USD ajustada con R²=0,984 (β₀=9,40%, τ=2,40); tasa forward converge al 9,0% anual.<br/>"
-        "• Compresión del riesgo país hacia 506 pb favorece extensión de duration en GD35/GD38.<br/>"
-        "• Stress testing: compresión de -300 pb proyecta retornos en USD del +19,55% en GD38."
-    )
-    box_regional = (
-        "<b>4. ACTIVIDAD Y ECONOMÍA DE CUYO</b><br/>"
-        "• EMAE nacional avanza +3,1% i.a. liderado por minería e hidrocarburos (+14,2% i.a.).<br/>"
-        "• ISARC Cuyo: San Luis lidera con +5,8% i.a., Mendoza +3,4% (vino y petróleo) y San Juan +2,1%.<br/>"
-        "• Despachos vitivinícolas crecen +3,2% MoM con 73% concentrado en vinos fraccionados."
-    )
-
-    card_style = ParagraphStyle('CardP', fontName='Georgia', fontSize=7.4, leading=10.2, textColor=DARK_TEXT)
-    cards_data = [
-        [Paragraph(box_tasas, card_style), Paragraph(box_precios, card_style)],
-        [Paragraph(box_soberano, card_style), Paragraph(box_regional, card_style)]
-    ]
-    t_cards = Table(cards_data, colWidths=[261, 261])
-    t_cards.setStyle(TableStyle([
+    t_meta = Table(meta_data, colWidths=[133, 133, 133, 133])
+    t_meta.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), BG_CARD),
         ('BOX', (0,0), (-1,-1), 0.6, BORDER),
-        ('INNERGRID', (0,0), (-1,-1), 0.6, BORDER),
-        ('TOPPADDING', (0,0), (-1,-1), 7),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 7),
-        ('LEFTPADDING', (0,0), (-1,-1), 7),
-        ('RIGHTPADDING', (0,0), (-1,-1), 7),
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('LINELEFT', (0,0), (0,0), 3.0, PRIMARY),
-        ('LINELEFT', (1,0), (1,0), 3.0, SECONDARY),
-        ('LINELEFT', (0,1), (0,1), 3.0, colors.HexColor("#15803D")),
-        ('LINELEFT', (1,1), (1,1), 3.0, colors.HexColor("#8B1E3F")),
+        ('INNERGRID', (0,0), (-1,-1), 0.4, BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 3.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
     ]))
-    elements.append(t_cards)
+    elements.append(t_meta)
     elements.append(Spacer(1, 10))
 
-    tesis_portada = (
-        "<b>SÍNTESIS ESTRATÉGICA PARA COMITÉS DE INVERSIÓN:</b> "
-        "El programa macroeconómico consolida el ancla fiscal con superávit primario acumulado y esterilización bancaria vía Lefi ($29,3 billones). "
-        "La persistencia de tasas reales positivas en moneda local y la estabilidad de la brecha cambiaria (5,39% sobre oficial) justifican mantener carteras de carry trade de corto plazo "
-        "mientras se capturan ganancias de capital en bonos globales largos con convexidad superior a 33 veces. "
-        "En la región cuyana, la vitivinicultura de valor agregado y los proyectos RIGI en hidrocarburos consolidan un sendero de recuperación diferenciado."
+    # 4. Matriz Ejecutiva de los 4 Pilares Macroeconómicos
+    pilar_tasas = (
+        "<font color='#0B3C5D'><b>1. TASAS & ARBITRAJE EN ARS</b></font><br/>"
+        "La tasa fija en Lecaps cortas (S31O6 en 2,95% TEM) otorga un premio de +95 pb reales ex-ante sobre la inflación esperada del REM (2,00%). Con un breakeven implícito de 2,86% mensual, la estrategia óptima maximiza exposición en el tramo corto para capturar el carry trade real sin riesgo de duration."
     )
-    t_tesis_p = Table([[Paragraph(tesis_portada, ParagraphStyle('TP', fontName='Georgia', fontSize=7.6, leading=10.5, textColor=SLATE))]], colWidths=[532])
-    t_tesis_p.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F0FDF4")),
-        ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor("#16A34A")),
-        ('LINELEFT', (0,0), (-1,-1), 3.0, colors.HexColor("#15803D")),
-        ('TOPPADDING', (0,0), (-1,-1), 6),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ('LEFTPADDING', (0,0), (-1,-1), 8),
-        ('RIGHTPADDING', (0,0), (-1,-1), 8),
-    ]))
-    elements.append(t_tesis_p)
-    elements.append(Spacer(1, 12))
+    pilar_precios = (
+        "<font color='#0B3C5D'><b>2. PRECIOS & CONVERGENCIA</b></font><br/>"
+        "El IPC Nacional registró 2,2% MoM (Mendoza DEIE: 2,3%), traccionado por regulados (3,0%) y servicios (2,9%). El ancla cambiaria y el orden fiscal contienen a los bienes transables en 1,9% MoM. La Canasta Básica Total mendocina se ubicó en $963.000, con el RIPTE formal avanzando +2,4% en el año."
+    )
+    pilar_soberano = (
+        "<font color='#0B3C5D'><b>3. CURVA SOBERANA EN USD</b></font><br/>"
+        "El ajuste paramétrico Nelson-Siegel (R²=0,984) ubica el nivel asintótico β₀ en 9,40%. La compresión del riesgo país hacia 506 pb reduce el costo de fondeo y convalida extender duration en Globales largos (GD35/GD38), que ofrecen una convexidad superior a 33x ante compresión de spreads."
+    )
+    pilar_regional = (
+        "<font color='#0B3C5D'><b>4. ACTIVIDAD Y CUYO (ISARC)</b></font><br/>"
+        "El EMAE consolidó un alza interanual de +3,1%, liderado por minería e hidrocarburos (+14,2%). El Indicador Sintético Regional (ISARC) muestra a San Luis expandiéndose al +5,8% i.a. por tracción industrial y construcción (+14,2%), seguido por Mendoza (+3,4%) y San Juan (+2,1%)."
+    )
 
-    autor_box = [
-        [
-            Paragraph("<b>AUTOR & ESTRATEGA:</b>", ParagraphStyle('AutL', fontName='Georgia-Bold', fontSize=8.0, textColor=PRIMARY)),
-            Paragraph("<b>Federico Agustín Chillón</b> · Lead Quantitative Macro & Financial Strategist", ParagraphStyle('AutV', fontName='Georgia', fontSize=8.0, textColor=DARK_TEXT))
-        ],
-        [
-            Paragraph("<b>FILIACIÓN INSTITUCIONAL:</b>", ParagraphStyle('AutL', fontName='Georgia-Bold', fontSize=8.0, textColor=PRIMARY)),
-            Paragraph("Facultad de Ciencias Económicas — Universidad Nacional de Cuyo (UNCUYO)", ParagraphStyle('AutV', fontName='Georgia', fontSize=8.0, textColor=DARK_TEXT))
-        ],
-        [
-            Paragraph("<b>REPOSITORIO & DATOS:</b>", ParagraphStyle('AutL', fontName='Georgia-Bold', fontSize=8.0, textColor=PRIMARY)),
-            Paragraph("github.com/federicoagustinchillon-creador/coyuntura-macro · Mendoza, Argentina", ParagraphStyle('AutV', fontName='Georgia', fontSize=8.0, textColor=SLATE))
-        ]
+    pilar_p_style = ParagraphStyle('PilP', fontName='Georgia', fontSize=7.2, leading=9.8, textColor=DARK_TEXT, alignment=TA_JUSTIFY)
+    pilares_table_data = [
+        [Paragraph(pilar_tasas, pilar_p_style), Paragraph(pilar_precios, pilar_p_style)],
+        [Paragraph(pilar_soberano, pilar_p_style), Paragraph(pilar_regional, pilar_p_style)]
     ]
-    t_aut = Table(autor_box, colWidths=[130, 402])
-    t_aut.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 2.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-        ('LINEABOVE', (0,0), (-1,0), 0.6, BORDER),
+    t_pilares = Table(pilares_table_data, colWidths=[261, 261])
+    t_pilares.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.white),
+        ('BOX', (0,0), (-1,-1), 0.6, BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.6, BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 6.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 7.5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 7.5),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LINELEFT', (0,0), (0,0), 2.5, PRIMARY),
+        ('LINELEFT', (1,0), (1,0), 2.5, SECONDARY),
+        ('LINELEFT', (0,1), (0,1), 2.5, colors.HexColor("#0D5C46")),
+        ('LINELEFT', (1,1), (1,1), 2.5, colors.HexColor("#722F37")),
     ]))
-    elements.append(t_aut)
+    elements.append(t_pilares)
+    elements.append(Spacer(1, 10))
+
+    # 5. Tesis Estratégica Central (Card Elegante)
+    tesis_content = (
+        "<font color='#0B3C5D'><b>TESIS ESTRATÉGICA PARA COMITÉS DE INVERSIÓN:</b></font> "
+        "La combinación de superávit fiscal primario y absorción monetaria cuasifiscal mediante Lefi ($29,3 billones) mantiene ancladas las expectativas cambiarias y reduce la volatilidad implícita en Rofex (35,2% TNA). "
+        "En este régimen de transición, la asignación táctica óptima consiste en capturar rendimientos reales en pesos en Lecaps cortas (S31O6) mientras se mantiene sobreponderación en bonos globales GD35/GD38 para maximizar el retorno total ante la normalización del crédito soberano internacional."
+    )
+    t_tesis_card = Table([[Paragraph(tesis_content, ParagraphStyle('TC_P', fontName='Georgia', fontSize=7.4, leading=10.2, textColor=SLATE, alignment=TA_JUSTIFY))]], colWidths=[532])
+    t_tesis_card.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), BG_CARD),
+        ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor("#CBD5E1")),
+        ('LINELEFT', (0,0), (-1,-1), 3.0, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 6.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6.0),
+        ('LEFTPADDING', (0,0), (-1,-1), 8.0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 8.0),
+    ]))
+    elements.append(t_tesis_card)
+    elements.append(Spacer(1, 10))
+
+    # 6. Bloque de Firma de Autor y Filiación Formal
+    autor_signature_table = Table([
+        [
+            Paragraph("<font color='#0B3C5D' size=8.0><b>Federico Agustín Chillón</b></font><br/><font color='#64748B' size=7.0>Lead Quantitative Macro & Financial Strategist<br/>Facultad de Ciencias Económicas — Universidad Nacional de Cuyo</font>", ParagraphStyle('SigL', fontName='Georgia', leading=9.5)),
+            Paragraph("<font color='#64748B' size=7.0><b>Repositorio Oficial & Pipelines:</b><br/>github.com/federicoagustinchillon-creador/coyuntura-macro<br/>Mendoza, Argentina · Agosto de 2026</font>", ParagraphStyle('SigR', fontName='Georgia', alignment=TA_RIGHT, leading=9.5))
+        ]
+    ], colWidths=[280, 252])
+    autor_signature_table.setStyle(TableStyle([
+        ('LINEABOVE', (0,0), (-1,0), 0.6, BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    elements.append(autor_signature_table)
 
     elements.append(PageBreak())
 
