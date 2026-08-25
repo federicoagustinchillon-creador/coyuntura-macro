@@ -1,0 +1,156 @@
+{
+  "name": "Coyuntura Macro & Mercados - Pipeline Desatendido",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "node-schedule-trigger",
+      "name": "Cron Matutino (09:00 ART)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "coyuntura-macro-trigger",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "node-webhook-trigger",
+      "name": "Webhook de Evento Macro (INDEC / BCRA)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        100,
+        480
+      ],
+      "webhookId": "coyuntura-macro-webhook"
+    },
+    {
+      "parameters": {
+        "command": "python src/agent_runner.py"
+      },
+      "id": "node-execute-runner",
+      "name": "Ejecutar Agent Runner Python",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        360,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst path = 'C:/Users/fedea/Downloads/coyuntura-macro/01_Bases_Datos/datos_del_dia.json';\nconst data = JSON.parse(fs.readFileSync(path, 'utf8'));\n\nconst mensaje = `🏛️ *REPORTE DE COYUNTURA MACROECONÓMICA & MERCADOS*\\n` +\n  `📅 *Fecha:* ${data.fecha}\\n\\n` +\n  `💵 *Dólar CCL:* $${data.dolar.ccl.toFixed(2)} (Brecha: ${data.dolar.brecha_ccl_oficial_pct}%)\\n` +\n  `📈 *Lecap Corta (TEM):* ${data.tasas_ars.lecap_corta_tem}% vs. REM ${data.tasas_ars.inflacion_esperada_rem_tem}% (Premio: +${data.tasas_ars.premio_tasa_fija_pbs} pb)\\n` +\n  `📊 *EMAE Interanual:* +${data.actividad.emae_interanual_pct}% | ISARC Cuyo: +${data.actividad.isarc_mendoza_ia_pct}%\\n` +\n  `🌎 *Riesgo País (EMBI+):* ${data.soberano_usd.embi_riesgo_pais_pbs} pb | GD30: ${data.soberano_usd.gd30_tir}% TIR\\n` +\n  `⚡ *S&P Merval:* ${data.equity.merval_ars.toLocaleString('es-AR')} pts (+${data.equity.var_semanal_pct}%)\\n\\n` +\n  `✅ *3 Entregables Compilados y Sincronizados:*\\n` +\n  `1. Monitor Diario (2 Págs)\\n` +\n  `2. Paper Semanal APA 7 (4 Págs)\\n` +\n  `3. Informe Mensual Master (14 Págs ReportLab)\\n\\n` +\n  `📁 *Google Drive:* Actualizado en coyuntura-macro/`;\n\nreturn [{ json: { mensaje, datos: data } }];"
+      },
+      "id": "node-parse-kpis",
+      "name": "Parsear KPIs y Formatear Alerta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID || '-1001234567890' }}",
+        "text": "={{ $json.mensaje }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-telegram-alert",
+      "name": "Notificación Telegram con KPIs",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        820,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "={{ $env.SLACK_CHANNEL || '#coyuntura-macro' }}",
+        "text": "={{ $json.mensaje }}",
+        "otherOptions": {}
+      },
+      "id": "node-slack-alert",
+      "name": "Notificación Slack para Comités",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        820,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Cron Matutino (09:00 ART)": {
+      "main": [
+        [
+          {
+            "node": "Ejecutar Agent Runner Python",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook de Evento Macro (INDEC / BCRA)": {
+      "main": [
+        [
+          {
+            "node": "Ejecutar Agent Runner Python",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar Agent Runner Python": {
+      "main": [
+        [
+          {
+            "node": "Parsear KPIs y Formatear Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear KPIs y Formatear Alerta": {
+      "main": [
+        [
+          {
+            "node": "Notificación Telegram con KPIs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notificación Slack para Comités",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  }
+}
