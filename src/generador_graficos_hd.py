@@ -73,7 +73,7 @@ def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis,
     # Tarjeta principal blanca
     main_card = patches.FancyBboxPatch(
         (0.025, 0.025), 0.950, 0.950,
-        boxstyle="round,pad=0.015,rounding_size=0.020",
+        boxstyle="round,pad=0.010,rounding_size=0.018",
         facecolor="#FFFFFF", edgecolor="#CBD5E1",
         linewidth=1.0, transform=fig.transFigure, zorder=-5
     )
@@ -81,55 +81,64 @@ def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis,
     
     # Pastilla superior izquierda de fecha
     pill = patches.FancyBboxPatch(
-        (0.055, 0.895), 0.320, 0.044,
-        boxstyle="round,pad=0.008,rounding_size=0.015",
+        (0.055, 0.898), 0.320, 0.042,
+        boxstyle="round,pad=0.005,rounding_size=0.012",
         facecolor="#E0F2FE", edgecolor="#BAE6FD",
         linewidth=0.8, transform=fig.transFigure
     )
     fig.patches.append(pill)
     
-    plt.figtext(0.068, 0.910, "•", fontname="Georgia", fontsize=10.0, color="#0284C7", transform=fig.transFigure, va='center')
-    plt.figtext(0.082, 0.910, date_str, fontname="Georgia", fontsize=8.0, fontweight='bold', color="#0369A1", transform=fig.transFigure, va='center')
+    plt.figtext(0.068, 0.913, "•", fontname="Georgia", fontsize=10.0, color="#0284C7", transform=fig.transFigure, va='center')
+    plt.figtext(0.082, 0.913, date_str, fontname="Georgia", fontsize=7.8, fontweight='bold', color="#0369A1", transform=fig.transFigure, va='center')
     
     # Título y subtítulo en Georgia Serif
-    plt.figtext(0.055, 0.840, title_str, fontname="Georgia", fontsize=12.5, fontweight='bold', color="#0F172A", transform=fig.transFigure)
-    plt.figtext(0.055, 0.808, subtitle_str, fontname="Georgia", fontsize=7.8, color="#475569", transform=fig.transFigure)
+    plt.figtext(0.055, 0.845, title_str, fontname="Georgia", fontsize=12.2, fontweight='bold', color="#0F172A", transform=fig.transFigure)
+    plt.figtext(0.055, 0.814, subtitle_str, fontname="Georgia", fontsize=7.6, color="#475569", transform=fig.transFigure)
     
-    # KPI Cards dinámicas según cantidad de elementos (N=3 o N=4)
+    # KPI Cards dinámicas sin solapamiento de líneas (Geometry & Hierarchy Impeccable)
     n_kpis = len(kpis)
     x_start = 0.055
     x_end = 0.945
     total_w = x_end - x_start
     gap = 0.014
     card_w = (total_w - (n_kpis - 1) * gap) / n_kpis
-    card_h = 0.118
-    y_card = 0.665
+    card_h = 0.126
+    y_card_bottom = 0.654
+    y_card_top = y_card_bottom + card_h  # 0.780
     
-    val_fontsize = 13.0 if n_kpis <= 3 else 11.2
-    title_fontsize = 7.6 if n_kpis <= 3 else 6.8
-    sub_fontsize = 6.6 if n_kpis <= 3 else 5.9
+    val_fontsize = 12.5 if n_kpis <= 3 else 11.0
+    title_fontsize = 7.4 if n_kpis <= 3 else 6.6
+    sub_fontsize = 6.6 if n_kpis <= 3 else 5.8
     
     for idx, (k_title, k_val, k_sub, k_color) in enumerate(kpis):
         x_pos = x_start + idx * (card_w + gap)
+        
+        # 1. Caja blanca de la tarjeta con borde sutil
         card = patches.FancyBboxPatch(
-            (x_pos, y_card), card_w, card_h,
-            boxstyle="round,pad=0.008,rounding_size=0.012",
+            (x_pos, y_card_bottom), card_w, card_h,
+            boxstyle="round,pad=0.005,rounding_size=0.010",
             facecolor="#FFFFFF", edgecolor="#E2E8F0",
             linewidth=0.8, transform=fig.transFigure
         )
         fig.patches.append(card)
         
-        top_bar = patches.FancyBboxPatch(
-            (x_pos, y_card + card_h - 0.012), card_w, 0.012,
-            boxstyle="round,pad=0.004,rounding_size=0.004",
-            facecolor=k_color, edgecolor='none', transform=fig.transFigure
+        # 2. Filete superior de color nítido sin padding que lo expanda
+        top_bar = patches.Rectangle(
+            (x_pos + 0.002, y_card_top - 0.004), card_w - 0.004, 0.004,
+            facecolor=k_color, edgecolor='none', transform=fig.transFigure, zorder=2
         )
         fig.patches.append(top_bar)
         
         x_mid = x_pos + card_w / 2.0
-        plt.figtext(x_mid, y_card + card_h - 0.026, k_title, fontname="Georgia", fontsize=title_fontsize, fontweight='bold', color="#0F172A", ha='center', transform=fig.transFigure)
-        plt.figtext(x_mid, y_card + card_h - 0.064, k_val, fontname="Georgia", fontsize=val_fontsize, fontweight='bold', color=k_color, ha='center', transform=fig.transFigure)
-        plt.figtext(x_mid, y_card + 0.015, k_sub, fontname="Georgia", fontsize=sub_fontsize, color="#64748B", ha='center', transform=fig.transFigure)
+        
+        # 3. Título claramente separado por debajo del filete (distancia vertical = 0.022)
+        plt.figtext(x_mid, y_card_top - 0.024, k_title, fontname="Georgia", fontsize=title_fontsize, fontweight='bold', color="#334155", ha='center', va='center', transform=fig.transFigure)
+        
+        # 4. Valor numérico en el centro de la tarjeta
+        plt.figtext(x_mid, y_card_bottom + 0.055, k_val, fontname="Georgia", fontsize=val_fontsize, fontweight='bold', color=k_color, ha='center', va='center', transform=fig.transFigure)
+        
+        # 5. Subtítulo en la base de la tarjeta
+        plt.figtext(x_mid, y_card_bottom + 0.018, k_sub, fontname="Georgia", fontsize=sub_fontsize, color="#64748B", ha='center', va='center', transform=fig.transFigure)
         
     # Área de gráfico con altura segura para evitar cualquier solapamiento
     ax_plot = fig.add_axes([0.065, 0.125, 0.870, 0.490])
