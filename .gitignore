@@ -1,0 +1,27 @@
+# Archivos temporales de Office y Word
+~$*.docx
+~$*.xlsx
+*.tmp
+
+# Entornos virtuales y Caches de Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Backups y temporales locales
+_backups_*/
+*.backup.*
+*.backup.pdf
+
+# Sistema Operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs y Caches de IDE
+.vscode/
+.idea/
+*.log

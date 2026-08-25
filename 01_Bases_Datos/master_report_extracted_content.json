@@ -1,0 +1,269 @@
+[
+  {
+    "page_num": 1,
+    "blocks": []
+  },
+  {
+    "page_num": 2,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "Índice General y Estructura del Informe",
+      "RESUMEN EJECUTIVO & ESCENARIOS",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      "Resumen Ejecutivo y Matriz de Escenarios a 12 Meses",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n3",
+      "CUERPO DEL INFORME",
+      "1. Arbitraje de Tasas en ARS, Breakeven y Recomendaciones\n. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n4",
+      "2. Dinámica de Precios, Canastas Básicas y Salario Real\n. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n5",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      "Cuadro 1. Índice de Precios al Consumidor (IPC INDEC y DEIE Mendoza)",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n6",
+      "3. Nivel de Actividad Económica General (EMAE)\n. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n7",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      "4. Desagregación Sectorial y Producción en Cuyo (INV, Petróleo,\nCemento)",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n8",
+      "5. Balance del BCRA, Pasivos Cuasifiscales y Brecha de Taylor\n. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n9",
+      "6. Estructura Temporal de la Deuda Soberana y Modelo Nelson-Siegel\n. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n10",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      "Cuadro 2. Parámetros del modelo Nelson-Siegel y rendimientos de mercado",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n10",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      "7. Microestructura Cambiaria, Futuros Rofex y Probabilidades\nImplícitas",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n11",
+      "8. Sector Financiero, Renta Variable y Radar de Balances\n. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n12",
+      "ANEXO & CIERRE",
+      "9. Flash Normativo, Contexto Internacional y Referencias APA 7ma\n. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+      ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\n13",
+      "CRITERIOS METODOLÓGICOS, MODELOS ECONOMÉTRICOS Y FUENTES",
+      "• Jerarquía por Importancia Relativa: El análisis prioriza los componentes de mayor incidencia macroeconómica (precios regulados sobre\nestacionales, transables sobre no transables, y deuda soberana sobre derivados).\n• Fuentes Oficiales Consolidadas: Series provistas por INDEC, DEIE Mendoza, Banco Central de la República Argentina (BCRA), Instituto\nNacional de Vitivinicultura (INV), Secretaría de Energía y Bolsas y Mercados Argentinos (ByMA).\n• Modelos Aplicados: Ajuste paramétrico continuo de curva spot y forward bajo Nelson-Siegel (1987), Regla de Taylor con tasa real ex-ante\n(1993) y cálculo de Breakeven Inflacionario implícito de mercado.",
+      "Abreviatura\nDefinición / Concepto\nUso en el Informe",
+      "TEM / TNA\nTasa Efectiva Mensual / Tasa Nominal Anual.\nRendimientos en letras del Tesoro (Lecaps).",
+      "Lefi\nLetras Fiscales de Liquidez emitidas por el Tesoro.\nInstrumento de esterilización bancaria cuasifiscal.",
+      "EMAE\nEstimador Mensual de Actividad Económica (INDEC).\nIndicador de ciclo y tendencia del PIB real.",
+      "ISARC\nIndicador Sintético de Actividad Regional de Cuyo.\nÍndice ponderado provincial (Vino, Petróleo, Cemento).",
+      "EMBI+\nEmerging Markets Bond Index (J.P. Morgan).\nRiesgo país y spread soberano en USD.",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 2 de 13"
+    ]
+  },
+  {
+    "page_num": 3,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "Resumen Ejecutivo y Matriz de Escenarios",
+      "El diagnóstico macroeconómico al cierre de agosto de 2026 confirma la vigencia del ancla fiscal y monetaria. La convergencia\ninflacionaria hacia el 2% mensual (IPC INDEC: 2,2% MoM vs. Mendoza DEIE: 2,3% MoM) estuvo liderada por el ajuste de\nprecios regulados (3,0% MoM) y servicios (2,9% MoM), que explicaron la mayor incidencia alcista, compensados por la\nestabilidad en bienes transables (1,9% MoM) y la inflación núcleo (1,9% MoM). En el frente monetario, la tasa real\nex-ante (+0,95% mensual TEM Lecap vs. REM) opera como barrera contra la dolarización de carteras, sustentada en la\nabsorción del Tesoro mediante Lefi ($29,3 billones) y el equilibrio presupuestario primario.",
+      "En el plano sociopolítico, la estabilidad cambiaria convive con tensiones distributivas: el salario real formal (RIPTE) alcanza\n84,4 puntos (+2,4% acumulado), pero el sector no registrado enfrenta una caída del poder adquisitivo superior al 18% respecto\na 2023. La Canasta Básica Total en Mendoza ($963.000) exige ingresos crecientes para superar el umbral de pobreza, mientras\nel endeudamiento de los hogares en créditos no bancarios exhibe una mora del 17%. A nivel soberano, la compresión del\nEMBI+ hacia 506 pb habilita la rotación de carteras hacia tramos medios-largos de Globales.",
+      "Matriz de Escenarios Macroeconómicos a 12 Meses:",
+      "Escenario\nProb.\nDólar CCL (Dic-26)\nInflación 2026\nTIR GD30 Esperada\nEstrategia Recomendada",
+      "Base (Continuidad)\n60%\n$1.750 - $1.850\n28% - 32% anual\n9,50% (Upside +12%)\nCarry en Lecaps cortas (S31O6) +\nsobreponderar tramo GD35/GD38.",
+      "Bull (Salida de\nCepo)\n25%\n$1.620 - $1.700\n20% - 25% anual\n7,80% (Upside +28%)\nMáxima exposición a Globales largos y\nacciones energéticas (YPF, PAMP).",
+      "Bear (Shock\nExterno)\n15%\n$1.950 - $2.150\n40% - 48% anual\n13,50% (Hedge)\nDolarización de liquidez en Bopreal / Boncer\ntramo corto.",
+      "LECTURA ESTRATÉGICA DE LA MESA DE DINERO",
+      "El set de datos de agosto convalida un equilibrio de tasas reales positivas con ancla cambiaria. La compresión del riesgo país hacia 500 pb\nreduce el costo de refinanciación soberano, tornando atractiva la extensión de duration en Globales largos (GD35/GD38) con convexidad\nsuperior a 33 veces. En moneda local, el arbitraje fija vs. CER favorece a las Lecaps cortas, capturando un carry mensual garantizado.",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 3 de 13"
+    ]
+  },
+  {
+    "page_num": 4,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "1. Arbitraje de Tasas en ARS, Breakeven y Recomendaciones de Cartera",
+      "El mercado de deuda en pesos refleja una marcada preferencia por el carry trade de corto plazo. La curva de Lecaps (tasa fija)\nopera con TEMs de entre 2,95% (30 días) y 3,40% (360 días), mientras los títulos Boncer indexados por CER rinden tasas reales\npositivas de entre +1,10% y +2,30% anual. A partir de esta estructura, el breakeven de inflación implícita se sitúa en 2,86%\nmensual para el tramo corto y 3,21% para el tramo anualizado.",
+      "Dado que las expectativas del REM proyectan una inflación mensual descendente hacia el 1,75%-2,00%, la tasa fija ofrece un\npremio de entre 86 y 146 pb mensuales sobre la inflación esperada. La estrategia táctica óptima consiste en maximizar\nexposición en Lecaps cortas (S31O6 / S28N6) para capturar el diferencial de rendimiento real sin asumir el riesgo de extensión\nde duration.",
+      "Instrumento / Especie\nTNA / TEM\nDuration / Convex.\nBreakeven / TIR\nTesis & Ponderación Táctica",
+      "Lecap S31O6 (Oct-26)\n35,4% TNA (2,95% TEM)\n68 días · Dur: 0,18\nBE: 2,86% MoM\nOVERWEIGHT · Máximo carry con riesgo tasa\nmínimo.",
+      "Lecap S28N6 (Nov-26)\n36,6% TNA (3,05% TEM)\n96 días · Dur: 0,26\nBE: 2,94% MoM\nOVERWEIGHT · Captura tasa fija antes de\nrecortes BCRA.",
+      "Boncer TZX27 (Dic-27)\nCER + 1,10% TIR Real\n1,4 años · Dur: 1,35\nTIR Real: +1,10%\nNEUTRAL · Cobertura si regulados superan el\n3,5% MoM.",
+      "Bopreal Serie 3 (USD)\n8,40% TIR en USD\n1,8 años · Dur: 1,65\nParidad: 88,5%\nOVERWEIGHT · Dolarización de excedentes\ncorporativos.",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 4 de 13"
+    ]
+  },
+  {
+    "page_num": 5,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "2. Dinámica de Precios, Canastas Básicas y Salario Real",
+      "La dinámica de precios de agosto confirmó la consolidación del sendero desinflacionario nacional (2,2% MoM) y provincial\n(Mendoza: 2,3% MoM). Por orden de incidencia relativa, los aumentos estuvieron encabezados por los precios regulados\n(3,0% INDEC; 3,3% DEIE) y los servicios privados (2,9% MoM), explicados por actualizaciones en tarifas de energía\neléctrica, gas de red y transporte interurbano en Cuyo. Como contrapartida, los bienes transables (1,9% MoM) y los\nalimentos (1,8% MoM) actuaron como anclas de convergencia.",
+      "En el plano social, la valorización de las canastas en Mendoza sitúa la Canasta Básica Alimentaria (CBA) en $433.000 y la Total\n(CBT) en $963.000 para una familia tipo. Aunque el salario real registrado (RIPTE) acumula una mejora del 2,4% en el año, la\nheterogeneidad en el mercado laboral presiona el consumo de bienes no transables y sostiene la demanda de financiamiento\npara gastos corrientes.",
+      "Indicador Social / Canasta (Mendoza)\nValor Ago-26\nVariación MoM\nCobertura / Brecha de Ingresos",
+      "Canasta Básica Alimentaria (CBA Mendoza)\n$433.000\n+1,8% MoM\nLínea de Indigencia · Requiere 1,2 salarios mínimos\ninformales.",
+      "Canasta Básica Total (CBT Mendoza)\n$963.000\n+2,3% MoM\nLínea de Pobreza · Brecha del 18% frente a ingresos no\nregistrados.",
+      "Salario Real Formal (RIPTE)\n84,4 pts\n+0,3% MoM\n+2,4% acum. vs. Dic-2023 · Cobertura del 100% de la\nCBT.",
+      "Mora en Créditos de Consumo (Fintech)\n17,2%\n+0,8 pp MoM\nTensión en financiamiento de gastos corrientes en\nfamilias.",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 5 de 13"
+    ]
+  },
+  {
+    "page_num": 6,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "Cuadro 1. Índice de Precios al Consumidor (IPC)",
+      "Variación mensual, acumulada e interanual según aperturas por orden de incidencia relativa. Agosto de 2026, en porcentaje.",
+      "Apertura / Jurisdicción\nMensual (Ago-26)\nAcum. 2026 (8 meses)\nInteranual (i.a.)",
+      "Precios Regulados (Mayor Incidencia)\n3,0%\n29,1%\n48,4%",
+      "Servicios (INDEC)\n2,9%\n24,8%\n41,2%",
+      "Provincia de Mendoza (DEIE General)\n2,3%\n19,4%\n32,8%",
+      "Vivienda, agua, electricidad y gas (DEIE)\n3,3%\n33,2%\n54,1%",
+      "Transporte y comunicaciones (DEIE)\n2,7%\n26,4%\n43,8%",
+      "Nivel General Nacional (INDEC)\n2,2%\n18,5%\n31,4%",
+      "IPC Núcleo (INDEC)\n1,9%\n15,9%\n26,5%",
+      "Bienes (INDEC)\n1,9%\n16,2%\n28,0%",
+      "Alimentos y bebidas (DEIE Mendoza)\n1,8%\n15,1%\n25,4%",
+      "Estacionales (INDEC)\n1,4%\n12,4%\n21,0%",
+      "Fuente: Instituto Nacional de Estadística y Censos (INDEC) y Dirección de Estadísticas e Investigaciones Económicas (DEIE) de Mendoza.\nOrdenado por orden decreciente de variación mensual relativa.",
+      "Canal de Transmisión / Rubro\nIncidencia en IPC",
+      "Elasticidad /\nPass-Through\nImplicancia para Empresas y Consumo",
+      "(pp)",
+      "Tarifas de Electricidad y Gas de Red\n+0,65 pp\nDirecto (100% regulado)\nAumento en costos fijos de PyMEs industriales y\nriego agrícola.",
+      "Combustibles y Fletes Interurbanos\n+0,48 pp\nRápido (60% a 30 días)\nPresión en logística de bodegas y distribución de\nalimentos.",
+      "Alimentos Secos y Productos de Almacén\n+0,42 pp\nModerado (anclado por",
+      "Migración del consumidor hacia segundas y\nterceras marcas.",
+      "FX)",
+      "Indumentaria y Calzado\n+0,12 pp\nBajo (competencia",
+      "Caída en márgenes comerciales por necesidad de\nliquidar stock.",
+      "importada)",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 6 de 13"
+    ]
+  },
+  {
+    "page_num": 7,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "3. Estimador Mensual de Actividad Económica (EMAE)",
+      "El Estimador Mensual de Actividad Económica (EMAE) creció 3,1% en la comparación interanual y avanzó 0,6% en su medición\ndesestacionalizada respecto al mes previo. La tendencia-ciclo consolidó una tasa positiva de 0,4% mensual, ratificando la\nsuperación del piso de actividad registrado durante el primer trimestre de 2026. La reactivación económica exhibe un patrón\nasimétrico traccionado principalmente por los sectores transables y exportadores.",
+      "Por orden de dinamismo, la minería e hidrocarburos (+14,2% i.a.) y el agro (+8,5% i.a.) encabezan la expansión, mientras\nque el comercio minorista (-1,8% i.a.) y la industria manufacturera no vinculada a energía (-0,5% i.a.) acumulan los\nmayores rezagos relativos. Este comportamiento responde a la recomposición gradual del ingreso disponible en un entorno de\ndisciplina fiscal.",
+      "Sector / Rama de Actividad (INDEC)\nVariación i.a.\nVariación MoM",
+      "Desest.\nFase del Ciclo / Driver Principal",
+      "Explotación de Minas y Canteras (O&G;)\n+14,2% i.a.\n+1,4% MoM\nExpansión Fuerte · Récord de shale oil y gasoductos.",
+      "Agricultura, Ganadería y Caza\n+8,5% i.a.\n+0,8% MoM\nRecuperación · Cosecha récord y liquidación de\ngranos.",
+      "Intermediación Financiera y Seguros\n+4,2% i.a.\n+0,5% MoM\nCrecimiento · Expansión de créditos corporativos en\nARS.",
+      "Construcción y Despacho de Insumos\n+0,6% i.a.\n+0,3% MoM\nEstabilización · Impulso privado compensa freno en\nobra pública.",
+      "Comercio Mayorista y Minorista\n-1,8% i.a.\n+0,1% MoM\nRezagado · Recuperación lenta en ventas de consumo\nmasivo.",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 7 de 13"
+    ]
+  },
+  {
+    "page_num": 8,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "4. Desagregación Sectorial y Producción en Mendoza y Cuyo",
+      "La estructura productiva de Mendoza exhibe desempeños asimétricos según orientación de mercado. En la industria\nvitivinícola, los despachos informados por el Instituto Nacional de Vitivinicultura (INV) alcanzaron 68,5 mil hectolitros (+3,2%\nMoM), impulsados en un 73% por vinos fraccionados (50,1 mil hl) de mayor valor agregado, frente a 18,4 mil hl a granel.",
+      "En hidrocarburos, la producción total en la cuenca cuyana alcanzó 212 mil m³ mensuales, explicada por 182 mil m³ de\nextracción convencional y un aporte creciente de 30 mil m³ en Vaca Muerta mendocina bajo proyectos adheridos al RIGI.\nPor su parte, los despachos de cemento portland (AFCP) operaron en 100,4 puntos base, reflejando reactivación en la obra\nprivada.",
+      "Cadena de Valor / Complejo (Cuyo)\nVolumen Ago-26\nParticipación %\nImpacto Fiscal, Empleo & Inversión",
+      "Vino Fraccionado (INV)\n50,1 mil hl\n73,1% del total\nGenerador del 65% del empleo agroindustrial en el Oasis\nCentral.",
+      "Vino a Granel y Mostos (INV)\n18,4 mil hl\n26,9% del total\nRegulador de stocks y exportación de commoditized wine.",
+      "Petróleo Convencional Cuenca Cuyana\n182 mil m³\n85,8% provincial\nBase de recaudación de regalías hidrocarburíferas para\nATM.",
+      "Vaca Muerta Mendocina (Malargüe)\n30 mil m³\n14,2% provincial\nProyectos RIGI en fractura hidráulica con proyección\nduplicada a 2027.",
+      "Cemento Portland (AFCP Cuyo)\n100,4 pts (Base 100)\n+0,6% MoM\nTracción por obras residenciales y desarrollos\ninmobiliarios privados.",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 8 de 13"
+    ]
+  },
+  {
+    "page_num": 9,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "5. Balance del BCRA, Pasivos Cuasifiscales y Brecha de Taylor",
+      "El esquema monetario consolidó el saneamiento patrimonial del Banco Central mediante la total extinción de los pases pasivos\nremunerados ($0 B), transfiriendo la absorción de liquidez bancaria a las Letras Fiscales de Liquidez (Lefi) emitidas por el\nTesoro Nacional ($29,3 billones). La Base Monetaria Ampliada se ubicó en $27,4 billones, manteniendo un estricto control\nsobre la expansión secundaria de dinero.",
+      "Bajo una formulación de la Regla de Taylor con tasa real ex-ante (TEM Lecap 2,95% − REM 2,00% = +0,95% mensual), la tasa\nde política monetaria se sitúa 20 pb por encima de la tasa neutral estimada (r* = 0,75%). Esta brecha contractiva garantiza el\nanclaje de expectativas inflacionarias sin restringir la expansión del crédito comercial privado en el sistema financiero.",
+      "Factor de Variación Monetaria / Balance\nMonto (ARS / USD)\nEfecto Neto\nImplicancia para la Estabilidad Financiera",
+      "Absorción Cuasifiscal vía Lefi (Tesoro)\n$29,3 Billones\nContractivo\nTraslado del costo financiero al Tesoro con superávit\nprimario.",
+      "Base Monetaria Ampliada (Circulación +\nEncajes)\n$27,4 Billones\nControlado\nRemonetización gradual en línea con la demanda\ntransaccional.",
+      "Pases Pasivos Remunerados BCRA\n$0,0 Billones\nExtinto\nEliminación definitiva de la emisión por déficit\ncuasifiscal.",
+      "Reservas Internacionales Netas (RIN FMI)\nUSD -4.200 M\nEn Recuperación\nCompras netas en el MLC compensadas por pagos de\ndeuda soberana.",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 9 de 13"
+    ]
+  },
+  {
+    "page_num": 10,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "6. Estructura Temporal de la Deuda Soberana y Modelo Nelson-Siegel",
+      "El ajuste paramétrico de la curva soberana en moneda extranjera bajo el modelo Nelson-Siegel arrojó parámetros de nivel (β₀ =\n9,40%), pendiente (β₁ = +5,60%), curvatura (β₂ = -3,20%) y parámetro de decaimiento τ = 2,40 (R² = 0,984 | RMSE = 14 bps).\nLa curva spot presenta una pendiente positiva normalizada entre los tramos cortos (AL30 en 11,20%) y largos (GD38 en\n9,70%), con la tasa forward instantánea f(t) anticipando convergencia de rendimientos hacia el 9,0% anual.",
+      "Parámetro / Especie\nSímbolo / Ticker\nValor Observado\nMétricas de Ajuste & Duration",
+      "Nivel de Largo Plazo\nβ₀\n9,40%\nR² = 0,984 · RMSE = 14 bps",
+      "Pendiente / Curvatura\nβ₁ / β₂\n+5,60% / -3,20%\nParámetro decaimiento τ = 2,40",
+      "Bonar 2030 (Ley Local)\nAL30\n11,20% TIR\nDuration: 2,78 · Paridad: 69,8%",
+      "Global 2038 (Ley NY)\nGD38\n9,70% TIR\nDuration: 5,81 · Paridad: 60,9%",
+      "Shock de Spread Soberano\nRetorno GD38 (Conv: 47,1)\nRetorno GD35 (Conv: 33,8)\nRetorno AL30 (Conv: 9,2)",
+      "Compresión -300 pb (Hacia 200 pb EMBI)\n+19,55% en USD\n+16,67% en USD\n+8,75% en USD",
+      "Compresión -100 pb (Hacia 400 pb EMBI)\n+6,05% en USD\n+5,22% en USD\n+2,83% en USD",
+      "Ampliación +100 pb (Hacia 600 pb EMBI)\n-5,57% en USD\n-4,88% en USD\n-2,73% en USD",
+      "Ampliación +300 pb (Shock Externo)\n-15,31% en USD\n-13,63% en USD\n-7,93% en USD",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 10 de 13"
+    ]
+  },
+  {
+    "page_num": 11,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "7. Microestructura Cambiaria, Futuros Rofex y Probabilidades Implícitas",
+      "El mercado cambiario finalizó agosto con el Dólar CCL en $1.596,59, el Dólar MEP en $1.532,33 y el Oficial BNA en $1.515,00.\nLa brecha cambiaria implícita se ubicó en 5,39% respecto al BNA (7,50% sobre el tipo de cambio mayorista de $1.485,00). La\ncotización informal (Dólar Blue) operó en $1.615,00, reflejando una compresión de la prima por riesgo cambiario en el mercado\nfinanciero.",
+      "A partir de la curva de futuros en Matba-Rofex y el Interés Abierto consolidado (1,25 millones de contratos en la posición\ncorta), la tasa nominal anual implícita a 30 días se ubica en 35,2% TNA. La distribución de probabilidad neutral al riesgo\nderivada de las cotizaciones a término estima una probabilidad de salto cambiario discreto de 8,5% a 30 días y de 16,8% a 90\ndías.",
+      "Posición / Vencimiento",
+      "Precio Futuro",
+      "(ARS)\nTNA Implícita %\nProb. Salto",
+      "Discreto\nEstrategia de Cobertura para Tesorerías",
+      "Rofex",
+      "Ago-26 (30 días residuales)\n$1.510,00\n35,2% TNA\n8,5%\nCarry trade en ARS sin cobertura ante crawling\ncontrolado.",
+      "Sep-26 (60 días residuales)\n$1.545,00\n36,4% TNA\n12,4%\nHedge parcial (30%) para importadores de insumos\ncríticos.",
+      "Dic-26 (180 días residuales)\n$1.680,00\n38,5% TNA\n24,5%\nCobertura recomendada (60%) ante eventual salida\nde cepo.",
+      "Ago-27 (360 días residuales)\n$1.920,00\n41,2% TNA\n34,0%\nDolarización sintética mediante futuros + Lecaps\ncortas.",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 11 de 13"
+    ]
+  },
+  {
+    "page_num": 12,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "8. Sector Financiero, Renta Variable y Radar de Balances",
+      "El índice S&P; Merval cerró en 3.156.332 puntos (+1,30% semanal), impulsado por la solidez operativa del sector energético y\nbancario. En el segmento energético, YPF (3,8x EV/EBITDA y margen operativo del 32,4%), Pampa Energía (4,1x\nEV/EBITDA y Deuda Neta/EBITDA < 1,2x) y TGS (4,4x EV/EBITDA) lideraron las preferencias del mercado gracias a la\nexpansión de infraestructura de gasoductos y las inversiones al amparo del RIGI.",
+      "Por su parte, las entidades financieras (Grupo Galicia, Banco Macro, BBVA Argentina) registraron avances semanales de entre\n1,2% y 1,9%, favorecidas por el crecimiento del crédito corporativo y la estabilización de los márgenes de intermediación\nfinanciera en un entorno de tasas reales positivas.",
+      "Empresa / Ticker ByMA\nMúltiplo\nEV/EBITDA",
+      "Margen EBITDA",
+      "Deuda Neta /",
+      "EBITDA\nCatalizadores Estratégicos & RIGI",
+      "%",
+      "YPF S.A. (YPFD / NYSE)\n3,8x\n32,4%\n1,45x\nLiderazgo en Vaca Muerta, desinversión de campos\nmaduros y proyecto GNL.",
+      "Pampa Energía (PAMP)\n4,1x\n38,5%\n1,15x\nGeneración eléctrica eficiente y récord de\nproducción de shale gas.",
+      "Transportadora Gas del Sur\n(TGSU2)\n4,4x\n42,1%\n0,85x\nAmpliación de capacidad de transporte regulado y\nexportación de líquidos.",
+      "Grupo Financiero Galicia\n(GGAL)\n6,2x\n28,5%\n0,00x (Solvente)\nConsolidación bancaria tras compra de HSBC y\nreactivación del crédito comercial.",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 12 de 13"
+    ]
+  },
+  {
+    "page_num": 13,
+    "blocks": [
+      "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026\nFEDERICO AGUSTÍN CHILLÓN",
+      "9. Flash Normativo, Contexto Internacional y Referencias",
+      "En el plano regulatorio, el BCRA ratificó el esquema de encajes no remunerados y absorción vía títulos públicos. En el contexto\ninternacional, el rendimiento del bono del Tesoro de EE.UU. a 10 años osciló en 3,85%-3,95%, el índice DXY se ubicó en 102,4\npuntos y el crudo WTI operó en USD 74/bbl, otorgando estabilidad a los términos de intercambio de las exportaciones\nenergéticas argentinas.",
+      "Fecha / Evento Crítico\nOrganismo / Emisor\nImpacto Esperado de Mercado",
+      "28 de Agosto de 2026: Licitación de Letras y\nBonos\nSecretaría de Finanzas\nRollover de vencimientos en ARS y fijación de corte de TEM en Lecaps.",
+      "11 de Septiembre de 2026: Publicación IPC\nAgosto 2026\nINDEC / DEIE Mendoza\nConfirmación de convergencia mensual hacia el rango del 2% MoM.",
+      "18 de Septiembre de 2026: Reunión de\nPolítica Monetaria FOMC\nReserva Federal (FED)\nDefinición de tasas globales e impacto en el DXY y deuda emergente.",
+      "Referencias Bibliográficas (Normas APA 7ma edición):",
+      "Asociación de Fabricantes de Cemento Portland. (2026). Estadísticas mensuales de despacho de cemento portland. AFCP.",
+      "Ámbito Financiero. (2026, 21 de agosto). Mercado financiero: bonos soberanos recortan pérdidas y descomprimen el riesgo país.",
+      "https://www.ambito.com",
+      "Banco Central de la República Argentina. (2026). Boletín Monetario Mensual y Relevamiento de Expectativas de Mercado (REM). BCRA.",
+      "Clarín. (2026, 23 de agosto). Dólar CCL hoy y cotizaciones financieras. https://www.clarin.com",
+      "Consultora 1816. (2026). Estrategia macroeconómica y mercado de deuda soberana [Informe de Research].",
+      "Dal Poggetto, M. (2026). Evaluación del programa monetario y esquema de reservas [Nota Técnica]. Eco Go Consultores.",
+      "Dirección de Estadísticas e Investigaciones Económicas de Mendoza. (2026). Índice de Precios al Consumidor y Valorización de la Canasta",
+      "Básica. DEIE Mendoza.",
+      "Fundación de Investigaciones Económicas Latinoamericanas. (2026). Indicadores de actividad y coyuntura económica. FIEL.",
+      "Instituto Nacional de Estadística y Censos. (2026). Índice de Precios al Consumidor y Estimador Mensual de Actividad Económica. INDEC.",
+      "Instituto Nacional de Vitivinicultura. (2026). Estadísticas de comercialización y despacho vitivinícola. INV.",
+      "La Nación. (2026, 21 de agosto). Riesgo país: variables determinantes y compresión hacia 500 pb. https://www.lanacion.com.ar",
+      "Nelson, C. R., & Siegel, A. F. (1987). Parsimonious modeling of yield curves. Journal of Business, 60(4), 473-489.",
+      "Romano Group. (2026). Análisis de renta fija y dinámica cambiaria [Informe Financiero].",
+      "Taylor, J. B. (1993). Discretion versus policy rules in practice. Carnegie-Rochester Conference Series on Public Policy, 39, 195-214.",
+      "TN. (2026, 21 de agosto). Dólar oficial hoy y cotizaciones financieras. https://tn.com.ar",
+      "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO\nPágina 13 de 13"
+    ]
+  }
+]
