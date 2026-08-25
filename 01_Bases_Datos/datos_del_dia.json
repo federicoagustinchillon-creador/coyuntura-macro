@@ -1,0 +1,74 @@
+{
+  "fecha": "2026-08-21",
+  "dolar": {
+    "oficial_bna": 1515.0,
+    "mayorista": 1485.0,
+    "mep": 1532.33,
+    "ccl": 1596.59,
+    "blue": 1615.0,
+    "brecha_ccl_oficial_pct": 5.39
+  },
+  "tasas_ars": {
+    "lecap_corta_tem": 2.95,
+    "lecap_larga_tem": 3.4,
+    "boncer_tzx27_tir_real": 1.1,
+    "breakeven_inflacion_tem": 2.86,
+    "inflacion_esperada_rem_tem": 2.0,
+    "premio_tasa_fija_pbs": 95
+  },
+  "inflacion": {
+    "indec_general_mom": 2.2,
+    "indec_regulados_mom": 3.0,
+    "indec_servicios_mom": 2.9,
+    "indec_nucleo_mom": 1.9,
+    "deie_mendoza_mom": 2.3,
+    "canasta_basica_total_mza": 963000,
+    "canasta_basica_alimentaria_mza": 433000
+  },
+  "actividad": {
+    "emae_interanual_pct": 3.1,
+    "emae_desestacionalizado_mom_pct": 0.6,
+    "isarc_mendoza_ia_pct": 3.4,
+    "isarc_san_juan_ia_pct": 2.1,
+    "isarc_san_luis_ia_pct": 5.8
+  },
+  "soberano_usd": {
+    "al30_tir": 11.2,
+    "gd30_tir": 9.8,
+    "gd35_tir": 9.65,
+    "gd38_tir": 9.7,
+    "embi_riesgo_pais_pbs": 506,
+    "nelson_siegel": {
+      "beta0": 9.4,
+      "beta1": 5.6,
+      "beta2": -3.2,
+      "tau": 2.4,
+      "r2": 0.984
+    }
+  },
+  "equity": {
+    "merval_ars": 3156332,
+    "merval_usd_ccl": 1976.92,
+    "var_semanal_pct": 1.3,
+    "lideres": [
+      {
+        "ticker": "YPFD",
+        "ev_ebitda": 3.8,
+        "margen_ebitda": 32.4,
+        "recom": "OVERWEIGHT"
+      },
+      {
+        "ticker": "PAMP",
+        "ev_ebitda": 4.1,
+        "margen_ebitda": 38.5,
+        "recom": "OVERWEIGHT"
+      },
+      {
+        "ticker": "GGAL",
+        "ev_ebitda": 6.2,
+        "margen_ebitda": 28.5,
+        "recom": "OVERWEIGHT"
+      }
+    ]
+  }
+}

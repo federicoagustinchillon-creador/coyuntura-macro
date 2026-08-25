@@ -1,0 +1,255 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EsquemaDatosCoyunturaMacro",
+  "type": "object",
+  "required": [
+    "fecha",
+    "dolar",
+    "tasas_ars",
+    "inflacion",
+    "actividad",
+    "soberano_usd",
+    "equity"
+  ],
+  "properties": {
+    "fecha": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "dolar": {
+      "type": "object",
+      "required": [
+        "oficial_bna",
+        "mayorista",
+        "mep",
+        "ccl",
+        "blue",
+        "brecha_ccl_oficial_pct"
+      ],
+      "properties": {
+        "oficial_bna": {
+          "type": "number",
+          "minimum": 100
+        },
+        "mayorista": {
+          "type": "number",
+          "minimum": 100
+        },
+        "mep": {
+          "type": "number",
+          "minimum": 100
+        },
+        "ccl": {
+          "type": "number",
+          "minimum": 100
+        },
+        "blue": {
+          "type": "number",
+          "minimum": 100
+        },
+        "brecha_ccl_oficial_pct": {
+          "type": "number",
+          "minimum": -20,
+          "maximum": 200
+        }
+      }
+    },
+    "tasas_ars": {
+      "type": "object",
+      "required": [
+        "lecap_corta_tem",
+        "lecap_larga_tem",
+        "boncer_tzx27_tir_real",
+        "breakeven_inflacion_tem",
+        "inflacion_esperada_rem_tem",
+        "premio_tasa_fija_pbs"
+      ],
+      "properties": {
+        "lecap_corta_tem": {
+          "type": "number"
+        },
+        "lecap_larga_tem": {
+          "type": "number"
+        },
+        "boncer_tzx27_tir_real": {
+          "type": "number"
+        },
+        "breakeven_inflacion_tem": {
+          "type": "number"
+        },
+        "inflacion_esperada_rem_tem": {
+          "type": "number"
+        },
+        "premio_tasa_fija_pbs": {
+          "type": "number"
+        }
+      }
+    },
+    "inflacion": {
+      "type": "object",
+      "required": [
+        "indec_general_mom",
+        "indec_regulados_mom",
+        "indec_servicios_mom",
+        "indec_nucleo_mom",
+        "deie_mendoza_mom"
+      ],
+      "properties": {
+        "indec_general_mom": {
+          "type": "number"
+        },
+        "indec_regulados_mom": {
+          "type": "number"
+        },
+        "indec_servicios_mom": {
+          "type": "number"
+        },
+        "indec_nucleo_mom": {
+          "type": "number"
+        },
+        "deie_mendoza_mom": {
+          "type": "number"
+        },
+        "canasta_basica_total_mza": {
+          "type": "number"
+        },
+        "canasta_basica_alimentaria_mza": {
+          "type": "number"
+        }
+      }
+    },
+    "actividad": {
+      "type": "object",
+      "required": [
+        "emae_interanual_pct",
+        "emae_desestacionalizado_mom_pct",
+        "isarc_mendoza_ia_pct",
+        "isarc_san_juan_ia_pct",
+        "isarc_san_luis_ia_pct"
+      ],
+      "properties": {
+        "emae_interanual_pct": {
+          "type": "number"
+        },
+        "emae_desestacionalizado_mom_pct": {
+          "type": "number"
+        },
+        "isarc_mendoza_ia_pct": {
+          "type": "number"
+        },
+        "isarc_san_juan_ia_pct": {
+          "type": "number"
+        },
+        "isarc_san_luis_ia_pct": {
+          "type": "number"
+        }
+      }
+    },
+    "soberano_usd": {
+      "type": "object",
+      "required": [
+        "al30_tir",
+        "gd30_tir",
+        "gd35_tir",
+        "gd38_tir",
+        "embi_riesgo_pais_pbs",
+        "nelson_siegel"
+      ],
+      "properties": {
+        "al30_tir": {
+          "type": "number"
+        },
+        "gd30_tir": {
+          "type": "number"
+        },
+        "gd35_tir": {
+          "type": "number"
+        },
+        "gd38_tir": {
+          "type": "number"
+        },
+        "embi_riesgo_pais_pbs": {
+          "type": "number"
+        },
+        "nelson_siegel": {
+          "type": "object",
+          "required": [
+            "beta0",
+            "beta1",
+            "beta2",
+            "tau",
+            "r2"
+          ],
+          "properties": {
+            "beta0": {
+              "type": "number"
+            },
+            "beta1": {
+              "type": "number"
+            },
+            "beta2": {
+              "type": "number"
+            },
+            "tau": {
+              "type": "number"
+            },
+            "r2": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "equity": {
+      "type": "object",
+      "required": [
+        "merval_ars",
+        "merval_usd_ccl",
+        "var_semanal_pct",
+        "lideres"
+      ],
+      "properties": {
+        "merval_ars": {
+          "type": "number"
+        },
+        "merval_usd_ccl": {
+          "type": "number"
+        },
+        "var_semanal_pct": {
+          "type": "number"
+        },
+        "lideres": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "ticker",
+              "ev_ebitda",
+              "margen_ebitda",
+              "recom"
+            ],
+            "properties": {
+              "ticker": {
+                "type": "string"
+              },
+              "ev_ebitda": {
+                "type": "number"
+              },
+              "margen_ebitda": {
+                "type": "number"
+              },
+              "recom": {
+                "type": "string",
+                "enum": [
+                  "OVERWEIGHT",
+                  "NEUTRAL",
+                  "UNDERWEIGHT"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
