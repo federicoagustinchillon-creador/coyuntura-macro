@@ -1,17 +1,25 @@
 """
-CONECTOR DE FEEDS EN VIVO: SECONDBRAIN -> DATOS_DEL_DIA.JSON
+CONECTOR DE VISTAS CUALITATIVAS: SECONDBRAIN -> DATOS_DEL_DIA.JSON
 =============================================================================
 Autor: Federico Agustin Chillon
 Facultad de Ciencias Economicas -- UNCUYO / OERU
 
-Sincroniza los campos de datos_del_dia.json que tienen equivalencia real y
-directa en el registro vivo de SecondBrain (macro_indicators + vistas
-tacticas Black-Litterman), sin fabricar conversiones para los campos que
-SecondBrain no cubre. Ver implementation_plan.md para el mapeo completo y
-su justificacion.
+AVISO (2026-08-25): este modulo sincronizaba antes tambien el cambiario
+(oficial/CCL/brecha) desde SecondBrain. Se dio de baja esa parte porque al
+contrastar contra la fuente oficial (BCRA) se encontro una discrepancia de
+~45% (SecondBrain informaba oficial 1055.0 el mismo dia que el BCRA publicaba
+1531.07) y una tasa de politica monetaria que el BCRA ya no publica desde
+2025-07. Ver el docstring de src/fetch_datos_reales.py para el detalle
+completo. Desde ese hallazgo, el cambiario y las tasas de referencia se
+sincronizan exclusivamente desde src/fetch_datos_reales.py (BCRA + yfinance,
+fuentes oficiales verificables), y SecondBrain queda restringido a lo que
+es -- juicio de inversion cualitativo (vistas tacticas Black-Litterman con
+tesis), no una serie de mercado.
 
-Disenado para ejecutarse tanto como paso del pipeline (integracion en
-pipeline_coyuntura_master.py) como de forma standalone:
+El orquestador real usado por el pipeline y el dashboard es
+src/sync_datos_del_dia.py (sincronizar_todo), que llama a ambas fuentes con
+el alcance correcto. Este archivo se conserva por sus helpers compartidos
+(cargar_json/guardar_json/validar_contra_schema) y para uso standalone:
     python src/sync_secondbrain_macro.py
 """
 
@@ -28,14 +36,6 @@ DEFAULT_REGISTRY_PATH = os.path.join(
     "live_macro_views_registry.json"
 )
 REGISTRY_PATH = os.environ.get("SECONDBRAIN_REGISTRY_PATH", DEFAULT_REGISTRY_PATH)
-
-# Mapeo campo a campo con equivalencia directa y verificada (ver plan).
-# clave SecondBrain (dentro de macro_indicators) -> ruta en datos_del_dia.json
-MAPEO_DOLAR = {
-    "tipo_de_cambio_oficial": ("dolar", "oficial_bna"),
-    "ccl_mercado": ("dolar", "ccl"),
-    "brecha_cambiaria_pct": ("dolar", "brecha_ccl_oficial_pct"),
-}
 
 
 def cargar_json(ruta):
@@ -61,7 +61,9 @@ def validar_contra_schema(data, schema):
 
 
 def sincronizar_desde_secondbrain(verbose=True):
-    """Punto de entrada. Devuelve (ok: bool, resumen: dict)."""
+    """Sincroniza SOLO black_litterman_tactical_views (juicio cualitativo).
+    Ya no toca cambiario ni fecha -- ver aviso en el docstring del modulo.
+    Devuelve (ok: bool, resumen: dict)."""
     registry = cargar_json(REGISTRY_PATH)
     if registry is None:
         if verbose:
@@ -75,26 +77,7 @@ def sincronizar_desde_secondbrain(verbose=True):
             print(f"      [SecondBrain] ERROR: no existe {DATA_PATH}, nada para sincronizar.")
         return False, {"actualizados": [], "motivo": "datos_del_dia_ausente"}
 
-    macro = registry.get("macro_indicators", {})
     actualizados = []
-    for clave_sb, (seccion, clave_destino) in MAPEO_DOLAR.items():
-        if clave_sb in macro:
-            valor_previo = datos.get(seccion, {}).get(clave_destino)
-            valor_nuevo = macro[clave_sb]
-            datos.setdefault(seccion, {})[clave_destino] = valor_nuevo
-            actualizados.append((f"{seccion}.{clave_destino}", valor_previo, valor_nuevo))
-
-    # Fecha del sync: se toma la parte de fecha del timestamp del registro.
-    timestamp = registry.get("timestamp")
-    if timestamp:
-        fecha_sync = timestamp.split(" ")[0]
-        fecha_previa = datos.get("fecha")
-        if fecha_sync != fecha_previa:
-            datos["fecha"] = fecha_sync
-            actualizados.append(("fecha", fecha_previa, fecha_sync))
-
-    # Vistas tacticas Black-Litterman: bloque adicional, no pisa nada del
-    # schema existente (additionalProperties no esta restringido).
     vistas = registry.get("black_litterman_tactical_views")
     if vistas:
         datos["black_litterman_tactical_views"] = vistas
@@ -113,20 +96,10 @@ def sincronizar_desde_secondbrain(verbose=True):
 
     if verbose:
         if actualizados:
-            print(f"      [SecondBrain] Sincronizado desde {REGISTRY_PATH}")
-            for campo, previo, nuevo in actualizados:
-                print(f"        - {campo}: {previo} -> {nuevo}")
+            print(f"      [SecondBrain] Vistas tacticas sincronizadas desde {REGISTRY_PATH}")
         else:
-            print("      [SecondBrain] Registro leido, sin cambios respecto al ultimo sync.")
-
-        campos_manuales = [
-            "dolar.mayorista", "dolar.mep", "dolar.blue",
-            "tasas_ars.*", "inflacion.*", "actividad.*",
-            "soberano_usd.* (TIRes, Nelson-Siegel)",
-            "equity.* (Merval, lideres EV/EBITDA)",
-        ]
-        print("      [SecondBrain] Siguen siendo carga manual (SecondBrain no los cubre):")
-        print("        " + ", ".join(campos_manuales))
+            print("      [SecondBrain] Registro leido, sin vistas nuevas.")
+        print("      [SecondBrain] Cambiario y tasas NO se toman de aqui -- ver src/fetch_datos_reales.py")
 
     return True, {"actualizados": actualizados}
 

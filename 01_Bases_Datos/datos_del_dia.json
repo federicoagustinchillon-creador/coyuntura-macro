@@ -1,12 +1,12 @@
 {
   "fecha": "2026-08-25",
   "dolar": {
-    "oficial_bna": 1055.0,
-    "mayorista": 1485.0,
+    "oficial_bna": 1531.07,
+    "mayorista": 1511.5326,
     "mep": 1532.33,
-    "ccl": 1220.0,
+    "ccl": 1596.59,
     "blue": 1615.0,
-    "brecha_ccl_oficial_pct": 15.64
+    "brecha_ccl_oficial_pct": 4.28
   },
   "tasas_ars": {
     "lecap_corta_tem": 2.95,
@@ -47,7 +47,7 @@
     }
   },
   "equity": {
-    "merval_ars": 3156332,
+    "merval_ars": 3009028.75,
     "merval_usd_ccl": 1976.92,
     "var_semanal_pct": 1.3,
     "lideres": [
@@ -94,5 +94,19 @@
       "confidence_omega": 0.00075,
       "thesis": "Crecimiento de crédito privado real desplazando exposición a títulos públicos."
     }
-  ]
+  ],
+  "tasas_bcra_referencia": {
+    "badlar_privados_tna": {
+      "fecha": "2026-08-24",
+      "valor": 23.625
+    },
+    "pases_1d_tna": {
+      "fecha": "2026-08-24",
+      "valor": 23.12
+    },
+    "reservas_brutas_usd_m": {
+      "fecha": "2026-08-21",
+      "valor": 50660.0
+    }
+  }
 }
