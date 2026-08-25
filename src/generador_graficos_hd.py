@@ -92,8 +92,8 @@ def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis,
     plt.figtext(0.082, 0.913, date_str, fontname="Georgia", fontsize=7.8, fontweight='bold', color="#0369A1", transform=fig.transFigure, va='center')
     
     # Título y subtítulo en Georgia Serif
-    plt.figtext(0.055, 0.845, title_str, fontname="Georgia", fontsize=12.2, fontweight='bold', color="#0F172A", transform=fig.transFigure)
-    plt.figtext(0.055, 0.814, subtitle_str, fontname="Georgia", fontsize=7.6, color="#475569", transform=fig.transFigure)
+    plt.figtext(0.055, 0.845, title_str, fontname="Georgia", fontsize=13.2, fontweight='bold', color="#0F172A", transform=fig.transFigure)
+    plt.figtext(0.055, 0.814, subtitle_str, fontname="Georgia", fontsize=8.4, color="#475569", transform=fig.transFigure)
     
     # KPI Cards dinámicas sin solapamiento de líneas (Geometry & Hierarchy Impeccable)
     n_kpis = len(kpis)
@@ -106,9 +106,9 @@ def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis,
     y_card_bottom = 0.654
     y_card_top = y_card_bottom + card_h  # 0.780
     
-    val_fontsize = 12.5 if n_kpis <= 3 else 11.0
-    title_fontsize = 7.4 if n_kpis <= 3 else 6.6
-    sub_fontsize = 6.6 if n_kpis <= 3 else 5.8
+    val_fontsize = 14.0 if n_kpis <= 3 else 12.2
+    title_fontsize = 8.2 if n_kpis <= 3 else 7.2
+    sub_fontsize = 7.2 if n_kpis <= 3 else 6.4
     
     for idx, (k_title, k_val, k_sub, k_color) in enumerate(kpis):
         x_pos = x_start + idx * (card_w + gap)
@@ -147,10 +147,10 @@ def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis,
     # Forzar que los ticks de ejes usen sans-serif técnico para máxima legibilidad
     for label in ax_plot.get_xticklabels() + ax_plot.get_yticklabels():
         label.set_fontfamily('sans-serif')
-        label.set_fontsize(7.0)
+        label.set_fontsize(7.8)
     
     # Footer institucional en Georgia Serif con margen inferior seguro
-    plt.figtext(0.055, 0.038, source_str, fontname="Georgia", fontsize=6.8, color="#64748B", transform=fig.transFigure)
+    plt.figtext(0.055, 0.038, source_str, fontname="Georgia", fontsize=7.4, color="#64748B", transform=fig.transFigure)
     plt.figtext(0.935, 0.038, brand_str, fontname="Georgia", fontsize=8.5, fontweight='bold', color="#0284C7", ha='right', transform=fig.transFigure)
     plt.figtext(0.940, 0.044, "•", fontsize=9, color="#EF4444", transform=fig.transFigure)
     

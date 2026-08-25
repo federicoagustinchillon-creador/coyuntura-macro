@@ -142,45 +142,45 @@ styles = getSampleStyleSheet()
 
 h1_style = ParagraphStyle(
     'H1_M', parent=styles['Normal'],
-    fontName='Georgia-Bold', fontSize=11.5, leading=14.5,
+    fontName='Georgia-Bold', fontSize=13.0, leading=16.0,
     textColor=PRIMARY, spaceBefore=0, spaceAfter=3,
     keepWithNext=True
 )
 
 h2_style = ParagraphStyle(
     'H2_M', parent=styles['Normal'],
-    fontName='Georgia-Bold', fontSize=8.8, leading=11.5,
+    fontName='Georgia-Bold', fontSize=9.5, leading=12.5,
     textColor=PRIMARY, spaceBefore=3, spaceAfter=2,
     keepWithNext=True
 )
 
 body_style = ParagraphStyle(
     'Body_M', parent=styles['Normal'],
-    fontName='Georgia', fontSize=8.0, leading=11.0,
-    alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=2
+    fontName='Georgia', fontSize=9.0, leading=12.2,
+    alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=2.5
 )
 
 cell_style_left = ParagraphStyle(
     'CellL_M', parent=styles['Normal'],
-    fontName='Georgia', fontSize=6.8, leading=9.0,
+    fontName='Georgia', fontSize=7.5, leading=9.8,
     alignment=TA_LEFT, textColor=DARK_TEXT
 )
 
 cell_style_center = ParagraphStyle(
     'CellC_M', parent=styles['Normal'],
-    fontName='Georgia', fontSize=6.8, leading=9.0,
+    fontName='Georgia', fontSize=7.5, leading=9.8,
     alignment=TA_CENTER, textColor=DARK_TEXT
 )
 
 cell_header_style = ParagraphStyle(
     'CellH_M', parent=styles['Normal'],
-    fontName='Georgia-Bold', fontSize=7.0, leading=9.2,
+    fontName='Georgia-Bold', fontSize=7.8, leading=10.2,
     alignment=TA_CENTER, textColor=colors.white
 )
 
 fig_caption = ParagraphStyle(
     'FigCaption_M', parent=styles['Normal'],
-    fontName='Georgia-Italic', fontSize=7.2, leading=9.5,
+    fontName='Georgia-Italic', fontSize=7.8, leading=10.0,
     alignment=TA_JUSTIFY, textColor=MUTED, spaceBefore=1, spaceAfter=2
 )
 
@@ -1202,7 +1202,7 @@ def generar_informe_mensual_reportlab():
 
     ref_style = ParagraphStyle(
         'RefAPA_M', parent=styles['Normal'],
-        fontName='Georgia', fontSize=6.6, leading=8.8,
+        fontName='Georgia', fontSize=7.4, leading=9.8,
         alignment=TA_JUSTIFY, leftIndent=14, firstLineIndent=-14,
         textColor=DARK_TEXT, spaceAfter=1.2
     )
