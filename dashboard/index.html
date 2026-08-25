@@ -18,7 +18,7 @@
 </script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js" crossorigin="anonymous"></script>
 
 <style>
   body { background:#08090C; }
@@ -345,12 +345,25 @@ function terminal() {
     _endLabel(color, formatter) {
       return { show: true, formatter, color, fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: 600 };
     },
+    // ECharts a veces tira un error interno transitorio durante el primer
+    // render (visto en consola, no reproducido de forma determinista) sin
+    // que el grafico deje de dibujarse -- lo blindamos para que un fallo
+    // puntual de un chart no deje el resto sin actualizar.
+    _setOptionSeguro(chart, option) {
+      if (!chart) return;
+      try {
+        chart.setOption(option);
+      } catch (e) {
+        console.warn('setOption fallo, reintentando en el siguiente tick:', e);
+        setTimeout(() => { try { chart.setOption(option); } catch (e2) { console.error('setOption fallo de nuevo:', e2); } }, 50);
+      }
+    },
 
     renderFx() {
       const chart = this._chart('chartFx');
       const oficial = this.historico.oficial_minorista || [], mayorista = this.historico.mayorista_a3500 || [];
       if (!chart || !oficial.length) return;
-      chart.setOption({
+      this._setOptionSeguro(chart, {
         tooltip: this._tooltipConFecha(oficial, (v) => '$' + v.toLocaleString('es-AR', {maximumFractionDigits: 2}), 'Tipo de cambio publicado por BCRA (promedio vendedor / A3500).'),
         legend: { data: ['Oficial', 'Mayorista'], textStyle: { color: '#a1a1aa', fontSize: 10 }, top: 0 },
         grid: { top: 28, right: 70, bottom: 24, left: 55 },
@@ -369,7 +382,7 @@ function terminal() {
       const chart = this._chart('chartTasas');
       const badlar = this.historico.badlar_privados || [], pases = this.historico.pases_1d || [];
       if (!chart || !badlar.length) return;
-      chart.setOption({
+      this._setOptionSeguro(chart, {
         tooltip: this._tooltipConFecha(badlar, (v) => v.toFixed(2) + '%', 'BADLAR: tasa privados a 30/35 días. Pases: tasa BCRA a 1 día (referencia corta).'),
         legend: { data: ['BADLAR', 'Pases 1d'], textStyle: { color: '#a1a1aa', fontSize: 10 }, top: 0 },
         grid: { top: 28, right: 60, bottom: 24, left: 45 },
@@ -388,7 +401,7 @@ function terminal() {
       const chart = this._chart('chartMerval');
       const serie = this.historico.merval || [];
       if (!chart || !serie.length) return;
-      chart.setOption({
+      this._setOptionSeguro(chart, {
         tooltip: this._tooltipConFecha(serie, (v) => v.toLocaleString('es-AR', {maximumFractionDigits: 0}) + ' pts', 'Índice líder de acciones argentinas (BYMA), cierre diario en ARS.'),
         grid: { top: 12, right: 70, bottom: 24, left: 65 },
         xAxis: this._ejeFechas(serie),
@@ -442,7 +455,7 @@ function terminal() {
         return Number((ns.beta0 + ns.beta1 * decay + ns.beta2 * (decay - Math.exp(-x))).toFixed(2));
       });
 
-      chart.setOption({
+      this._setOptionSeguro(chart, {
         tooltip: {
           trigger: 'axis',
           backgroundColor: 'rgba(18,18,21,0.95)',
