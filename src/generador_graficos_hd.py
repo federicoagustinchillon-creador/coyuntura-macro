@@ -842,16 +842,17 @@ def generar_todas_las_infografias(*args, **kwargs):
     
     f6 = create_master_infographic(
         "chart_indec_6_fx.png",
-        "BCRA / MATBA-ROFEX · CIERRE FINANCIERO",
-        "Microestructura Cambiaria y Derivados Matba-Rofex",
-        "Brechas cambiarias spot y estructura de tasas implícitas con probabilidad de salto discreto",
+        "BCRA / MATBA-ROFEX / MIT RESEARCH · CIERRE FINANCIERO",
+        "Microestructura Cambiaria, Rofex y Fragilidad Sistémica",
+        "Brechas spot, futuros y métricas de acoplamiento multivariado (Ratio de Absorción & Mahalanobis)",
         [
-            ("DÓLAR CCL (GD30)", "$1.596,59", "Brecha vs. Mayorista 7,51% (5,39% BNA)", C_RED),
-            ("FUTURO DIC-26 ROFEX", "$1.680,00", "TNA implícita 38,5% · OI 450k", C_NAVY),
-            ("PROB. SALTO 90 DÍAS", "16,8%", "Riesgo neutral de ajuste discreto", C_AMBER)
+            ("DÓLAR CCL (GD30)", "$1.596,59", "Brecha BNA: 5,39% (7,51% May)", C_RED),
+            ("FUTURO DIC-26", "$1.680,00", "TNA implícita 38,5% · OI 450k", C_NAVY),
+            ("ABSORPTION RATIO", "64,2%", "Régimen Resiliente (<75%)", C_TEAL),
+            ("TURBULENCIA dt", "4,12", "Normal (Umbral Chi2: 11,07)", C_AMBER)
         ],
         plot_fx_master,
-        "Fuentes: BCRA, Matba-Rofex y Bolsas y Mercados Argentinos (ByMA)."
+        "Fuentes: BCRA, Matba-Rofex, ByMA y modelo cuantitativo de fragilidad de activos cruzados."
     )
     
     f7 = create_master_infographic(

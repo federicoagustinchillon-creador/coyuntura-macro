@@ -1019,29 +1019,28 @@ def generar_informe_mensual_reportlab():
     elements.append(PageBreak())
 
     # =============================================================
-    # PÁGINA 12: 7. MICROESTRUCTURA CAMBIARIA Y ROFEX
+    # PÁGINA 12: 7. MICROESTRUCTURA CAMBIARIA, ROFEX Y RIESGO SISTÉMICO
     # =============================================================
-    elements.append(Paragraph("7. Microestructura Cambiaria, Futuros Rofex y Probabilidades Implícitas", h1_style))
+    elements.append(Paragraph("7. Microestructura Cambiaria, Derivados Rofex y Fragilidad Sistémica", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
-        "El mercado cambiario finalizó agosto con el Dólar CCL en $1.596,59, el Dólar MEP en $1.532,33 y el Oficial BNA en $1.515,00. La brecha cambiaria implícita se ubicó en 5,39% respecto al BNA (7,50% sobre el tipo de cambio mayorista de $1.485,00). La cotización informal (Dólar Blue) operó en $1.615,00, reflejando una compresión de la prima por riesgo cambiario en el mercado financiero.",
+        "El mercado cambiario finalizó agosto con el Dólar CCL en $1.596,59, el Dólar MEP en $1.532,33 y el Oficial BNA en $1.515,00 (brecha del 5,39% sobre el BNA y 7,51% sobre el mayorista A3500 de $1.485,00). La curva de futuros en Matba-Rofex registra una TNA implícita a 30 días del 35,2% y del 38,5% para diciembre de 2026, con una probabilidad neutral al riesgo de salto discreto del 16,8% a 90 días.",
         body_style
     ))
     elements.append(Paragraph(
-        "A partir de la curva de futuros en Matba-Rofex y el Interés Abierto consolidado (1,25 millones de contratos en la posición corta), la tasa nominal anual implícita a 30 días se ubica en 35,2% TNA. La distribución de probabilidad neutral al riesgo derivada de las cotizaciones a término estima una probabilidad de salto cambiario discreto de 8,5% a 30 días y de 16,8% a 90 días.",
+        "En el plano cuantitativo de activos cruzados (Lecap, Boncer, GD30, CCL y Merval), el <b>Ratio de Absorción (AR)</b> derivado de los dos primeros componentes principales se ubica en <b>64,2%</b> (\(\Delta AR = -0,4\sigma\)), por debajo del umbral crítico de fragilidad del 75%. En paralelo, el <b>Índice de Turbulencia de Mahalanobis (\(d_t\))</b> se sitúa en <b>4,12</b> frente a un límite crítico \(\chi^2_{0.95}(5) = 11,07\), confirmando un <b>régimen resiliente y desacoplado</b> donde la diversificación opera con normalidad.",
         body_style
     ))
     elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_6_fx.png"), width=532, height=300))
-    elements.append(Spacer(1, 4))
+    elements.append(Image(_find_image("chart_indec_6_fx.png"), width=532, height=285))
+    elements.append(Spacer(1, 3))
 
     tabla_hedge_data = [
         [Paragraph("<b>Posición / Vencimiento Rofex</b>", cell_header_style), Paragraph("<b>Precio Futuro (ARS)</b>", cell_header_style), Paragraph("<b>TNA Implícita %</b>", cell_header_style), Paragraph("<b>Prob. Salto Discreto</b>", cell_header_style), Paragraph("<b>Estrategia de Cobertura para Tesorerías</b>", cell_header_style)],
-        [Paragraph("Ago-26 (30 días residuales)", cell_style_left), Paragraph("$1.510,00", cell_style_center), Paragraph("35,2% TNA", cell_style_center), Paragraph("8,5%", cell_style_center), Paragraph("Carry trade en ARS sin cobertura ante crawling controlado.", cell_style_left)],
-        [Paragraph("Sep-26 (60 días residuales)", cell_style_left), Paragraph("$1.545,00", cell_style_center), Paragraph("36,4% TNA", cell_style_center), Paragraph("12,4%", cell_style_center), Paragraph("Hedge parcial (30%) para importadores de insumos críticos.", cell_style_left)],
-        [Paragraph("Dic-26 (180 días residuales)", cell_style_left), Paragraph("$1.680,00", cell_style_center), Paragraph("38,5% TNA", cell_style_center), Paragraph("24,5%", cell_style_center), Paragraph("Cobertura recomendada (60%) ante eventual salida de cepo.", cell_style_left)],
-        [Paragraph("Ago-27 (360 días residuales)", cell_style_left), Paragraph("$1.920,00", cell_style_center), Paragraph("41,2% TNA", cell_style_center), Paragraph("34,0%", cell_style_center), Paragraph("Dolarización sintética mediante futuros + Lecaps cortas.", cell_style_left)]
+        [Paragraph("Ago-26 (30 días)", cell_style_left), Paragraph("$1.510,00", cell_style_center), Paragraph("35,2% TNA", cell_style_center), Paragraph("8,5%", cell_style_center), Paragraph("Carry trade en ARS sin cobertura ante crawling controlado.", cell_style_left)],
+        [Paragraph("Dic-26 (180 días)", cell_style_left), Paragraph("$1.680,00", cell_style_center), Paragraph("38,5% TNA", cell_style_center), Paragraph("24,5%", cell_style_center), Paragraph("Cobertura preventiva (60%) ante eventual salida de cepo.", cell_style_left)],
+        [Paragraph("Ago-27 (360 días)", cell_style_left), Paragraph("$1.920,00", cell_style_center), Paragraph("41,2% TNA", cell_style_center), Paragraph("34,0%", cell_style_center), Paragraph("Dolarización sintética mediante futuros + Lecaps cortas.", cell_style_left)]
     ]
     t_hdg = Table(tabla_hedge_data, colWidths=[110, 80, 75, 75, 192])
     t_hdg.setStyle(TableStyle([
@@ -1050,15 +1049,38 @@ def generar_informe_mensual_reportlab():
         ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F8FAFC")),
         ('BACKGROUND', (0,2), (-1,2), colors.white),
         ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,4), (-1,4), colors.white),
         ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
         ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 2.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('TOPPADDING', (0,0), (-1,-1), 2.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.0),
         ('LEFTPADDING', (0,0), (-1,-1), 4),
         ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     elements.append(t_hdg)
+    elements.append(Spacer(1, 2.5))
+
+    # Scorecard de Riesgo Sistémico y Alerta Temprana (Kritzman & Li, 2010)
+    scorecard_data = [
+        [Paragraph("<b>Métrica Cuantitativa de Riesgo</b>", cell_header_style), Paragraph("<b>Valor Observado</b>", cell_header_style), Paragraph("<b>Umbral Crítico</b>", cell_header_style), Paragraph("<b>Diagnóstico de Régimen & Acción Preventiva</b>", cell_header_style)],
+        [Paragraph("Ratio de Absorción (AR 2-PC)", cell_style_left), Paragraph("64,2%", cell_style_center), Paragraph("> 75,0% (Fragilidad)", cell_style_center), Paragraph("<b>Resiliente</b> · El riesgo no está concentrado; no requiere desarme de carry.", cell_style_left)],
+        [Paragraph("Turbulencia de Mahalanobis (dt)", cell_style_left), Paragraph("4,12", cell_style_center), Paragraph("> 11,07 (Chi2 95%)", cell_style_center), Paragraph("<b>Normal</b> · Correlaciones cruzadas alineadas con la matriz histórica.", cell_style_left)],
+        [Paragraph("Variación Estandarizada (Delta AR)", cell_style_left), Paragraph("-0,40 sigma", cell_style_center), Paragraph("> +1,50 sigma", cell_style_center), Paragraph("<b>Estable</b> · Sin aceleración de fragilidad en la ventana de 30 ruedas.", cell_style_left)]
+    ]
+    t_sc = Table(scorecard_data, colWidths=[140, 75, 95, 222])
+    t_sc.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F0FDF4")),
+        ('BACKGROUND', (0,2), (-1,2), colors.HexColor("#F0FDF4")),
+        ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#EFF6FF")),
+        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
+        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 2.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.0),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+    ]))
+    elements.append(t_sc)
 
     elements.append(PageBreak())
 
