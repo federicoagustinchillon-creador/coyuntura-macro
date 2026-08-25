@@ -25,6 +25,7 @@ Ejecucion local:
 import os
 import sys
 import json
+import time
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
@@ -36,6 +37,10 @@ if BASE_DIR not in sys.path:
 
 from src.sync_datos_del_dia import sincronizar_todo, DATA_PATH  # noqa: E402
 from src.sync_secondbrain_macro import cargar_json as _cargar_json_generico, REGISTRY_PATH  # noqa: E402
+from src.fetch_datos_reales import obtener_historicos_dashboard  # noqa: E402
+
+_HISTORICO_CACHE = {"ts": 0, "data": None}
+_HISTORICO_TTL_SEG = 600  # el historial de 90 dias no cambia intra-dia; evita pegarle a BCRA/yfinance en cada poll de 60s
 
 DASHBOARD_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -69,6 +74,19 @@ def get_live():
             },
         },
     }
+
+
+@app.get("/api/historico")
+def get_historico():
+    """Series reales de los ultimos 90 dias (BCRA + yfinance) para los
+    graficos del dashboard. Cacheado 10 min en memoria: son datos que
+    publican una vez por dia, no tiene sentido re-descargar toda la serie
+    en cada poll de 60s del frontend."""
+    ahora = time.time()
+    if _HISTORICO_CACHE["data"] is None or (ahora - _HISTORICO_CACHE["ts"]) > _HISTORICO_TTL_SEG:
+        _HISTORICO_CACHE["data"] = obtener_historicos_dashboard(dias=90)
+        _HISTORICO_CACHE["ts"] = ahora
+    return _HISTORICO_CACHE["data"]
 
 
 @app.get("/")

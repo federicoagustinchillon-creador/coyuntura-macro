@@ -4,9 +4,9 @@
     "oficial_bna": 1531.07,
     "mayorista": 1511.5326,
     "mep": 1532.33,
-    "ccl": 1596.59,
+    "ccl": 1600.2,
     "blue": 1615.0,
-    "brecha_ccl_oficial_pct": 4.28
+    "brecha_ccl_oficial_pct": 4.52
   },
   "tasas_ars": {
     "lecap_corta_tem": 2.95,
@@ -97,16 +97,19 @@
   ],
   "tasas_bcra_referencia": {
     "badlar_privados_tna": {
-      "fecha": "2026-08-24",
-      "valor": 23.625
+      "valor": 23.625,
+      "fecha": "2026-08-25",
+      "fuente": "SecondBrain"
     },
     "pases_1d_tna": {
-      "fecha": "2026-08-24",
-      "valor": 23.12
+      "valor": 23.12,
+      "fecha": "2026-08-25",
+      "fuente": "SecondBrain"
     },
     "reservas_brutas_usd_m": {
-      "fecha": "2026-08-21",
-      "valor": 50660.0
+      "valor": 50660.0,
+      "fecha": "2026-08-25",
+      "fuente": "SecondBrain"
     }
   }
 }

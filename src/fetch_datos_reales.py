@@ -35,7 +35,7 @@ propio BCRA, no de este script); se desactiva verify solo para este host.
 import os
 import sys
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 
@@ -88,6 +88,52 @@ def obtener_ultimo_bcra(id_variable):
 def obtener_serie_bcra(id_variable):
     """Devuelve la lista completa [{fecha, valor}, ...] tal como la publica el BCRA."""
     return _bcra_get(id_variable)
+
+
+def obtener_historial_bcra(id_variable, dias=90):
+    """Serie real acotada a los ultimos `dias` (query server-side via
+    desde/hasta) -- evita traer decadas de historia en cada refresh del
+    dashboard. Devuelve orden cronologico ascendente (para graficar)."""
+    hasta = datetime.now().strftime("%Y-%m-%d")
+    desde = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+    url = f"{BCRA_BASE}/{id_variable}"
+    try:
+        r = requests.get(url, params={"desde": desde, "hasta": hasta}, timeout=20, verify=False)
+        r.raise_for_status()
+        resultados = r.json().get("results", [])
+        detalle = resultados[0]["detalle"] if resultados and "detalle" in resultados[0] else []
+        return list(reversed(detalle))  # la API devuelve descendente; graficamos ascendente
+    except Exception as e:
+        print(f"      [BCRA] ERROR consultando historial de variable {id_variable}: {e}")
+        return []
+
+
+def obtener_merval_historial(dias=90):
+    """Historial real del indice Merval (^MERV) via yfinance, orden ascendente."""
+    try:
+        import yfinance as yf
+        hist = yf.Ticker(MERVAL_TICKER).history(period=f"{dias}d")
+        if hist.empty:
+            return []
+        return [
+            {"fecha": idx.strftime("%Y-%m-%d"), "close": round(float(row["Close"]), 2)}
+            for idx, row in hist.iterrows()
+        ]
+    except Exception as e:
+        print(f"      [yfinance] ERROR consultando historial {MERVAL_TICKER}: {e}")
+        return []
+
+
+def obtener_historicos_dashboard(dias=90):
+    """Agrupa los historiales reales que consume el dashboard (un solo punto
+    de entrada para no duplicar la logica de ventana de fechas)."""
+    return {
+        "oficial_minorista": obtener_historial_bcra(BCRA_VARS["oficial_minorista"], dias),
+        "mayorista_a3500": obtener_historial_bcra(BCRA_VARS["mayorista_a3500"], dias),
+        "badlar_privados": obtener_historial_bcra(BCRA_VARS["badlar_privados"], dias),
+        "pases_1d": obtener_historial_bcra(BCRA_VARS["pases_1d"], dias),
+        "merval": obtener_merval_historial(dias),
+    }
 
 
 def obtener_merval_reciente(dias=30):

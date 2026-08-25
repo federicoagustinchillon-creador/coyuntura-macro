@@ -37,7 +37,7 @@
         <span class="text-xs font-semibold uppercase tracking-widest" :class="ok ? 'text-emerald-400' : 'text-rose-400'" x-text="ok ? 'Sync OK' : 'Sync con errores'"></span>
       </div>
       <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-1">Coyuntura Macro &amp; Mercado de Capitales</h1>
-      <p class="text-xs text-zinc-400 mt-0.5">Terminal de acompañamiento entre informes · Federico Agustín Chillón · UNCUYO / OERU</p>
+      <p class="text-xs text-zinc-400 mt-0.5">Terminal de acompañamiento entre informes</p>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] font-mono">
       <div class="bg-zinc-900/60 border border-white/10 px-3 py-1.5 rounded-xl">
@@ -111,18 +111,42 @@
     </div>
   </section>
 
-  <!-- Curva soberana USD (Nelson-Siegel) -->
-  <section class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-6 rounded-2xl space-y-4">
-    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-      <div>
-        <h2 class="text-lg font-semibold text-white tracking-tight">Curva Soberana USD (Nelson-Siegel) <span class="text-zinc-600 text-xs font-normal normal-case">· manual</span></h2>
-        <p class="text-xs text-zinc-400 font-mono" x-text="'β0=' + fmt(datos.soberano_usd?.nelson_siegel?.beta0) + '  β1=' + fmt(datos.soberano_usd?.nelson_siegel?.beta1) + '  β2=' + fmt(datos.soberano_usd?.nelson_siegel?.beta2) + '  τ=' + fmt(datos.soberano_usd?.nelson_siegel?.tau) + '  R²=' + fmt(datos.soberano_usd?.nelson_siegel?.r2)"></p>
+  <!-- Panel de mercados: 4 graficos, 3 con historia real (BCRA/yfinance) + 1 manual -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Mercados <span class="text-emerald-400 normal-case">· historial real 90 días</span></h2>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      <div class="bg-zinc-900/60 backdrop-blur-md border border-emerald-500/30 p-5 rounded-2xl">
+        <h3 class="text-sm font-semibold text-white tracking-tight mb-3">Tipo de Cambio Oficial vs. Mayorista</h3>
+        <div class="relative"><div id="chartFx" class="w-full h-60"></div>
+          <div x-show="!(historico.oficial_minorista||[]).length" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 font-mono">Cargando historial BCRA...</div>
+        </div>
       </div>
-      <div class="text-xs font-mono text-amber-400" x-text="'EMBI+ Riesgo País: ' + (datos.soberano_usd?.embi_riesgo_pais_pbs ?? 's/d') + ' pbs'"></div>
-    </div>
-    <div class="relative">
-      <div id="nsChart" class="w-full h-72"></div>
-      <div x-show="!datos.soberano_usd?.nelson_siegel" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 font-mono">Sin datos de curva soberana.</div>
+
+      <div class="bg-zinc-900/60 backdrop-blur-md border border-emerald-500/30 p-5 rounded-2xl">
+        <h3 class="text-sm font-semibold text-white tracking-tight mb-3">Tasas de Referencia (BADLAR vs. Pases 1 día)</h3>
+        <div class="relative"><div id="chartTasas" class="w-full h-60"></div>
+          <div x-show="!(historico.badlar_privados||[]).length" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 font-mono">Cargando historial BCRA...</div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900/60 backdrop-blur-md border border-emerald-500/30 p-5 rounded-2xl">
+        <h3 class="text-sm font-semibold text-white tracking-tight mb-3">Índice Merval</h3>
+        <div class="relative"><div id="chartMerval" class="w-full h-60"></div>
+          <div x-show="!(historico.merval||[]).length" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 font-mono">Cargando historial yfinance...</div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl">
+        <div class="flex justify-between items-start mb-3">
+          <h3 class="text-sm font-semibold text-white tracking-tight">Curva Soberana USD <span class="text-zinc-600 text-xs font-normal">· manual</span></h3>
+          <span class="text-xs font-mono text-amber-400" x-text="'EMBI+ ' + (datos.soberano_usd?.embi_riesgo_pais_pbs ?? 's/d') + ' pbs'"></span>
+        </div>
+        <div class="relative"><div id="chartCurva" class="w-full h-60"></div>
+          <div x-show="!datos.soberano_usd?.nelson_siegel" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 font-mono">Sin datos de curva soberana.</div>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -200,17 +224,19 @@
 function terminal() {
   return {
     datos: {},
+    historico: {},
     camposSincronizados: [],
     fuentes: {},
     ok: false,
     lastRefresh: '--:--:--',
-    nsChart: null,
-    nsResizeObserver: null,
+    charts: {},
 
     init() {
       lucide.createIcons();
       this.refresh();
+      this.refreshHistorico();
       setInterval(() => this.refresh(), 60000);
+      setInterval(() => this.refreshHistorico(), 300000); // el historial cambia una vez por dia, no hace falta pedirlo cada 60s
     },
 
     async refresh() {
@@ -222,11 +248,125 @@ function terminal() {
         this.fuentes = body.sync?.fuentes || {};
         this.ok = !!body.sync?.ok;
         this.lastRefresh = new Date().toLocaleTimeString('es-AR');
-        this.$nextTick(() => { lucide.createIcons(); this.renderCurve(); });
+        this.$nextTick(() => { lucide.createIcons(); this.renderCurva(); });
       } catch (e) {
         this.ok = false;
         console.error('Fallo al refrescar /api/live', e);
       }
+    },
+
+    async refreshHistorico() {
+      try {
+        const res = await fetch('/api/historico');
+        this.historico = await res.json();
+        this.$nextTick(() => { this.renderFx(); this.renderTasas(); this.renderMerval(); });
+      } catch (e) {
+        console.error('Fallo al refrescar /api/historico', e);
+      }
+    },
+
+    _chart(id) {
+      if (!this.charts[id]) {
+        const dom = document.getElementById(id);
+        if (!dom) return null;
+        this.charts[id] = echarts.init(dom);
+        activeCharts.push(this.charts[id]);
+        // ResizeObserver, no un unico resize() manual: Tailwind CDN aplica
+        // las clases de layout (h-60/w-full) DESPUES de que echarts.init
+        // mide el contenedor -- sin esto el canvas queda en 0px de ancho.
+        new ResizeObserver(() => this.charts[id] && this.charts[id].resize()).observe(dom);
+      }
+      return this.charts[id];
+    },
+
+    _tooltipBase() {
+      return {
+        trigger: 'axis',
+        backgroundColor: 'rgba(18,18,21,0.95)',
+        borderColor: 'rgba(255,255,255,0.12)',
+        textStyle: { color: '#fafafa', fontSize: 12, fontFamily: 'JetBrains Mono' }
+      };
+    },
+    _ejeFechas(serie) {
+      return {
+        type: 'category', data: serie.map(p => p.fecha.slice(5)), boundaryGap: false,
+        axisLine: { lineStyle: { color: '#3f3f46' } },
+        axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', fontSize: 10, interval: Math.ceil(serie.length / 6) }
+      };
+    },
+    _ejeValor(formatter) {
+      return {
+        type: 'value', scale: true,
+        axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', fontSize: 10, formatter },
+        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } }
+      };
+    },
+
+    // Estandar institucional: series de mercado se grafican con segmentos
+    // RECTOS entre observaciones reales (smooth:false) -- suavizar una serie
+    // financiera inventa curvatura entre puntos que el mercado no hizo.
+    // Suavizado (smooth:true) solo se reserva para curvas parametricas
+    // genuinamente continuas, como la Nelson-Siegel de renderCurva().
+    _endLabel(color, formatter) {
+      return { show: true, formatter, color, fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: 600 };
+    },
+
+    renderFx() {
+      const chart = this._chart('chartFx');
+      const oficial = this.historico.oficial_minorista || [], mayorista = this.historico.mayorista_a3500 || [];
+      if (!chart || !oficial.length) return;
+      chart.setOption({
+        tooltip: this._tooltipBase(),
+        legend: { data: ['Oficial', 'Mayorista'], textStyle: { color: '#a1a1aa', fontSize: 10 }, top: 0 },
+        grid: { top: 28, right: 70, bottom: 24, left: 55 },
+        xAxis: this._ejeFechas(oficial),
+        yAxis: this._ejeValor('${value}'),
+        series: [
+          { name: 'Oficial', type: 'line', data: oficial.map(p => p.valor), smooth: false, showSymbol: false,
+            lineStyle: { color: '#10B981', width: 2 }, endLabel: this._endLabel('#10B981', (p) => '$' + p.value.toFixed(0)) },
+          { name: 'Mayorista', type: 'line', data: mayorista.map(p => p.valor), smooth: false, showSymbol: false,
+            lineStyle: { color: '#38BDF8', width: 1.5, type: 'dashed' }, endLabel: this._endLabel('#38BDF8', (p) => '$' + p.value.toFixed(0)) }
+        ]
+      });
+    },
+
+    renderTasas() {
+      const chart = this._chart('chartTasas');
+      const badlar = this.historico.badlar_privados || [], pases = this.historico.pases_1d || [];
+      if (!chart || !badlar.length) return;
+      chart.setOption({
+        tooltip: this._tooltipBase(),
+        legend: { data: ['BADLAR', 'Pases 1d'], textStyle: { color: '#a1a1aa', fontSize: 10 }, top: 0 },
+        grid: { top: 28, right: 60, bottom: 24, left: 45 },
+        xAxis: this._ejeFechas(badlar),
+        yAxis: this._ejeValor('{value}%'),
+        series: [
+          { name: 'BADLAR', type: 'line', data: badlar.map(p => p.valor), smooth: false, showSymbol: false,
+            lineStyle: { color: '#F59E0B', width: 2 }, endLabel: this._endLabel('#F59E0B', (p) => p.value.toFixed(1) + '%') },
+          { name: 'Pases 1d', type: 'line', data: pases.map(p => p.valor), smooth: false, showSymbol: false,
+            lineStyle: { color: '#6366F1', width: 1.5, type: 'dashed' }, endLabel: this._endLabel('#6366F1', (p) => p.value.toFixed(1) + '%') }
+        ]
+      });
+    },
+
+    renderMerval() {
+      const chart = this._chart('chartMerval');
+      const serie = this.historico.merval || [];
+      if (!chart || !serie.length) return;
+      chart.setOption({
+        tooltip: this._tooltipBase(),
+        grid: { top: 12, right: 70, bottom: 24, left: 65 },
+        xAxis: this._ejeFechas(serie),
+        yAxis: this._ejeValor((v) => (v / 1e6).toFixed(2) + 'M'),
+        series: [{
+          name: 'Merval', type: 'line', data: serie.map(p => p.close), smooth: false, showSymbol: false,
+          lineStyle: { color: '#818CF8', width: 2 },
+          endLabel: this._endLabel('#818CF8', (p) => (p.value / 1e6).toFixed(2) + 'M'),
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(129,140,248,0.20)' }, { offset: 1, color: 'rgba(129,140,248,0.0)' }
+          ]) }
+        }]
+      });
     },
 
     labelDolar(k) {
@@ -254,22 +394,11 @@ function terminal() {
       return Number(v).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + '%';
     },
 
-    renderCurve() {
+    renderCurva() {
       const ns = this.datos.soberano_usd?.nelson_siegel;
-      const dom = document.getElementById('nsChart');
-      if (!dom) return;
-
-      if (!this.nsChart) {
-        this.nsChart = echarts.init(dom);
-        activeCharts.push(this.nsChart);
-        // ResizeObserver en vez de depender de un unico resize() manual:
-        // cubre el caso (real, encontrado al probar esto) en que Tailwind
-        // CDN aplica las clases de layout (h-72/w-full) DESPUES de que
-        // echarts.init ya midio el contenedor en 0px de ancho.
-        this.nsResizeObserver = new ResizeObserver(() => this.nsChart && this.nsChart.resize());
-        this.nsResizeObserver.observe(dom);
-      }
-      if (!ns) { this.nsChart.clear(); return; }
+      const chart = this._chart('chartCurva');
+      if (!chart) return;
+      if (!ns) { chart.clear(); return; }
 
       const tenores = [1, 2, 3, 5, 8, 12, 16, 20, 25];
       const yields = tenores.map(t => {
@@ -278,31 +407,22 @@ function terminal() {
         return Number((ns.beta0 + ns.beta1 * decay + ns.beta2 * (decay - Math.exp(-x))).toFixed(2));
       });
 
-      this.nsChart.setOption({
-        tooltip: {
-          trigger: 'axis',
-          backgroundColor: 'rgba(18,18,21,0.95)',
-          borderColor: 'rgba(255,255,255,0.12)',
-          textStyle: { color: '#fafafa', fontSize: 12, fontFamily: 'JetBrains Mono' },
-          valueFormatter: (v) => v.toFixed(2) + '%'
-        },
-        grid: { top: 24, right: 24, bottom: 32, left: 50 },
+      chart.setOption({
+        tooltip: { ...this._tooltipBase(), valueFormatter: (v) => v.toFixed(2) + '%' },
+        grid: { top: 12, right: 16, bottom: 24, left: 45 },
         xAxis: {
           type: 'category', data: tenores.map(t => t + 'y'), boundaryGap: false,
           axisLine: { lineStyle: { color: '#3f3f46' } },
-          axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', fontSize: 11 }
+          axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', fontSize: 10 }
         },
-        yAxis: {
-          type: 'value', axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', fontSize: 11, formatter: '{value}%' },
-          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } }
-        },
+        yAxis: this._ejeValor('{value}%'),
         series: [{
-          name: 'TIR Nelson-Siegel', type: 'line', data: yields, smooth: true,
-          symbol: 'circle', symbolSize: 6,
+          name: 'TIR', type: 'line', data: yields, smooth: true,
+          symbol: 'circle', symbolSize: 5,
           itemStyle: { color: '#818CF8', borderColor: '#08090C', borderWidth: 2 },
-          lineStyle: { color: '#6366F1', width: 3 },
+          lineStyle: { color: '#6366F1', width: 2.5 },
           areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(99,102,241,0.28)' }, { offset: 1, color: 'rgba(99,102,241,0.0)' }
+            { offset: 0, color: 'rgba(99,102,241,0.25)' }, { offset: 1, color: 'rgba(99,102,241,0.0)' }
           ]) }
         }]
       });

@@ -2,24 +2,29 @@
 ORQUESTADOR DE SINCRONIZACION DE datos_del_dia.json
 =============================================================================
 Autor: Federico Agustin Chillon
-Facultad de Ciencias Economicas -- UNCUYO / OERU
 
 Punto de entrada unico usado por el pipeline (Paso 0) y por el dashboard
-(cada request a /api/live). Combina, por orden de autoridad:
+(cada request a /api/live).
 
-1. BCRA (api.bcra.gob.ar v4.0) + yfinance (src/fetch_datos_reales.py):
-   fuente PRIMARIA para cambiario oficial/mayorista, tasas de referencia y
-   el indice Merval. Estos son los unicos campos que esta funcion sobrescribe
-   con dato de mercado verificado contra la fuente oficial.
-
-2. SecondBrain (src/sync_secondbrain_macro.py): fuente para las vistas
-   tacticas Black-Litterman (juicio de inversion cualitativo, no serie
-   oficial). No se usa para cambiario ni tasas -- ver el docstring de
-   fetch_datos_reales.py para el hallazgo que motivo este cambio.
+Historia (2026-08-25, mismo dia -- ver git log para el detalle completo):
+1. Version original: SecondBrain como fuente de cambiario. Se descubrio que
+   su registro nunca tuvo datos reales (bug en el fetch de BCRA -- siempre
+   caia a un fallback hardcodeado disfrazado de "verified baseline").
+2. Se bypaseo SecondBrain y se armo un conector directo a BCRA/yfinance
+   (src/fetch_datos_reales.py) como fuente primaria.
+3. SecondBrain se corrigio en la fuente (otra sesion, mismo dia): ahora cada
+   campo de su registro lleva su propio tag "<campo>__source" =
+   "LIVE:<fuente>:<fecha>" o "STALE_FALLBACK:..." / "MODEL_ASSUMPTION:...".
+   Con esa trazabilidad, SecondBrain vuelve a ser la fuente PRIMARIA (es el
+   hub que van a leer todos los agentes del ecosistema, no solo este
+   proyecto) -- pero SOLO se confia en un campo si su propio tag dice LIVE.
+   src/fetch_datos_reales.py (BCRA/yfinance directo) queda como respaldo
+   para cualquier campo que SecondBrain no traiga en vivo en una corrida
+   puntual, y sigue siendo la fuente de Merval (SecondBrain no lo cubre).
 
 Campos que NINGUNA fuente automatica cubre todavia y siguen siendo carga
-manual: dolar.mep, dolar.blue, dolar.ccl (mercado, no oficial), toda
-inflacion/actividad/soberano_usd/equity.lideres (multiplos).
+manual: dolar.mep, dolar.blue, toda tasas_ars/inflacion/actividad/
+soberano_usd/equity.lideres (multiplos).
 """
 
 import os
@@ -37,11 +42,23 @@ from src.sync_secondbrain_macro import (  # noqa: E402
 )
 
 CAMPOS_MANUALES = [
-    "dolar.mep", "dolar.blue", "dolar.ccl (cotizacion de mercado)",
+    "dolar.mep", "dolar.blue",
     "tasas_ars.*", "inflacion.*", "actividad.*",
     "soberano_usd.* (TIRes, Nelson-Siegel)",
     "equity.lideres (multiplos EV/EBITDA)",
 ]
+
+# clave en registry.macro_indicators -> (seccion, clave) en datos_del_dia.json
+MAPEO_SECONDBRAIN = {
+    "tipo_de_cambio_oficial": ("dolar", "oficial_bna"),
+    "tipo_de_cambio_mayorista": ("dolar", "mayorista"),
+    "ccl_mercado": ("dolar", "ccl"),
+}
+
+
+def _es_live(registry_macro, campo):
+    fuente = registry_macro.get(f"{campo}__source", "")
+    return fuente.startswith("LIVE:"), fuente
 
 
 def sincronizar_todo(verbose=True):
@@ -53,32 +70,55 @@ def sincronizar_todo(verbose=True):
             print(f"      [Sync] ERROR: no existe {DATA_PATH}")
         return False, {"actualizados": [], "fuentes": {}}
 
-    reales = sincronizar_datos_reales(verbose=verbose)
     actualizados = []
+    cubierto_por_secondbrain = set()  # nombres de campo en MAPEO_SECONDBRAIN ya resueltos con LIVE
 
-    if "oficial_minorista" in reales:
+    # 1) SecondBrain, PRIMARIO -- solo se toma lo que el propio registro marca LIVE.
+    registry = cargar_json(REGISTRY_PATH)
+    macro = registry.get("macro_indicators", {}) if registry else {}
+    for campo_sb, (seccion, clave) in MAPEO_SECONDBRAIN.items():
+        if campo_sb not in macro:
+            continue
+        es_live, fuente_tag = _es_live(macro, campo_sb)
+        if not es_live:
+            if verbose:
+                print(f"      [SecondBrain] {campo_sb} no esta LIVE ({fuente_tag or 'sin tag'}), se busca en BCRA/yfinance directo.")
+            continue
+        prev = datos.get(seccion, {}).get(clave)
+        nuevo = macro[campo_sb]
+        datos.setdefault(seccion, {})[clave] = nuevo
+        fuente_corta = fuente_tag.replace("LIVE:", "")
+        actualizados.append((f"{seccion}.{clave} [SecondBrain: {fuente_corta}]", prev, nuevo))
+        cubierto_por_secondbrain.add(campo_sb)
+
+    if "tipo_de_cambio_oficial" in cubierto_por_secondbrain and registry.get("timestamp"):
+        datos["fecha"] = registry["timestamp"].split(" ")[0]
+
+    if macro.get("brecha_cambiaria_pct__source", "").startswith("LIVE:") or \
+       ("tipo_de_cambio_oficial" in cubierto_por_secondbrain and "ccl_mercado" in cubierto_por_secondbrain):
+        prev = datos.get("dolar", {}).get("brecha_ccl_oficial_pct")
+        nuevo = macro.get("brecha_cambiaria_pct")
+        if nuevo is not None:
+            datos.setdefault("dolar", {})["brecha_ccl_oficial_pct"] = nuevo
+            actualizados.append(("dolar.brecha_ccl_oficial_pct [SecondBrain]", prev, nuevo))
+
+    # 2) BCRA + yfinance directo, RESPALDO -- llena lo que SecondBrain no
+    #    trajo en vivo esta corrida, y siempre aporta Merval (SecondBrain no
+    #    lo cubre todavia).
+    reales = sincronizar_datos_reales(verbose=verbose)
+
+    if "tipo_de_cambio_oficial" not in cubierto_por_secondbrain and "oficial_minorista" in reales:
         prev = datos.get("dolar", {}).get("oficial_bna")
         nuevo = reales["oficial_minorista"]["valor"]
         datos.setdefault("dolar", {})["oficial_bna"] = nuevo
-        actualizados.append(("dolar.oficial_bna [BCRA minorista, proxy]", prev, nuevo))
+        actualizados.append(("dolar.oficial_bna [respaldo BCRA minorista]", prev, nuevo))
         datos["fecha"] = reales["oficial_minorista"]["fecha"]
 
-    if "mayorista_a3500" in reales:
+    if "tipo_de_cambio_mayorista" not in cubierto_por_secondbrain and "mayorista_a3500" in reales:
         prev = datos.get("dolar", {}).get("mayorista")
         nuevo = reales["mayorista_a3500"]["valor"]
         datos.setdefault("dolar", {})["mayorista"] = nuevo
-        actualizados.append(("dolar.mayorista [BCRA A3500]", prev, nuevo))
-
-    # Brecha CCL/oficial: el CCL sigue siendo manual (no hay fuente gratuita
-    # confiable todavia), pero recalculamos la brecha contra el oficial
-    # REAL para que al menos esa mitad de la cuenta sea correcta.
-    ccl_manual = datos.get("dolar", {}).get("ccl")
-    oficial_real = datos.get("dolar", {}).get("oficial_bna")
-    if ccl_manual and oficial_real:
-        prev = datos.get("dolar", {}).get("brecha_ccl_oficial_pct")
-        nuevo = round((ccl_manual / oficial_real - 1.0) * 100.0, 2)
-        datos["dolar"]["brecha_ccl_oficial_pct"] = nuevo
-        actualizados.append(("dolar.brecha_ccl_oficial_pct [recalculada, CCL sigue manual]", prev, nuevo))
+        actualizados.append(("dolar.mayorista [respaldo BCRA A3500]", prev, nuevo))
 
     if "merval_ultimo_cierre" in reales:
         prev = datos.get("equity", {}).get("merval_ars")
@@ -86,19 +126,28 @@ def sincronizar_todo(verbose=True):
         datos.setdefault("equity", {})["merval_ars"] = nuevo
         actualizados.append(("equity.merval_ars [yfinance ^MERV]", prev, nuevo))
 
-    # Tasas de referencia BCRA: no forman parte del schema historico, se
-    # agregan como bloque informativo aparte (no pisa tasas_ars.*, que sigue
-    # siendo el contrato de instrumentos en pesos, carga manual).
-    tasas_bcra = {}
-    for campo in ("badlar_privados_tna", "pases_1d_tna", "reservas_brutas_usd_m"):
-        if campo in reales:
-            tasas_bcra[campo] = reales[campo]
-    if tasas_bcra:
-        datos["tasas_bcra_referencia"] = tasas_bcra
-        actualizados.append(("tasas_bcra_referencia [BCRA]", None, tasas_bcra))
+    # Tasas de referencia BCRA/SecondBrain: no forman parte del schema
+    # historico, se agregan como bloque informativo aparte (no pisa
+    # tasas_ars.*, que sigue siendo el contrato de instrumentos en pesos).
+    fecha_registry = registry.get("timestamp", "").split(" ")[0] if registry else None
+    tasas_ref = {}
+    if macro.get("tasa_badlar_pct__source", "").startswith("LIVE:"):
+        tasas_ref["badlar_privados_tna"] = {"valor": macro["tasa_badlar_pct"], "fecha": fecha_registry, "fuente": "SecondBrain"}
+    elif "badlar_privados_tna" in reales:
+        tasas_ref["badlar_privados_tna"] = {**reales["badlar_privados_tna"], "fuente": "BCRA directo"}
+    if macro.get("tna_politica_monetaria_pct__source", "").startswith("LIVE:"):
+        tasas_ref["pases_1d_tna"] = {"valor": macro["tna_politica_monetaria_pct"], "fecha": fecha_registry, "fuente": "SecondBrain"}
+    elif "pases_1d_tna" in reales:
+        tasas_ref["pases_1d_tna"] = {**reales["pases_1d_tna"], "fuente": "BCRA directo"}
+    if macro.get("reservas_brutas_usd_m__source", "").startswith("LIVE:"):
+        tasas_ref["reservas_brutas_usd_m"] = {"valor": macro["reservas_brutas_usd_m"], "fecha": fecha_registry, "fuente": "SecondBrain"}
+    elif "reservas_brutas_usd_m" in reales:
+        tasas_ref["reservas_brutas_usd_m"] = {**reales["reservas_brutas_usd_m"], "fuente": "BCRA directo"}
+    if tasas_ref:
+        datos["tasas_bcra_referencia"] = tasas_ref
+        actualizados.append(("tasas_bcra_referencia", None, tasas_ref))
 
     # Vistas tacticas Black-Litterman: SecondBrain, exclusivamente cualitativo.
-    registry = cargar_json(REGISTRY_PATH)
     if registry and registry.get("black_litterman_tactical_views"):
         datos["black_litterman_tactical_views"] = registry["black_litterman_tactical_views"]
         actualizados.append(("black_litterman_tactical_views [SecondBrain, cualitativo]", None,
@@ -120,7 +169,11 @@ def sincronizar_todo(verbose=True):
             print(f"      [Sync] {campo}: {prev} -> {nuevo}")
         print("      [Sync] Siguen siendo carga manual: " + ", ".join(CAMPOS_MANUALES))
 
-    return True, {"actualizados": actualizados, "fuentes": reales}
+    return True, {
+        "actualizados": actualizados,
+        "fuentes": reales,
+        "secondbrain_timestamp": registry.get("timestamp") if registry else None,
+    }
 
 
 if __name__ == "__main__":
