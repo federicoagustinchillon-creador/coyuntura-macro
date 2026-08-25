@@ -21,7 +21,6 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIR_FIG = os.path.join(BASE_DIR, "03_Figuras_HD")
-DIR_FIG_MASTER = os.path.join(DIR_FIG, "master_extracted_images")
 OUT_DIR_MENSUAL = os.path.join(BASE_DIR, "06_Informes_Mensuales_OERU")
 OUT_DIR_CONSOL = os.path.join(BASE_DIR, "07_Reportes_Ejecutivos_PDF")
 os.makedirs(OUT_DIR_MENSUAL, exist_ok=True)
@@ -74,6 +73,28 @@ class ZeroWhitespaceCanvas(canvas.Canvas):
         footer_line_y = 30
         footer_text_y = 18
 
+        page_bookmarks = {
+            1: ("Portada Institucional", "sec_cover"),
+            2: ("Índice y Metodología", "sec_toc"),
+            3: ("Resumen Ejecutivo y Escenarios", "sec_exec"),
+            4: ("1. Arbitraje en ARS y Breakeven", "sec_tactical"),
+            5: ("2. Precios y Salarios (INDEC)", "sec_prices"),
+            6: ("Cuadro 1. Aperturas IPC y Pass-Through", "sec_tab_ipc"),
+            7: ("3. Nivel de Actividad General (EMAE)", "sec_emae"),
+            8: ("4. Producción Sectorial en Cuyo", "sec_cuyo"),
+            9: ("4.1 Comparativo Regional ISARC", "sec_regional_cuyo"),
+            10: ("5. Balance BCRA y Regla de Taylor", "sec_monetary"),
+            11: ("6. Curva Soberana Nelson-Siegel", "sec_yield"),
+            12: ("7. Microestructura FX y Rofex", "sec_fx"),
+            13: ("8. Renta Variable y Balances", "sec_equity"),
+            14: ("9. Flash Normativo y Referencias", "sec_refs")
+        }
+
+        if self._pageNumber in page_bookmarks:
+            title, key = page_bookmarks[self._pageNumber]
+            self.bookmarkPage(key)
+            self.addOutlineEntry(title, key, level=0, closed=False)
+
         if self._pageNumber > 1:
             self.setFont("Georgia", 7.5)
             self.setFillColor(colors.HexColor("#64748B"))
@@ -92,28 +113,6 @@ class ZeroWhitespaceCanvas(canvas.Canvas):
             self.setFillColor(colors.HexColor("#64748B"))
             self.drawString(left, footer_text_y, "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO")
             self.drawRightString(right, footer_text_y, f"Página {self._pageNumber} de {page_count}")
-
-        page_bookmarks = {
-            1: ("Portada Diseñada", "sec_cover"),
-            2: ("Índice y Estructura Metodológica", "sec_toc"),
-            3: ("Resumen Ejecutivo y Escenarios", "sec_exec"),
-            4: ("1. Arbitraje en ARS y Breakeven", "sec_tactical"),
-            5: ("2. Precios y Salarios (INDEC)", "sec_prices"),
-            6: ("Cuadro 1. Aperturas IPC", "sec_tab_ipc"),
-            7: ("3. Nivel de Actividad General (EMAE)", "sec_emae"),
-            8: ("4. Producción Sectorial en Cuyo", "sec_cuyo"),
-            9: ("4.1 Comparativo Regional ISARC", "sec_regional_cuyo"),
-            10: ("5. Balance BCRA y Regla de Taylor", "sec_monetary"),
-            11: ("6. Curva Soberana Nelson-Siegel", "sec_yield"),
-            12: ("7. Microestructura FX y Rofex", "sec_fx"),
-            13: ("8. Renta Variable y Balances", "sec_equity"),
-            14: ("9. Flash Normativo y Referencias", "sec_refs")
-        }
-
-        if self._pageNumber in page_bookmarks:
-            title, key = page_bookmarks[self._pageNumber]
-            self.bookmarkPage(key)
-            self.addOutlineEntry(title, key, level=0, closed=False)
 
         self.restoreState()
 
@@ -186,14 +185,13 @@ fig_caption = ParagraphStyle(
 )
 
 def _find_image(filename):
-    paths = [
-        os.path.join(DIR_FIG_MASTER, filename),
-        os.path.join(DIR_FIG, filename),
-    ]
-    for p in paths:
-        if os.path.exists(p):
-            return p
-    return paths[0]
+    p = os.path.join(DIR_FIG, filename)
+    if os.path.exists(p):
+        return p
+    p_master = os.path.join(DIR_FIG, 'master_extracted_images', filename)
+    if os.path.exists(p_master):
+        return p_master
+    return p
 
 def generar_informe_mensual_reportlab():
     pdf_path = os.path.join(OUT_DIR_MENSUAL, "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
@@ -202,60 +200,174 @@ def generar_informe_mensual_reportlab():
         pagesize=letter,
         leftMargin=40,
         rightMargin=40,
-        topMargin=44,
-        bottomMargin=38
+        topMargin=36,
+        bottomMargin=36
     )
 
     elements = []
 
     # =============================================================
-    # PÁGINA 1: PORTADA DISEÑADA A MEDIDA (FULL COVER)
+    # PÁGINA 1: PORTADA INSTITUCIONAL PROGRAMÁTICA (VECTORIAL PURA)
     # =============================================================
-    cover_img_path = _find_image("portada_master_hd.png")
-    if not os.path.exists(cover_img_path):
-        cover_img_path = _find_image("img_p1_master_cover.png")
-    elements.append(Image(cover_img_path, width=532, height=695))
+    elements.append(Paragraph("<font color='#64748B' size=8.5><b>FACULTAD DE CIENCIAS ECONÓMICAS — UNIVERSIDAD NACIONAL DE CUYO</b></font>", ParagraphStyle('CoverSubTop', fontName='Georgia', alignment=TA_CENTER, spaceAfter=2)))
+    elements.append(Paragraph("<font color='#0B3C5D' size=9.5><b>INVESTIGACIÓN MACROECONÓMICA CUANTITATIVA & ESTRATEGIA FINANCIERA</b></font>", ParagraphStyle('CoverTop', fontName='Georgia-Bold', alignment=TA_CENTER, spaceAfter=8)))
+    elements.append(HRFlowable(width="100%", thickness=2.5, color=PRIMARY, spaceBefore=0, spaceAfter=12))
+
+    elements.append(Paragraph("INFORME DE COYUNTURA MACROECONÓMICA", ParagraphStyle('CoverTitle', fontName='Georgia-Bold', fontSize=22, leading=26, alignment=TA_CENTER, textColor=PRIMARY, spaceAfter=5)))
+    elements.append(Paragraph("Análisis Integral de Precios, Política Monetaria, Deuda Soberana, Microestructura Cambiaria y Actividad Regional en Cuyo", ParagraphStyle('CoverSub', fontName='Georgia-Italic', fontSize=10.5, leading=14, alignment=TA_CENTER, textColor=SLATE, spaceAfter=12)))
+
+    badge_data = [
+        [
+            Paragraph("<b>EDICIÓN: AGOSTO 2026</b>", ParagraphStyle('Badge1', fontName='Georgia-Bold', fontSize=8.5, textColor=colors.white, alignment=TA_CENTER)),
+            Paragraph("<b>ESTÁNDAR: INSTITUTIONAL RESEARCH</b>", ParagraphStyle('Badge2', fontName='Georgia-Bold', fontSize=8.5, textColor=colors.white, alignment=TA_CENTER)),
+            Paragraph("<b>PUBLICACIÓN: MENSUAL (Nº 32)</b>", ParagraphStyle('Badge3', fontName='Georgia-Bold', fontSize=8.5, textColor=colors.white, alignment=TA_CENTER))
+        ]
+    ]
+    t_badge = Table(badge_data, colWidths=[177, 178, 177])
+    t_badge.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), PRIMARY),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 4.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4.5),
+        ('BOX', (0,0), (-1,-1), 0.5, SECONDARY),
+    ]))
+    elements.append(t_badge)
+    elements.append(Spacer(1, 10))
+
+    box_tasas = (
+        "<b>1. ARBITRAJE EN ARS & TASAS REALES</b><br/>"
+        "• Lecaps cortas con TEM del 2,95% (S31O6) rinden +95 pb reales sobre el REM (2,00% MoM).<br/>"
+        "• Breakeven inflacionario en 2,86% convalida sobreponderar tasa fija vs. títulos indexados CER.<br/>"
+        "• Recomendación: Sobreponderar tramo corto (S31O6/S28N6) y neutral en Boncer largo (TZX27)."
+    )
+    box_precios = (
+        "<b>2. DINÁMICA DE PRECIOS & SALARIOS</b><br/>"
+        "• IPC Nacional en 2,2% MoM (Mendoza DEIE: 2,3% MoM) traccionado por regulados (3,0% MoM).<br/>"
+        "• Canasta Básica Total en Mendoza alcanza $963.000; salario formal RIPTE avanza +2,4% en 2026.<br/>"
+        "• Pass-through controlado por estabilidad cambiaria y ancla salarial del sector público."
+    )
+    box_soberano = (
+        "<b>3. DEUDA SOBERANA & NELSON-SIEGEL</b><br/>"
+        "• Curva USD ajustada con R²=0,984 (β₀=9,40%, τ=2,40); tasa forward converge al 9,0% anual.<br/>"
+        "• Compresión del riesgo país hacia 506 pb favorece extensión de duration en GD35/GD38.<br/>"
+        "• Stress testing: compresión de -300 pb proyecta retornos en USD del +19,55% en GD38."
+    )
+    box_regional = (
+        "<b>4. ACTIVIDAD Y ECONOMÍA DE CUYO</b><br/>"
+        "• EMAE nacional avanza +3,1% i.a. liderado por minería e hidrocarburos (+14,2% i.a.).<br/>"
+        "• ISARC Cuyo: San Luis lidera con +5,8% i.a., Mendoza +3,4% (vino y petróleo) y San Juan +2,1%.<br/>"
+        "• Despachos vitivinícolas crecen +3,2% MoM con 73% concentrado en vinos fraccionados."
+    )
+
+    card_style = ParagraphStyle('CardP', fontName='Georgia', fontSize=7.4, leading=10.2, textColor=DARK_TEXT)
+    cards_data = [
+        [Paragraph(box_tasas, card_style), Paragraph(box_precios, card_style)],
+        [Paragraph(box_soberano, card_style), Paragraph(box_regional, card_style)]
+    ]
+    t_cards = Table(cards_data, colWidths=[261, 261])
+    t_cards.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), BG_CARD),
+        ('BOX', (0,0), (-1,-1), 0.6, BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.6, BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 7),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 7),
+        ('LEFTPADDING', (0,0), (-1,-1), 7),
+        ('RIGHTPADDING', (0,0), (-1,-1), 7),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LINELEFT', (0,0), (0,0), 3.0, PRIMARY),
+        ('LINELEFT', (1,0), (1,0), 3.0, SECONDARY),
+        ('LINELEFT', (0,1), (0,1), 3.0, colors.HexColor("#15803D")),
+        ('LINELEFT', (1,1), (1,1), 3.0, colors.HexColor("#8B1E3F")),
+    ]))
+    elements.append(t_cards)
+    elements.append(Spacer(1, 10))
+
+    tesis_portada = (
+        "<b>SÍNTESIS ESTRATÉGICA PARA COMITÉS DE INVERSIÓN:</b> "
+        "El programa macroeconómico consolida el ancla fiscal con superávit primario acumulado y esterilización bancaria vía Lefi ($29,3 billones). "
+        "La persistencia de tasas reales positivas en moneda local y la estabilidad de la brecha cambiaria (5,39% sobre oficial) justifican mantener carteras de carry trade de corto plazo "
+        "mientras se capturan ganancias de capital en bonos globales largos con convexidad superior a 33 veces. "
+        "En la región cuyana, la vitivinicultura de valor agregado y los proyectos RIGI en hidrocarburos consolidan un sendero de recuperación diferenciado."
+    )
+    t_tesis_p = Table([[Paragraph(tesis_portada, ParagraphStyle('TP', fontName='Georgia', fontSize=7.6, leading=10.5, textColor=SLATE))]], colWidths=[532])
+    t_tesis_p.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F0FDF4")),
+        ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor("#16A34A")),
+        ('LINELEFT', (0,0), (-1,-1), 3.0, colors.HexColor("#15803D")),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+    ]))
+    elements.append(t_tesis_p)
+    elements.append(Spacer(1, 12))
+
+    autor_box = [
+        [
+            Paragraph("<b>AUTOR & ESTRATEGA:</b>", ParagraphStyle('AutL', fontName='Georgia-Bold', fontSize=8.0, textColor=PRIMARY)),
+            Paragraph("<b>Federico Agustín Chillón</b> · Lead Quantitative Macro & Financial Strategist", ParagraphStyle('AutV', fontName='Georgia', fontSize=8.0, textColor=DARK_TEXT))
+        ],
+        [
+            Paragraph("<b>FILIACIÓN INSTITUCIONAL:</b>", ParagraphStyle('AutL', fontName='Georgia-Bold', fontSize=8.0, textColor=PRIMARY)),
+            Paragraph("Facultad de Ciencias Económicas — Universidad Nacional de Cuyo (UNCUYO)", ParagraphStyle('AutV', fontName='Georgia', fontSize=8.0, textColor=DARK_TEXT))
+        ],
+        [
+            Paragraph("<b>REPOSITORIO & DATOS:</b>", ParagraphStyle('AutL', fontName='Georgia-Bold', fontSize=8.0, textColor=PRIMARY)),
+            Paragraph("github.com/federicoagustinchillon-creador/coyuntura-macro · Mendoza, Argentina", ParagraphStyle('AutV', fontName='Georgia', fontSize=8.0, textColor=SLATE))
+        ]
+    ]
+    t_aut = Table(autor_box, colWidths=[130, 402])
+    t_aut.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+        ('LINEABOVE', (0,0), (-1,0), 0.6, BORDER),
+    ]))
+    elements.append(t_aut)
+
     elements.append(PageBreak())
 
     # =============================================================
-    # PÁGINA 2: ÍNDICE GENERAL Y GLOSARIO METODOLÓGICO
+    # PÁGINA 2: ÍNDICE GENERAL INTERACTIVO (CON ENLACES) Y GLOSARIO
     # =============================================================
     elements.append(Paragraph("Índice General y Estructura del Informe", h1_style))
     elements.append(HRFlowable(width="100%", thickness=1.0, color=PRIMARY, spaceBefore=0, spaceAfter=5))
 
     toc_entries = [
-        ("CAT", "RESUMEN EJECUTIVO & ESCENARIOS", ""),
-        ("MAIN", "Resumen Ejecutivo y Matriz de Escenarios a 12 Meses", "3"),
-        ("CAT", "CUERPO DEL INFORME", ""),
-        ("MAIN", "1. Arbitraje de Tasas en ARS, Breakeven y Recomendaciones", "4"),
-        ("MAIN", "2. Dinámica de Precios, Canastas Básicas y Salario Real", "5"),
-        ("SUB", "Cuadro 1. Índice de Precios al Consumidor (IPC INDEC y DEIE Mendoza)", "6"),
-        ("MAIN", "3. Nivel de Actividad Económica General (EMAE)", "7"),
-        ("MAIN", "4. Desagregación Sectorial y Producción en Cuyo (INV, Petróleo, Cemento)", "8"),
-        ("SUB", "4.1. Comparativo Regional: Índice Sintético de Actividad (Mendoza, San Juan, San Luis)", "9"),
-        ("MAIN", "5. Balance del BCRA, Pasivos Cuasifiscales y Brecha de Taylor", "10"),
-        ("MAIN", "6. Estructura Temporal de la Deuda Soberana y Modelo Nelson-Siegel", "11"),
-        ("SUB", "Cuadro 2. Parámetros del modelo Nelson-Siegel y rendimientos de mercado", "11"),
-        ("MAIN", "7. Microestructura Cambiaria, Futuros Rofex y Probabilidades Implícitas", "12"),
-        ("MAIN", "8. Sector Financiero, Renta Variable y Radar de Balances", "13"),
-        ("CAT", "ANEXO & CIERRE", ""),
-        ("MAIN", "9. Flash Normativo, Contexto Internacional y Referencias APA 7ma", "14")
+        ("CAT", "RESUMEN EJECUTIVO & ESCENARIOS", "", ""),
+        ("MAIN", "Resumen Ejecutivo, Matriz de Escenarios y Asignación de Carteras", "3", "sec_exec"),
+        ("CAT", "CUERPO DEL INFORME", "", ""),
+        ("MAIN", "1. Arbitraje de Tasas en ARS, Breakeven y Recomendaciones", "4", "sec_tactical"),
+        ("MAIN", "2. Dinámica de Precios, Canastas Básicas y Salario Real", "5", "sec_prices"),
+        ("SUB", "Cuadro 1. Índice de Precios al Consumidor (IPC INDEC y DEIE Mendoza)", "6", "sec_tab_ipc"),
+        ("MAIN", "3. Nivel de Actividad Económica General (EMAE)", "7", "sec_emae"),
+        ("MAIN", "4. Desagregación Sectorial y Producción en Cuyo (INV, Petróleo, Cemento)", "8", "sec_cuyo"),
+        ("SUB", "4.1. Comparativo Regional: Índice Sintético de Actividad (Mendoza, San Juan, San Luis)", "9", "sec_regional_cuyo"),
+        ("MAIN", "5. Balance del BCRA, Pasivos Cuasifiscales y Brecha de Taylor", "10", "sec_monetary"),
+        ("MAIN", "6. Estructura Temporal de la Deuda Soberana y Modelo Nelson-Siegel", "11", "sec_yield"),
+        ("SUB", "Cuadro 2. Parámetros del modelo Nelson-Siegel y rendimientos de mercado", "11", "sec_yield"),
+        ("MAIN", "7. Microestructura Cambiaria, Futuros Rofex y Probabilidades Implícitas", "12", "sec_fx"),
+        ("MAIN", "8. Sector Financiero, Renta Variable y Radar de Balances", "13", "sec_equity"),
+        ("CAT", "ANEXO & CIERRE", "", ""),
+        ("MAIN", "9. Flash Normativo, Contexto Internacional y Referencias APA 7ma", "14", "sec_refs")
     ]
 
     toc_table_data = []
-    for typ, text, page in toc_entries:
+    for typ, text, page, anchor in toc_entries:
         if typ == "CAT":
             p_t = Paragraph(f"<b>{text}</b>", ParagraphStyle('TOCCat', fontName='Georgia-Bold', fontSize=7.2, leading=10, textColor=MUTED, spaceBefore=1, spaceAfter=1))
             toc_table_data.append([p_t, "", ""])
         elif typ == "MAIN":
-            p_t = Paragraph(text, ParagraphStyle('TOCMain', fontName='Georgia-Bold', fontSize=7.6, leading=10.5, textColor=PRIMARY))
+            p_t = Paragraph(f'<a href="#{anchor}" color="#0B3C5D"><b>{text}</b></a>', ParagraphStyle('TOCMain', fontName='Georgia-Bold', fontSize=7.6, leading=10.5, textColor=PRIMARY))
             p_dots = Paragraph(". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", ParagraphStyle('TOCDots', fontName='Georgia', fontSize=6.8, textColor=colors.HexColor("#94A3B8"), alignment=TA_CENTER))
-            p_p = Paragraph(f"<b>{page}</b>", ParagraphStyle('TOCPage', fontName='Georgia-Bold', fontSize=7.6, leading=10.5, alignment=TA_RIGHT, textColor=PRIMARY))
+            p_p = Paragraph(f'<a href="#{anchor}" color="#0B3C5D"><b>{page}</b></a>', ParagraphStyle('TOCPage', fontName='Georgia-Bold', fontSize=7.6, leading=10.5, alignment=TA_RIGHT, textColor=PRIMARY))
             toc_table_data.append([p_t, p_dots, p_p])
         elif typ == "SUB":
-            p_t = Paragraph(text, ParagraphStyle('TOCSub', fontName='Georgia', fontSize=7.2, leading=9.8, leftIndent=10, textColor=DARK_TEXT))
+            p_t = Paragraph(f'<a href="#{anchor}" color="#1E293B">{text}</a>', ParagraphStyle('TOCSub', fontName='Georgia', fontSize=7.2, leading=9.8, leftIndent=10, textColor=DARK_TEXT))
             p_dots = Paragraph(". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", ParagraphStyle('TOCDots', fontName='Georgia', fontSize=6.8, textColor=colors.HexColor("#94A3B8"), alignment=TA_CENTER))
-            p_p = Paragraph(f"{page}", ParagraphStyle('TOCPageS', fontName='Georgia', fontSize=7.2, leading=9.8, alignment=TA_RIGHT, textColor=SLATE))
+            p_p = Paragraph(f'<a href="#{anchor}" color="#334155">{page}</a>', ParagraphStyle('TOCPageS', fontName='Georgia', fontSize=7.2, leading=9.8, alignment=TA_RIGHT, textColor=SLATE))
             toc_table_data.append([p_t, p_dots, p_p])
 
     toc_table = Table(toc_table_data, colWidths=[300, 182, 50])
@@ -314,20 +426,20 @@ def generar_informe_mensual_reportlab():
     elements.append(PageBreak())
 
     # =============================================================
-    # PÁGINA 3: RESUMEN EJECUTIVO Y ESCENARIOS A 12 MESES
+    # PÁGINA 3: RESUMEN EJECUTIVO, MATRIZ DE ESCENARIOS Y CARTERAS
     # =============================================================
-    elements.append(Paragraph("Resumen Ejecutivo y Matriz de Escenarios", h1_style))
-    elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=5))
+    elements.append(Paragraph("Resumen Ejecutivo, Matriz de Escenarios y Asignación Táctica", h1_style))
+    elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
-        "El diagnóstico macroeconómico al cierre de agosto de 2026 confirma la vigencia del ancla fiscal y monetaria. La convergencia inflacionaria hacia el 2% mensual (IPC INDEC: 2,2% MoM vs. Mendoza DEIE: 2,3% MoM) estuvo liderada por el ajuste de <b>precios regulados (3,0% MoM)</b> y <b>servicios (2,9% MoM)</b>, que explicaron la mayor incidencia alcista, compensados por la estabilidad en <b>bienes transables (1,9% MoM)</b> y la <b>inflación núcleo (1,9% MoM)</b>. En el frente monetario, la tasa real ex-ante (+0,95% mensual TEM Lecap vs. REM) opera como barrera contra la dolarización de carteras, sustentada en la absorción del Tesoro mediante Lefi ($29,3 billones) y el equilibrio presupuestario primario.",
+        "El diagnóstico macroeconómico al cierre de agosto de 2026 confirma la vigencia y efectividad del ancla fiscal y monetaria. La convergencia inflacionaria hacia el 2% mensual (IPC INDEC: 2,2% MoM vs. Mendoza DEIE: 2,3% MoM) estuvo liderada por el reacomodamiento de <b>precios regulados (3,0% MoM)</b> y <b>servicios privados (2,9% MoM)</b>, que explicaron la mayor incidencia alcista, compensados por la estabilidad en <b>bienes transables (1,9% MoM)</b> y la <b>inflación núcleo (1,9% MoM)</b>. En el frente monetario, la tasa real ex-ante (+0,95% mensual TEM Lecap vs. REM) opera como barrera contra la dolarización de carteras, sustentada en la absorción del Tesoro mediante Lefi ($29,3 billones) y el equilibrio presupuestario primario.",
         body_style
     ))
     elements.append(Paragraph(
-        "En el plano sociopolítico, la estabilidad cambiaria convive con tensiones distributivas: el salario real formal (RIPTE) alcanza 84,4 puntos (+2,4% acumulado), pero el sector no registrado enfrenta una caída del poder adquisitivo superior al 18% respecto a 2023. La Canasta Básica Total en Mendoza ($963.000) exige ingresos crecientes para superar el umbral de pobreza, mientras el endeudamiento de los hogares en créditos no bancarios exhibe una mora del 17%. A nivel soberano, la compresión del EMBI+ hacia 506 pb habilita la rotación de carteras hacia tramos medios-largos de Globales.",
+        "En el plano sociopolítico y distributivo, la estabilidad cambiaria convive con tensiones en el ingreso disponible: el salario real formal (RIPTE) alcanza 84,4 puntos (+2,4% acumulado en 2026), pero el sector no registrado enfrenta una pérdida de poder de compra superior al 18% respecto a 2023. La Canasta Básica Total en Mendoza ($963.000) exige ingresos crecientes para superar el umbral de pobreza, mientras el endeudamiento de los hogares en créditos de consumo exhibe una mora del 17,2%. A nivel soberano, la compresión del EMBI+ hacia 506 pb reduce el costo de fondeo y habilita la rotación de carteras hacia tramos medios-largos de Globales con elevado potencial de revalorización de capital.",
         body_style
     ))
-    elements.append(Spacer(1, 3))
+    elements.append(Spacer(1, 2))
 
     elements.append(Paragraph("<b>Matriz de Escenarios Macroeconómicos a 12 Meses:</b>", h2_style))
 
@@ -375,28 +487,63 @@ def generar_informe_mensual_reportlab():
         ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
         ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
         ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('TOPPADDING', (0,0), (-1,-1), 2.2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.2),
         ('LEFTPADDING', (0,0), (-1,-1), 4),
         ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     elements.append(t_esc)
-    elements.append(Spacer(1, 4))
+    elements.append(Spacer(1, 2.5))
 
-    tesis_box = Table([
-        [Paragraph("<b>LECTURA ESTRATÉGICA DE LA MESA DE DINERO</b>", ParagraphStyle('TH', fontName='Georgia-Bold', fontSize=7.8, textColor=PRIMARY))],
-        [Paragraph("El set de datos de agosto convalida un equilibrio de tasas reales positivas con ancla cambiaria. La compresión del riesgo país hacia 500 pb reduce el costo de refinanciación soberano, tornando atractiva la extensión de duration en Globales largos (GD35/GD38) con convexidad superior a 33 veces. En moneda local, el arbitraje fija vs. CER favorece a las Lecaps cortas, capturando un carry mensual garantizado.", ParagraphStyle('TB', fontName='Georgia', fontSize=7.2, leading=9.8, textColor=SLATE))]
-    ], colWidths=[532])
-    tesis_box.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F0FDF4")),
-        ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor("#16A34A")),
-        ('LINELEFT', (0,0), (-1,-1), 2.5, colors.HexColor("#15803D")),
-        ('TOPPADDING', (0,0), (-1,-1), 4),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
-        ('LEFTPADDING', (0,0), (-1,-1), 6),
-        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+    elements.append(Paragraph("<b>Guía de Asignación Táctica de Carteras (Asset Allocation Recomendado):</b>", h2_style))
+    carteras_data = [
+        [Paragraph("<b>Perfil de Inversor</b>", cell_header_style), Paragraph("<b>Horizonte</b>", cell_header_style), Paragraph("<b>Composición Recomendada (% Cartera)</b>", cell_header_style), Paragraph("<b>Tesis de Rendimiento / Cobertura</b>", cell_header_style)],
+        [Paragraph("<b>Conservador (Treasury)</b>", cell_style_left), Paragraph("30 - 60 días", cell_style_center), Paragraph("<b>70%</b> Lecap Corta (S31O6) + <b>30%</b> Boncer TZX26", cell_style_left), Paragraph("Captura de TEM 2,95% con mínima volatilidad en pesos.", cell_style_left)],
+        [Paragraph("<b>Moderado (Institucional)</b>", cell_style_left), Paragraph("90 - 180 días", cell_style_center), Paragraph("<b>40%</b> Lecap S28N6 + <b>20%</b> TZX27 + <b>25%</b> GD35/GD38 + <b>15%</b> Bopreal 3", cell_style_left), Paragraph("Balance carry real positivo con potencial compresión USD.", cell_style_left)],
+        [Paragraph("<b>Agresivo (Total Return)</b>", cell_style_left), Paragraph("+12 meses", cell_style_center), Paragraph("<b>20%</b> Lecaps + <b>45%</b> Globales GD35/GD38 + <b>35%</b> Equity (YPF, PAMP, TGS)", cell_style_left), Paragraph("Maximizar convexidad soberana e inversión RIGI energética.", cell_style_left)]
+    ]
+    t_cart = Table(carteras_data, colWidths=[105, 65, 210, 152])
+    t_cart.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F8FAFC")),
+        ('BACKGROUND', (0,2), (-1,2), colors.white),
+        ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
+        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
+        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
-    elements.append(tesis_box)
+    elements.append(t_cart)
+    elements.append(Spacer(1, 2.5))
+
+    # Termómetro y Semáforo de Presión Cambiaria / Soberana
+    elements.append(Paragraph("<b>Termómetro de Presión Cambiaria y Semáforo de Riesgo Soberano:</b>", h2_style))
+    termometro_data = [
+        [Paragraph("<b>Variable / Indicador Clave</b>", cell_header_style), Paragraph("<b>Nivel Observado</b>", cell_header_style), Paragraph("<b>Estado / Semáforo</b>", cell_header_style), Paragraph("<b>Lectura de Mercado & Vulnerabilidad</b>", cell_header_style)],
+        [Paragraph("Brecha Cambiaria CCL / Oficial", cell_style_left), Paragraph("5,39% (CCL $1.596)", cell_style_center), Paragraph("<b>Baja Presión</b>", cell_style_center), Paragraph("Oferta exportadora del blend 80/20 contiene la volatilidad financiera.", cell_style_left)],
+        [Paragraph("Demanda de Hedge Rofex a 30d", cell_style_left), Paragraph("35,2% TNA Implícita", cell_style_center), Paragraph("<b>Estable</b>", cell_style_center), Paragraph("Curva de futuros alineada con el crawling peg sin prima de salto.", cell_style_left)],
+        [Paragraph("Spread EMBI+ Argentina (J.P. Morgan)", cell_style_left), Paragraph("506 pb (-42 pb MoM)", cell_style_center), Paragraph("<b>En Compresión</b>", cell_style_center), Paragraph("Mejora en paridades soberanas anticipa retorno a mercados voluntarios.", cell_style_left)],
+        [Paragraph("Absorción Bancaria vía Lefi (Tesoro)", cell_style_left), Paragraph("$29,3 Billones", cell_style_center), Paragraph("<b>Controlado</b>", cell_style_center), Paragraph("Esterilización no monetaria sustentada en superávit fiscal primario.", cell_style_left)]
+    ]
+    t_ter = Table(termometro_data, colWidths=[130, 85, 75, 242])
+    t_ter.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F0FDF4")),
+        ('BACKGROUND', (0,2), (-1,2), colors.HexColor("#F0FDF4")),
+        ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#EFF6FF")),
+        ('BACKGROUND', (0,4), (-1,4), colors.HexColor("#F8FAFC")),
+        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
+        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+    ]))
+    elements.append(t_ter)
 
     elements.append(PageBreak())
 
@@ -415,7 +562,7 @@ def generar_informe_mensual_reportlab():
         body_style
     ))
     elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_1_rates.png"), width=532, height=310))
+    elements.append(Image(_find_image("chart_indec_1_rates.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
     tabla_tactica_data = [
@@ -459,7 +606,7 @@ def generar_informe_mensual_reportlab():
         body_style
     ))
     elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_2_ipc.png"), width=532, height=310))
+    elements.append(Image(_find_image("chart_indec_2_ipc.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
     tabla_social_data = [
@@ -489,10 +636,10 @@ def generar_informe_mensual_reportlab():
     elements.append(PageBreak())
 
     # =============================================================
-    # PÁGINA 6: CUADRO 1 (TABLA IPC COMPLETA)
+    # PÁGINA 6: CUADRO 1 (TABLA IPC Y TRANSMISIÓN COMPLETA)
     # =============================================================
-    elements.append(Paragraph("Cuadro 1. Índice de Precios al Consumidor (IPC)", h1_style))
-    elements.append(Paragraph("<i>Variación mensual, acumulada e interanual según aperturas por orden de incidencia relativa. Agosto de 2026, en porcentaje.</i>", ParagraphStyle('ST', fontName='Georgia-Italic', fontSize=8.0, textColor=MUTED, spaceAfter=5)))
+    elements.append(Paragraph("Cuadro 1. Índice de Precios al Consumidor (IPC) y Canales de Transmisión", h1_style))
+    elements.append(Paragraph("<i>Variación mensual, acumulada e interanual según aperturas por orden de incidencia relativa. Agosto de 2026, en porcentaje.</i>", ParagraphStyle('ST', fontName='Georgia-Italic', fontSize=7.5, textColor=MUTED, spaceAfter=4)))
 
     tabla_ipc_data = [
         [
@@ -529,16 +676,17 @@ def generar_informe_mensual_reportlab():
         ('BACKGROUND', (0,10), (-1,10), colors.HexColor("#F8FAFC")),
         ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
         ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 2.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('TOPPADDING', (0,0), (-1,-1), 2.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.0),
         ('LEFTPADDING', (0,0), (-1,-1), 4),
         ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     elements.append(t_ipc)
-    elements.append(Spacer(1, 3))
-    elements.append(Paragraph("<i>Fuente:</i> Instituto Nacional de Estadística y Censos (INDEC) y Dirección de Estadísticas e Investigaciones Económicas (DEIE) de Mendoza. Ordenado por orden decreciente de variación mensual relativa.", fig_caption))
-    elements.append(Spacer(1, 4))
+    elements.append(Spacer(1, 2.5))
+    elements.append(Paragraph("<i>Fuente:</i> INDEC y DEIE Mendoza. Ordenado por incidencia decreciente.", fig_caption))
+    elements.append(Spacer(1, 2.5))
 
+    elements.append(Paragraph("<b>Canales de Transmisión y Elasticidad de Pass-Through a Precios:</b>", h2_style))
     tabla_passthrough_data = [
         [Paragraph("<b>Canal de Transmisión / Rubro</b>", cell_header_style), Paragraph("<b>Incidencia en IPC (pp)</b>", cell_header_style), Paragraph("<b>Elasticidad / Pass-Through</b>", cell_header_style), Paragraph("<b>Implicancia para Empresas y Consumo</b>", cell_header_style)],
         [Paragraph("Tarifas de Electricidad y Gas de Red", cell_style_left), Paragraph("+0,65 pp", cell_style_center), Paragraph("Directo (100% regulado)", cell_style_center), Paragraph("Aumento en costos fijos de PyMEs industriales y riego agrícola.", cell_style_left)],
@@ -556,12 +704,45 @@ def generar_informe_mensual_reportlab():
         ('BACKGROUND', (0,4), (-1,4), colors.white),
         ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
         ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 2.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('TOPPADDING', (0,0), (-1,-1), 2.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.0),
         ('LEFTPADDING', (0,0), (-1,-1), 4),
         ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     elements.append(t_pt)
+    elements.append(Spacer(1, 2.5))
+
+    analisis_pt_box = Table([
+        [Paragraph("<b>EVALUACIÓN EMPÍRICA DE LA DISPERSIÓN DE PRECIOS RELATIVOS</b>", ParagraphStyle('PTH', fontName='Georgia-Bold', fontSize=7.4, textColor=PRIMARY))],
+        [Paragraph("La divergencia entre la variación de bienes (1,9% MoM) y servicios/regulados (3,0% MoM) ratifica que el proceso desinflacionario transita su fase de corrección de precios relativos. La estabilidad cambiaria funciona como ancla para los transables, mientras las tarifas absorben el retraso acumulado del período 2019-2023. Para las tesorerías corporativas, la estabilidad del tipo de cambio mayorista y la compresión del IPIM (1,4% MoM) permiten proyectar un alivio en costos de reposición hacia el cuarto trimestre de 2026.", ParagraphStyle('PTB', fontName='Georgia', fontSize=6.8, leading=9.0, textColor=SLATE))]
+    ], colWidths=[532])
+    analisis_pt_box.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), BG_CARD),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+        ('LINELEFT', (0,0), (-1,-1), 2.5, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(analisis_pt_box)
+    elements.append(Spacer(1, 2.5))
+
+    # Conclusiones Microsectoriales de Fijación de Precios
+    micro_pricing_box = Table([
+        [Paragraph("<b>DIRECTRICES DE PRICING Y POLÍTICA DE STOCKS PARA EMPRESAS</b>", ParagraphStyle('MPH', fontName='Georgia-Bold', fontSize=7.4, textColor=PRIMARY))],
+        [Paragraph("• <b>Comercio Mayorista y Retail:</b> Se recomienda rotación rápida de inventarios sobre márgenes unitarios, evitando acumulación de stock apalancado a tasas reales del 35% TNA.<br/>• <b>Industria Agroalimentaria:</b> Aprovechar estabilidad en costos de granos para pactar compras a plazo fijo en ARS con descuento financiero superior al 3% mensual.<br/>• <b>Empresas de Servicios:</b> Incorporar cláusulas de indexación escalonadas en contratos corporativos basadas en 50% IPC Núcleo y 50% RIPTE para preservar el valor real de los honorarios.", ParagraphStyle('MPB', fontName='Georgia', fontSize=6.8, leading=9.0, textColor=DARK_TEXT))]
+    ], colWidths=[532])
+    micro_pricing_box.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F0FDF4")),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#16A34A")),
+        ('LINELEFT', (0,0), (-1,-1), 2.5, colors.HexColor("#15803D")),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(micro_pricing_box)
 
     elements.append(PageBreak())
 
@@ -580,7 +761,7 @@ def generar_informe_mensual_reportlab():
         body_style
     ))
     elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_emae_master.png"), width=532, height=310))
+    elements.append(Image(_find_image("chart_indec_emae_master.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
     tabla_semaforo_data = [
@@ -626,7 +807,7 @@ def generar_informe_mensual_reportlab():
         body_style
     ))
     elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_3_cuyo.png"), width=532, height=310))
+    elements.append(Image(_find_image("chart_indec_3_cuyo.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
     tabla_cadenas_data = [
@@ -672,7 +853,7 @@ def generar_informe_mensual_reportlab():
         body_style
     ))
     elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_3b_regional_cuyo.png"), width=532, height=310))
+    elements.append(Image(_find_image("chart_indec_3b_regional_cuyo.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
     elements.append(Paragraph("<b>Cuadro. Desagregación Provincial por Sector (Variación Interanual %):</b>", h2_style))
@@ -734,7 +915,7 @@ def generar_informe_mensual_reportlab():
         body_style
     ))
     elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_4_monetary.png"), width=532, height=310))
+    elements.append(Image(_find_image("chart_indec_4_monetary.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
     tabla_rin_data = [
@@ -848,7 +1029,7 @@ def generar_informe_mensual_reportlab():
         body_style
     ))
     elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_6_fx.png"), width=532, height=310))
+    elements.append(Image(_find_image("chart_indec_6_fx.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
     tabla_hedge_data = [
@@ -892,7 +1073,7 @@ def generar_informe_mensual_reportlab():
         body_style
     ))
     elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_7_equity.png"), width=532, height=310))
+    elements.append(Image(_find_image("chart_indec_7_equity.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
     tabla_equity_data = [
@@ -922,9 +1103,9 @@ def generar_informe_mensual_reportlab():
     elements.append(PageBreak())
 
     # =============================================================
-    # PÁGINA 14: 9. FLASH NORMATIVO Y REFERENCIAS APA 7MA
+    # PÁGINA 14: 9. FLASH NORMATIVO, CALENDARIO Y REFERENCIAS APA
     # =============================================================
-    elements.append(Paragraph("9. Flash Normativo, Contexto Internacional y Referencias", h1_style))
+    elements.append(Paragraph("9. Flash Normativo, Calendario Crítico y Referencias Bibliográficas", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
@@ -934,10 +1115,10 @@ def generar_informe_mensual_reportlab():
     elements.append(Spacer(1, 2))
 
     tabla_eventos_data = [
-        [Paragraph("<b>Fecha / Evento Crítico</b>", cell_header_style), Paragraph("<b>Organismo / Emisor</b>", cell_header_style), Paragraph("<b>Impacto Esperado de Mercado</b>", cell_header_style)],
-        [Paragraph("28 de Agosto de 2026: Licitación de Letras y Bonos", cell_style_left), Paragraph("Secretaría de Finanzas", cell_style_center), Paragraph("Rollover de vencimientos en ARS y fijación de corte de TEM en Lecaps.", cell_style_left)],
+        [Paragraph("<b>Fecha / Evento Crítico</b>", cell_header_style), Paragraph("<b>Organismo / Emisor</b>", cell_header_style), Paragraph("<b>Impacto Esperado de Mercado & Rollover</b>", cell_header_style)],
+        [Paragraph("28 de Agosto de 2026: Licitación de Letras y Bonos", cell_style_left), Paragraph("Secretaría de Finanzas", cell_style_center), Paragraph("Rollover de vencimientos en ARS ($1,4 B); test de corte de TEM en Lecaps cortas.", cell_style_left)],
         [Paragraph("11 de Septiembre de 2026: Publicación IPC Agosto 2026", cell_style_left), Paragraph("INDEC / DEIE Mendoza", cell_style_center), Paragraph("Confirmación de convergencia mensual hacia el rango del 2% MoM.", cell_style_left)],
-        [Paragraph("18 de Septiembre de 2026: Reunión de Política Monetaria FOMC", cell_style_left), Paragraph("Reserva Federal (FED)", cell_style_center), Paragraph("Definición de tasas globales e impacto en el DXY y deuda emergente.", cell_style_left)]
+        [Paragraph("18 de Septiembre de 2026: Reunión de Política Monetaria FOMC", cell_style_left), Paragraph("Reserva Federal (FED)", cell_style_center), Paragraph("Definición de tasas globales e impacto en el DXY y deuda soberana emergente.", cell_style_left)]
     ]
     t_ev = Table(tabla_eventos_data, colWidths=[165, 105, 262])
     t_ev.setStyle(TableStyle([
@@ -954,7 +1135,24 @@ def generar_informe_mensual_reportlab():
         ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     elements.append(t_ev)
-    elements.append(Spacer(1, 4))
+    elements.append(Spacer(1, 2.5))
+
+    # Directrices Estratégicas para Comités de Inversión y Tesorerías
+    directrices_box = Table([
+        [Paragraph("<b>DIRECTRICES ESTRATÉGICAS Y RECOMENDACIONES DE CIERRE DE MES</b>", ParagraphStyle('DCH', fontName='Georgia-Bold', fontSize=7.4, textColor=PRIMARY))],
+        [Paragraph("• <b>Gestión de Liquidez Corporativa (30-60 días):</b> Maximizar colocaciones en Lecaps cortas (S31O6 / S28N6) a TEM 2,95%-3,05%, complementadas con cauciones bursátiles activas para optimizar rendimientos diarios de caja.<br/>• <b>Estrategia Cambiaria y Comercio Exterior (90-180 días):</b> Mantener coberturas selectivas mediante futuros Matba-Rofex solo para compromisos rígidos de importación, aprovechando la compresión de tasas implícitas (35%-38% TNA).<br/>• <b>Posicionamiento Soberano en Moneda Extranjera (+12 meses):</b> Sobreponderar bonos globales GD35 y GD38 con paridades inferiores al 62%, capturando una aceleración en el retorno total ante convergencia de spreads hacia 400 pb EMBI.", ParagraphStyle('DCB', fontName='Georgia', fontSize=6.8, leading=8.8, textColor=DARK_TEXT))]
+    ], colWidths=[532])
+    directrices_box.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F0FDF4")),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#16A34A")),
+        ('LINELEFT', (0,0), (-1,-1), 2.5, colors.HexColor("#15803D")),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(directrices_box)
+    elements.append(Spacer(1, 2.5))
 
     elements.append(Paragraph("<b>Referencias Bibliográficas (Normas APA 7ma edición):</b>", h2_style))
 
@@ -978,9 +1176,9 @@ def generar_informe_mensual_reportlab():
 
     ref_style = ParagraphStyle(
         'RefAPA_M', parent=styles['Normal'],
-        fontName='Georgia', fontSize=7.2, leading=10.0,
+        fontName='Georgia', fontSize=6.6, leading=8.8,
         alignment=TA_JUSTIFY, leftIndent=14, firstLineIndent=-14,
-        textColor=DARK_TEXT, spaceAfter=2
+        textColor=DARK_TEXT, spaceAfter=1.2
     )
 
     for r in refs:

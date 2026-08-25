@@ -35,9 +35,9 @@ def cargar_datos_del_dia():
 
 DATOS_DEL_DIA = cargar_datos_del_dia()
 
-# Configuración tipográfica y de estilo global
-plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial', 'Helvetica']
+# Configuración tipográfica y de estilo global: Georgia (serif) institucional, sans-serif solo en ejes
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.serif'] = ['Georgia', 'DejaVu Serif', 'Times New Roman']
 plt.rcParams['font.size'] = 8.0
 plt.rcParams['axes.spines.top'] = False
 plt.rcParams['axes.spines.right'] = False
@@ -61,7 +61,7 @@ C_GRAY  = "#64748B"
 C_GRID  = "#E2E8F0"
 
 def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis, plot_func, source_str, brand_str="UNCUYO"):
-    fig = plt.figure(figsize=(10.0, 7.5), dpi=300, facecolor="#F0F4F8")
+    fig = plt.figure(figsize=(10.64, 6.0), dpi=300, facecolor="#F0F4F8")
     
     # Fondo con gradiente sutil
     ax_bg = fig.add_axes([0, 0, 1, 1], zorder=-10)
@@ -72,8 +72,8 @@ def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis,
     
     # Tarjeta principal blanca
     main_card = patches.FancyBboxPatch(
-        (0.04, 0.04), 0.92, 0.92,
-        boxstyle="round,pad=0.015,rounding_size=0.025",
+        (0.03, 0.03), 0.94, 0.94,
+        boxstyle="round,pad=0.015,rounding_size=0.020",
         facecolor="#FFFFFF", edgecolor="#CBD5E1",
         linewidth=1.0, transform=fig.transFigure, zorder=-5
     )
@@ -81,50 +81,55 @@ def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis,
     
     # Pastilla superior izquierda de fecha
     pill = patches.FancyBboxPatch(
-        (0.07, 0.895), 0.25, 0.042,
-        boxstyle="round,pad=0.008,rounding_size=0.018",
+        (0.055, 0.890), 0.26, 0.048,
+        boxstyle="round,pad=0.008,rounding_size=0.015",
         facecolor="#E0F2FE", edgecolor="#BAE6FD",
         linewidth=0.8, transform=fig.transFigure
     )
     fig.patches.append(pill)
     
-    plt.figtext(0.085, 0.908, "•", fontsize=11.0, color="#0284C7", transform=fig.transFigure, va='center')
-    plt.figtext(0.105, 0.908, date_str, fontsize=8.8, fontweight='bold', color="#0369A1", transform=fig.transFigure, va='center')
+    plt.figtext(0.068, 0.905, "•", fontname="Georgia", fontsize=11.0, color="#0284C7", transform=fig.transFigure, va='center')
+    plt.figtext(0.088, 0.905, date_str, fontname="Georgia", fontsize=8.5, fontweight='bold', color="#0369A1", transform=fig.transFigure, va='center')
     
-    # Título y subtítulo
-    plt.figtext(0.07, 0.850, title_str, fontsize=14.5, fontweight='bold', color="#0F172A", transform=fig.transFigure)
-    plt.figtext(0.07, 0.822, subtitle_str, fontsize=8.5, color="#475569", transform=fig.transFigure)
+    # Título y subtítulo en Georgia Serif
+    plt.figtext(0.055, 0.835, title_str, fontname="Georgia", fontsize=13.0, fontweight='bold', color="#0F172A", transform=fig.transFigure)
+    plt.figtext(0.055, 0.805, subtitle_str, fontname="Georgia", fontsize=8.0, color="#475569", transform=fig.transFigure)
     
-    # 3 KPI Cards
+    # 3 KPI Cards con tipografía Georgia
     for idx, (k_title, k_val, k_sub, k_color) in enumerate(kpis):
-        x_pos = 0.07 + idx * 0.298
+        x_pos = 0.055 + idx * 0.302
         card = patches.FancyBboxPatch(
-            (x_pos, 0.665), 0.270, 0.140,
-            boxstyle="round,pad=0.008,rounding_size=0.018",
+            (x_pos, 0.640), 0.285, 0.145,
+            boxstyle="round,pad=0.008,rounding_size=0.015",
             facecolor="#FFFFFF", edgecolor="#E2E8F0",
             linewidth=0.9, transform=fig.transFigure
         )
         fig.patches.append(card)
         
         top_bar = patches.FancyBboxPatch(
-            (x_pos, 0.787), 0.270, 0.018,
-            boxstyle="round,pad=0.004,rounding_size=0.008",
+            (x_pos, 0.770), 0.285, 0.015,
+            boxstyle="round,pad=0.004,rounding_size=0.006",
             facecolor=k_color, edgecolor='none', transform=fig.transFigure
         )
         fig.patches.append(top_bar)
         
-        plt.figtext(x_pos + 0.135, 0.760, k_title, fontsize=8.0, fontweight='bold', color="#0F172A", ha='center', transform=fig.transFigure)
-        plt.figtext(x_pos + 0.135, 0.706, k_val, fontsize=15.0, fontweight='bold', color=k_color, ha='center', transform=fig.transFigure)
-        plt.figtext(x_pos + 0.135, 0.678, k_sub, fontsize=6.8, color="#64748B", ha='center', transform=fig.transFigure)
+        plt.figtext(x_pos + 0.142, 0.740, k_title, fontname="Georgia", fontsize=7.8, fontweight='bold', color="#0F172A", ha='center', transform=fig.transFigure)
+        plt.figtext(x_pos + 0.142, 0.685, k_val, fontname="Georgia", fontsize=14.0, fontweight='bold', color=k_color, ha='center', transform=fig.transFigure)
+        plt.figtext(x_pos + 0.142, 0.655, k_sub, fontname="Georgia", fontsize=6.8, color="#64748B", ha='center', transform=fig.transFigure)
         
     # Área de gráfico
-    ax_plot = fig.add_axes([0.08, 0.10, 0.84, 0.52])
+    ax_plot = fig.add_axes([0.065, 0.10, 0.87, 0.50])
     plot_func(ax_plot, fig)
     
-    # Footer institucional
-    plt.figtext(0.07, 0.055, source_str, fontsize=7.2, color="#64748B", transform=fig.transFigure)
-    plt.figtext(0.91, 0.055, brand_str, fontsize=9.5, fontweight='bold', color="#0284C7", ha='right', transform=fig.transFigure)
-    plt.figtext(0.915, 0.062, "•", fontsize=11, color="#EF4444", transform=fig.transFigure)
+    # Forzar que los ticks de ejes usen sans-serif técnico para máxima legibilidad
+    for label in ax_plot.get_xticklabels() + ax_plot.get_yticklabels():
+        label.set_fontfamily('sans-serif')
+        label.set_fontsize(7.2)
+    
+    # Footer institucional en Georgia Serif
+    plt.figtext(0.055, 0.045, source_str, fontname="Georgia", fontsize=7.0, color="#64748B", transform=fig.transFigure)
+    plt.figtext(0.935, 0.045, brand_str, fontname="Georgia", fontsize=9.0, fontweight='bold', color="#0284C7", ha='right', transform=fig.transFigure)
+    plt.figtext(0.940, 0.052, "•", fontsize=10, color="#EF4444", transform=fig.transFigure)
     
     out_path = os.path.join(OUT_DIR, filename)
     fig.savefig(out_path, dpi=300, facecolor=fig.get_facecolor(), edgecolor='none')
