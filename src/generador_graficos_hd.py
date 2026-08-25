@@ -72,7 +72,7 @@ def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis,
     
     # Tarjeta principal blanca
     main_card = patches.FancyBboxPatch(
-        (0.03, 0.03), 0.94, 0.94,
+        (0.025, 0.025), 0.950, 0.950,
         boxstyle="round,pad=0.015,rounding_size=0.020",
         facecolor="#FFFFFF", edgecolor="#CBD5E1",
         linewidth=1.0, transform=fig.transFigure, zorder=-5
@@ -81,55 +81,69 @@ def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis,
     
     # Pastilla superior izquierda de fecha
     pill = patches.FancyBboxPatch(
-        (0.055, 0.890), 0.26, 0.048,
+        (0.055, 0.895), 0.320, 0.044,
         boxstyle="round,pad=0.008,rounding_size=0.015",
         facecolor="#E0F2FE", edgecolor="#BAE6FD",
         linewidth=0.8, transform=fig.transFigure
     )
     fig.patches.append(pill)
     
-    plt.figtext(0.068, 0.905, "•", fontname="Georgia", fontsize=11.0, color="#0284C7", transform=fig.transFigure, va='center')
-    plt.figtext(0.088, 0.905, date_str, fontname="Georgia", fontsize=8.5, fontweight='bold', color="#0369A1", transform=fig.transFigure, va='center')
+    plt.figtext(0.068, 0.910, "•", fontname="Georgia", fontsize=10.0, color="#0284C7", transform=fig.transFigure, va='center')
+    plt.figtext(0.082, 0.910, date_str, fontname="Georgia", fontsize=8.0, fontweight='bold', color="#0369A1", transform=fig.transFigure, va='center')
     
     # Título y subtítulo en Georgia Serif
-    plt.figtext(0.055, 0.835, title_str, fontname="Georgia", fontsize=13.0, fontweight='bold', color="#0F172A", transform=fig.transFigure)
-    plt.figtext(0.055, 0.805, subtitle_str, fontname="Georgia", fontsize=8.0, color="#475569", transform=fig.transFigure)
+    plt.figtext(0.055, 0.840, title_str, fontname="Georgia", fontsize=12.5, fontweight='bold', color="#0F172A", transform=fig.transFigure)
+    plt.figtext(0.055, 0.808, subtitle_str, fontname="Georgia", fontsize=7.8, color="#475569", transform=fig.transFigure)
     
-    # 3 KPI Cards con tipografía Georgia
+    # KPI Cards dinámicas según cantidad de elementos (N=3 o N=4)
+    n_kpis = len(kpis)
+    x_start = 0.055
+    x_end = 0.945
+    total_w = x_end - x_start
+    gap = 0.014
+    card_w = (total_w - (n_kpis - 1) * gap) / n_kpis
+    card_h = 0.118
+    y_card = 0.665
+    
+    val_fontsize = 13.0 if n_kpis <= 3 else 11.2
+    title_fontsize = 7.6 if n_kpis <= 3 else 6.8
+    sub_fontsize = 6.6 if n_kpis <= 3 else 5.9
+    
     for idx, (k_title, k_val, k_sub, k_color) in enumerate(kpis):
-        x_pos = 0.055 + idx * 0.302
+        x_pos = x_start + idx * (card_w + gap)
         card = patches.FancyBboxPatch(
-            (x_pos, 0.640), 0.285, 0.145,
-            boxstyle="round,pad=0.008,rounding_size=0.015",
+            (x_pos, y_card), card_w, card_h,
+            boxstyle="round,pad=0.008,rounding_size=0.012",
             facecolor="#FFFFFF", edgecolor="#E2E8F0",
-            linewidth=0.9, transform=fig.transFigure
+            linewidth=0.8, transform=fig.transFigure
         )
         fig.patches.append(card)
         
         top_bar = patches.FancyBboxPatch(
-            (x_pos, 0.770), 0.285, 0.015,
-            boxstyle="round,pad=0.004,rounding_size=0.006",
+            (x_pos, y_card + card_h - 0.012), card_w, 0.012,
+            boxstyle="round,pad=0.004,rounding_size=0.004",
             facecolor=k_color, edgecolor='none', transform=fig.transFigure
         )
         fig.patches.append(top_bar)
         
-        plt.figtext(x_pos + 0.142, 0.740, k_title, fontname="Georgia", fontsize=7.8, fontweight='bold', color="#0F172A", ha='center', transform=fig.transFigure)
-        plt.figtext(x_pos + 0.142, 0.685, k_val, fontname="Georgia", fontsize=14.0, fontweight='bold', color=k_color, ha='center', transform=fig.transFigure)
-        plt.figtext(x_pos + 0.142, 0.655, k_sub, fontname="Georgia", fontsize=6.8, color="#64748B", ha='center', transform=fig.transFigure)
+        x_mid = x_pos + card_w / 2.0
+        plt.figtext(x_mid, y_card + card_h - 0.026, k_title, fontname="Georgia", fontsize=title_fontsize, fontweight='bold', color="#0F172A", ha='center', transform=fig.transFigure)
+        plt.figtext(x_mid, y_card + card_h - 0.064, k_val, fontname="Georgia", fontsize=val_fontsize, fontweight='bold', color=k_color, ha='center', transform=fig.transFigure)
+        plt.figtext(x_mid, y_card + 0.015, k_sub, fontname="Georgia", fontsize=sub_fontsize, color="#64748B", ha='center', transform=fig.transFigure)
         
-    # Área de gráfico
-    ax_plot = fig.add_axes([0.065, 0.10, 0.87, 0.50])
+    # Área de gráfico con altura segura para evitar cualquier solapamiento
+    ax_plot = fig.add_axes([0.065, 0.125, 0.870, 0.490])
     plot_func(ax_plot, fig)
     
     # Forzar que los ticks de ejes usen sans-serif técnico para máxima legibilidad
     for label in ax_plot.get_xticklabels() + ax_plot.get_yticklabels():
         label.set_fontfamily('sans-serif')
-        label.set_fontsize(7.2)
+        label.set_fontsize(7.0)
     
-    # Footer institucional en Georgia Serif
-    plt.figtext(0.055, 0.045, source_str, fontname="Georgia", fontsize=7.0, color="#64748B", transform=fig.transFigure)
-    plt.figtext(0.935, 0.045, brand_str, fontname="Georgia", fontsize=9.0, fontweight='bold', color="#0284C7", ha='right', transform=fig.transFigure)
-    plt.figtext(0.940, 0.052, "•", fontsize=10, color="#EF4444", transform=fig.transFigure)
+    # Footer institucional en Georgia Serif con margen inferior seguro
+    plt.figtext(0.055, 0.038, source_str, fontname="Georgia", fontsize=6.8, color="#64748B", transform=fig.transFigure)
+    plt.figtext(0.935, 0.038, brand_str, fontname="Georgia", fontsize=8.5, fontweight='bold', color="#0284C7", ha='right', transform=fig.transFigure)
+    plt.figtext(0.940, 0.044, "•", fontsize=9, color="#EF4444", transform=fig.transFigure)
     
     out_path = os.path.join(OUT_DIR, filename)
     fig.savefig(out_path, dpi=300, facecolor=fig.get_facecolor(), edgecolor='none')
@@ -629,8 +643,8 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
         }
 
     ax.axis('off')
-    ax1 = fig.add_axes([0.19, 0.11, 0.28, 0.50])
-    ax2 = fig.add_axes([0.55, 0.11, 0.38, 0.50])
+    ax1 = fig.add_axes([0.18, 0.13, 0.29, 0.45])
+    ax2 = fig.add_axes([0.57, 0.13, 0.36, 0.45])
     ax1.set_facecolor("#FFFFFF")
     ax2.set_facecolor("#FFFFFF")
 
@@ -644,15 +658,20 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
     _xmin_fx = min(cotiz_vals) * 0.94
     for y, val, col, br in zip(y_fx, cotiz_vals, colores_fx, brechas_m):
         ax1.hlines(y=y, xmin=_xmin_fx, xmax=val, color=col, lw=2.2, alpha=0.85)
-        ax1.plot(val, y, marker='o', markersize=7.0, color=col, markeredgecolor='white')
+        ax1.plot(val, y, marker='o', markersize=6.5, color=col, markeredgecolor='white')
         ax1.text(val + (max(cotiz_vals) - min(cotiz_vals)) * 0.02, y, f"${val:,.2f} ({br})".replace(",", "X").replace(".", ",").replace("X", "."),
-                 va='center', fontsize=7.2, fontweight='bold', color=col)
+                 va='center', fontsize=6.8, fontweight='bold', color=col)
 
     ax1.set_yticks(y_fx)
-    ax1.set_yticklabels(dolares_nom, fontsize=6.9)
+    ax1.set_yticklabels(dolares_nom, fontsize=6.8)
+    for lbl in ax1.get_yticklabels():
+        lbl.set_fontfamily('sans-serif')
+    for lbl in ax1.get_xticklabels():
+        lbl.set_fontfamily('sans-serif')
+        lbl.set_fontsize(6.8)
     ax1.set_xlim(_xmin_fx, max(cotiz_vals) * 1.10)
-    ax1.set_title("A. Cotizaciones Cambiarias y Brechas Spot", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
-    ax1.set_xlabel("Cotización en Pesos (ARS)", fontsize=7.5, color=C_SLATE)
+    ax1.set_title("A. Cotizaciones Cambiarias y Brechas Spot", fontsize=8.0, fontweight='bold', color=C_NAVY, pad=6, loc='left')
+    ax1.set_xlabel("Cotización en Pesos (ARS)", fontsize=7.0, color=C_SLATE, labelpad=2)
     ax1.grid(axis='x', linestyle='--', color=C_GRID, lw=0.6)
 
     posiciones = rofex["posiciones"]
@@ -663,12 +682,14 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
     x_pos = np.arange(len(posiciones))
     ax2.bar(x_pos, oi_contratos, color="#E2E8F0", width=0.45, label='Open Interest (k contratos)')
     for i, oi in enumerate(oi_contratos):
-        ax2.text(x_pos[i], oi + max(oi_contratos) * 0.02, f"{oi}k", ha='center', fontsize=6.8, color=C_SLATE)
+        ax2.text(x_pos[i], oi + max(oi_contratos) * 0.02, f"{oi}k", ha='center', fontsize=6.5, color=C_SLATE)
 
-    ax2.set_ylabel("Open Interest (Miles de contratos)", fontsize=7.5, color=C_SLATE)
+    ax2.set_ylabel("Open Interest (Miles de contratos)", fontsize=7.0, color=C_SLATE)
     ax2.set_ylim(0, max(oi_contratos) * 1.30)
     ax2.set_xticks(x_pos)
-    ax2.set_xticklabels(posiciones, fontsize=7.2)
+    ax2.set_xticklabels(posiciones, fontsize=6.8)
+    for lbl in ax2.get_xticklabels() + ax2.get_yticklabels():
+        lbl.set_fontfamily('sans-serif')
     
     ax2_t = ax2.twinx()
     ax2_t.spines['top'].set_visible(False)
@@ -677,17 +698,20 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
     n_pos = len(x_pos)
     for i, (tna, pr) in enumerate(zip(tna_rofex, prob_salto)):
         if i == n_pos - 1:
-            ax2_t.annotate(f"{tna:.1f}%\n(P:{pr:.1f}%)", (x_pos[i], tna), xytext=(0, 11), textcoords="offset points",
-                           ha='center', va='bottom', fontsize=6.5, fontweight='bold', color=C_RED)
+            ax2_t.annotate(f"{tna:.1f}%\n(P:{pr:.1f}%)", (x_pos[i], tna), xytext=(0, 9), textcoords="offset points",
+                           ha='center', va='bottom', fontsize=6.2, fontweight='bold', color=C_RED)
         else:
-            ax2_t.annotate(f"{tna:.1f}%\n(P:{pr:.1f}%)", (x_pos[i], tna), xytext=(14, 0), textcoords="offset points",
-                           ha='left', va='center', fontsize=6.5, fontweight='bold', color=C_RED)
-    ax2_t.set_ylabel("Tasa Implícita TNA (%)", fontsize=7.5, color=C_RED, labelpad=8)
+            ax2_t.annotate(f"{tna:.1f}%\n(P:{pr:.1f}%)", (x_pos[i], tna), xytext=(12, 0), textcoords="offset points",
+                           ha='left', va='center', fontsize=6.2, fontweight='bold', color=C_RED)
+    ax2_t.set_ylabel("Tasa Implícita TNA (%)", fontsize=7.0, color=C_RED, labelpad=6)
     _pad_tna = max(1.5, (max(tna_rofex) - min(tna_rofex)) * 0.35)
     ax2_t.set_ylim(min(tna_rofex) - _pad_tna * 1.6, max(tna_rofex) + _pad_tna)
     ax2_t.grid(False)
+    for lbl in ax2_t.get_yticklabels():
+        lbl.set_fontfamily('sans-serif')
+        lbl.set_fontsize(6.8)
     
-    ax2.set_title("B. Futuros Matba-Rofex y Prob. Salto", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
+    ax2.set_title("B. Futuros Matba-Rofex y Prob. Salto", fontsize=8.0, fontweight='bold', color=C_NAVY, pad=6, loc='left')
 
 # ==============================================================================
 # 8. FIGURA 7: RENTA VARIABLE & RADAR DE VALUACIÓN

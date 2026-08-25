@@ -1029,7 +1029,7 @@ def generar_informe_mensual_reportlab():
         body_style
     ))
     elements.append(Paragraph(
-        "En el plano cuantitativo de activos cruzados (Lecap, Boncer, GD30, CCL y Merval), el <b>Ratio de Absorción (AR)</b> derivado de los dos primeros componentes principales se ubica en <b>64,2%</b> (\(\Delta AR = -0,4\sigma\)), por debajo del umbral crítico de fragilidad del 75%. En paralelo, el <b>Índice de Turbulencia de Mahalanobis (\(d_t\))</b> se sitúa en <b>4,12</b> frente a un límite crítico \(\chi^2_{0.95}(5) = 11,07\), confirmando un <b>régimen resiliente y desacoplado</b> donde la diversificación opera con normalidad.",
+        "En el plano cuantitativo de activos cruzados (Lecap, Boncer, GD30, CCL y Merval), el <b>Ratio de Absorción (AR)</b> derivado de los dos primeros componentes principales se ubica en <b>64,2%</b> (&Delta;AR = -0,40 desvíos), por debajo del umbral crítico de fragilidad del 75%. En paralelo, el <b>Índice de Turbulencia de Mahalanobis (<i>d<sub>t</sub></i>)</b> se sitúa en <b>4,12</b> frente al valor crítico Chi² al 95% de 11,07, confirmando un <b>régimen resiliente y desacoplado</b> donde la diversificación opera con normalidad.",
         body_style
     ))
     elements.append(Spacer(1, 2))
