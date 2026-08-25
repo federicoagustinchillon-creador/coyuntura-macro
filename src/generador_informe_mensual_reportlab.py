@@ -196,6 +196,11 @@ def _find_image(filename):
 def generar_informe_mensual_reportlab():
     pdf_path = os.path.join(OUT_DIR_MENSUAL, "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
     doc = SimpleDocTemplate(
+        title="Informe de Coyuntura Macroeconómica & Mercado de Capitales — Agosto 2026",
+        author="Federico Agustín Chillón",
+        subject="Economía Aplicada & Estrategia de Inversión — FCE UNCUYO",
+        creator="Federico Agustín Chillón — Lead Macro & Financial Strategist",
+        keywords="Macroeconomía, Finanzas, Curva Soberana, Inflación, Riesgo Sistémico, Federico Agustín Chillón, UNCUYO",
         pdf_path,
         pagesize=letter,
         leftMargin=40,
