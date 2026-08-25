@@ -1,12 +1,12 @@
 {
-  "fecha": "2026-08-21",
+  "fecha": "2026-08-25",
   "dolar": {
-    "oficial_bna": 1515.0,
+    "oficial_bna": 1055.0,
     "mayorista": 1485.0,
     "mep": 1532.33,
-    "ccl": 1596.59,
+    "ccl": 1220.0,
     "blue": 1615.0,
-    "brecha_ccl_oficial_pct": 5.39
+    "brecha_ccl_oficial_pct": 15.64
   },
   "tasas_ars": {
     "lecap_corta_tem": 2.95,
@@ -70,5 +70,29 @@
         "recom": "SOBREPONDERAR"
       }
     ]
-  }
+  },
+  "black_litterman_tactical_views": [
+    {
+      "asset": "ALUA.BA",
+      "view_type": "ABSOLUTE",
+      "view_return_annual": 0.265,
+      "confidence_omega": 0.00045,
+      "thesis": "Contrato hidroeléctrico Futaleufú (10.6 USD/MWh hasta 2050) + Capex eólico 332 MW genera ventaja de costo en aluminio primario."
+    },
+    {
+      "asset": "GD30.BA",
+      "view_type": "ABSOLUTE",
+      "view_return_annual": 0.21,
+      "confidence_omega": 0.0006,
+      "thesis": "Compresión de curva soberana por ancla fiscal (superávit primario) y pago de cupones."
+    },
+    {
+      "asset": "GGAL.BA",
+      "view_type": "RELATIVE_TO_BENCHMARK",
+      "relative_benchmark": "SPY",
+      "excess_return_annual": 0.085,
+      "confidence_omega": 0.00075,
+      "thesis": "Crecimiento de crédito privado real desplazando exposición a títulos públicos."
+    }
+  ]
 }

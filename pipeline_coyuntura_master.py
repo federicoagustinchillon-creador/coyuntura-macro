@@ -24,6 +24,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
+from src.sync_secondbrain_macro import sincronizar_desde_secondbrain
 from src.actualizador_datos import construir_base_datos_macro
 from src.generador_graficos_hd import generar_todas_las_infografias
 from src.generador_informe_diario import compilar_informe_diario
@@ -81,7 +82,11 @@ def ejecutar_pipeline_coyuntura_completo():
         os.makedirs(d, exist_ok=True)
         
     ruta_excel = os.path.join(dir_bd, "Base_Datos_Macro_Financiera.xlsx")
-    
+
+    # 0. Sincronizacion de feeds en vivo desde SecondBrain
+    print("\n[0/5] Sincronizando feeds en vivo desde SecondBrain...")
+    sincronizar_desde_secondbrain()
+
     # 1. Base de Datos
     print("\n[1/5] Consolidando Base de Datos Macro-Financiera...")
     construir_base_datos_macro(ruta_excel)
