@@ -229,7 +229,6 @@ function terminal() {
     fuentes: {},
     ok: false,
     lastRefresh: '--:--:--',
-    charts: {},
 
     init() {
       lucide.createIcons();
@@ -266,17 +265,26 @@ function terminal() {
     },
 
     _chart(id) {
-      if (!this.charts[id]) {
+      // Las instancias de ECharts NUNCA deben vivir dentro del estado
+      // reactivo de Alpine (this.*): Alpine usa @vue/reactivity por debajo,
+      // que envuelve cualquier objeto guardado en un Proxy. ECharts depende
+      // de identidad de objeto real (WeakMaps internos, cierres con `this`)
+      // para su ciclo de tooltip/axisPointer -- contra un Proxy, dispatchAction
+      // ("showTip") corre sin errores pero nunca pinta nada, porque el
+      // objeto que ve el usuario en pantalla y el que recibe la llamada
+      // dejan de ser el mismo. Por eso viven en `chartInstances`, un objeto
+      // plano fuera de Alpine (ver mas abajo, junto a `activeCharts`).
+      if (!chartInstances[id]) {
         const dom = document.getElementById(id);
         if (!dom) return null;
-        this.charts[id] = echarts.init(dom);
-        activeCharts.push(this.charts[id]);
+        chartInstances[id] = echarts.init(dom);
+        activeCharts.push(chartInstances[id]);
         // ResizeObserver, no un unico resize() manual: Tailwind CDN aplica
         // las clases de layout (h-60/w-full) DESPUES de que echarts.init
         // mide el contenedor -- sin esto el canvas queda en 0px de ancho.
-        new ResizeObserver(() => this.charts[id] && this.charts[id].resize()).observe(dom);
+        new ResizeObserver(() => chartInstances[id] && chartInstances[id].resize()).observe(dom);
       }
-      return this.charts[id];
+      return chartInstances[id];
     },
 
     // Formato de fecha local (dd-mm-yy / dd-mm), nunca el orden ingles mm-dd.
@@ -489,6 +497,9 @@ function terminal() {
   }
 }
 
+// Objeto plano deliberadamente fuera de Alpine.data() -- ver comentario en
+// _chart() de por que las instancias de ECharts no pueden vivir en `this`.
+const chartInstances = {};
 const activeCharts = [];
 let resizeRaf = null;
 window.addEventListener('resize', () => {
