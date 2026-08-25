@@ -83,8 +83,8 @@ def ejecutar_pipeline_coyuntura_completo():
         
     ruta_excel = os.path.join(dir_bd, "Base_Datos_Macro_Financiera.xlsx")
 
-    # 0. Sincronizacion de feeds en vivo: BCRA + yfinance (oficial) y SecondBrain (cualitativo)
-    print("\n[0/5] Sincronizando feeds en vivo (BCRA, yfinance, SecondBrain)...")
+    # 0. Sincronizacion de feeds en vivo: registro macro interno + BCRA/yfinance de respaldo
+    print("\n[0/5] Sincronizando feeds en vivo...")
     sincronizar_todo()
 
     # 1. Base de Datos

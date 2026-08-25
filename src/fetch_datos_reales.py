@@ -4,21 +4,18 @@ CONECTORES DE DATOS REALES: BCRA (API oficial) Y MERCADO (yfinance)
 Autor: Federico Agustin Chillon
 Facultad de Ciencias Economicas -- UNCUYO / OERU
 
-Fuente PRIMARIA y autoritativa para cambiario/tasas: API estadisticas del
-BCRA (api.bcra.gob.ar, v4.0, publica y gratuita, sin autenticacion).
-Fuente para indice Merval y equity: yfinance (Yahoo Finance).
+Fuente oficial verificable para cambiario/tasas: API estadisticas del BCRA
+(api.bcra.gob.ar, v4.0, publica y gratuita, sin autenticacion). Fuente para
+indice Merval y equity: yfinance (Yahoo Finance).
 
-Por que existe este modulo (hallazgo critico, ver CHANGELOG en el commit):
-El conector anterior (src/sync_secondbrain_macro.py) tomaba tipo_de_cambio_
-oficial y ccl_mercado del registro de SecondBrain. Al contrastar contra el
-BCRA real se encontro una discrepancia enorme: SecondBrain informaba oficial
-1055.0 el mismo dia que el BCRA publicaba minorista 1531.07 y mayorista
-1511.53 (~45% de diferencia). Ademas, SecondBrain informaba una "tasa de
-politica monetaria" de 35.0% cuando el BCRA no publica una tasa de politica
-monetaria vigente desde 2025-07 (esquema sin tasa fija) y la tasa de pases a
-1 dia real ronda 20-26%. Conclusion: el registro de SecondBrain no debe
-tratarse como fuente de datos de mercado verificados -- se reserva para las
-tesis cualitativas Black-Litterman (juicio de inversion, no serie oficial).
+Por que existe este modulo: un registro macro interno usado como fuente de
+cambiario mostro en su momento una discrepancia enorme contra el BCRA real
+(~45% de diferencia en el tipo de cambio oficial) y una "tasa de politica
+monetaria" que el BCRA no publica desde 2025-07 (esquema sin tasa fija; la
+tasa de pases a 1 dia real ronda 20-26%). Ese registro ya fue corregido en
+su fuente y hoy tagea cada campo con su procedencia (`__source`); este
+modulo queda como respaldo verificable y como unica fuente para el indice
+Merval -- ver src/sync_datos_del_dia.py para como se combinan ambas.
 
 IDs de variables BCRA usadas (confirmados contra /estadisticas/v4.0/monetarias):
   4   = Tipo de cambio minorista (promedio vendedor)      -> proxy de "oficial"

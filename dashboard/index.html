@@ -42,15 +42,15 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] font-mono">
       <div class="bg-zinc-900/60 border border-white/10 px-3 py-1.5 rounded-xl">
         <div class="text-zinc-500 text-[10px] uppercase tracking-wide">BCRA (oficial/tasas)</div>
-        <div class="text-white mt-0.5" x-text="fuentes.bcra_yfinance?.oficial_minorista?.fecha ? 'al ' + fuentes.bcra_yfinance.oficial_minorista.fecha : 's/d'"></div>
+        <div class="text-white mt-0.5" x-text="fuentes.bcra_yfinance?.oficial_minorista?.fecha ? 'al ' + fmtFechaCorta(fuentes.bcra_yfinance.oficial_minorista.fecha) : 's/d'"></div>
       </div>
       <div class="bg-zinc-900/60 border border-white/10 px-3 py-1.5 rounded-xl">
         <div class="text-zinc-500 text-[10px] uppercase tracking-wide">yfinance (Merval)</div>
-        <div class="text-white mt-0.5" x-text="fuentes.bcra_yfinance?.merval_ultimo_cierre?.fecha ? 'al ' + fuentes.bcra_yfinance.merval_ultimo_cierre.fecha : 's/d'"></div>
+        <div class="text-white mt-0.5" x-text="fuentes.bcra_yfinance?.merval_ultimo_cierre?.fecha ? 'al ' + fmtFechaCorta(fuentes.bcra_yfinance.merval_ultimo_cierre.fecha) : 's/d'"></div>
       </div>
       <div class="bg-zinc-900/60 border border-white/10 px-3 py-1.5 rounded-xl">
-        <div class="text-zinc-500 text-[10px] uppercase tracking-wide">SecondBrain (vistas)</div>
-        <div class="text-white mt-0.5" x-text="fuentes.secondbrain_registry_timestamp || 's/d'"></div>
+        <div class="text-zinc-500 text-[10px] uppercase tracking-wide">Vistas tácticas</div>
+        <div class="text-white mt-0.5" x-text="fuentes.vistas_timestamp ? fmtFechaCorta(fuentes.vistas_timestamp) : 's/d'"></div>
       </div>
     </div>
   </header>
@@ -64,7 +64,7 @@
              :class="esVivo(k) ? 'border-emerald-500/30' : 'border-white/[0.08]'">
           <p class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400" x-text="labelDolar(k)"></p>
           <p class="mt-2 text-xl font-bold font-mono text-white tabular-nums" x-text="fmtDolar(k)"></p>
-          <p class="mt-1 text-[10px] font-mono" :class="esVivo(k) ? 'text-emerald-400' : 'text-zinc-500'" x-text="fuenteDolar(k)"></p>
+          <p class="mt-1 text-[10px] font-mono" :class="esVivo(k) ? 'text-emerald-400' : 'text-zinc-500'" x-text="formatearFuente(fuenteDolar(k))"></p>
         </div>
       </template>
     </div>
@@ -88,7 +88,7 @@
         <div class="flex justify-between"><dt class="text-zinc-400">BADLAR privados</dt><dd class="text-white" x-text="pct(datos.tasas_bcra_referencia?.badlar_privados_tna?.valor)"></dd></div>
         <div class="flex justify-between"><dt class="text-zinc-400">Pases 1 día</dt><dd class="text-white" x-text="pct(datos.tasas_bcra_referencia?.pases_1d_tna?.valor)"></dd></div>
         <div class="flex justify-between"><dt class="text-zinc-400">Reservas brutas</dt><dd class="text-white" x-text="fmt(datos.tasas_bcra_referencia?.reservas_brutas_usd_m?.valor) + ' M USD'"></dd></div>
-        <div class="text-[10px] text-zinc-500 pt-1" x-text="'al ' + (datos.tasas_bcra_referencia?.badlar_privados_tna?.fecha || 's/d')"></div>
+        <div class="text-[10px] text-zinc-500 pt-1" x-text="'al ' + fmtFechaCorta(datos.tasas_bcra_referencia?.badlar_privados_tna?.fecha)"></div>
       </dl>
     </div>
     <div class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl">
@@ -152,7 +152,7 @@
 
   <!-- Vistas Black-Litterman -->
   <section class="bg-zinc-900/60 backdrop-blur-md border border-emerald-500/30 p-6 rounded-2xl">
-    <h2 class="text-lg font-semibold text-white tracking-tight mb-1">Vistas Tácticas Black-Litterman <span class="text-emerald-400 text-xs font-normal normal-case">· SecondBrain, juicio cualitativo</span></h2>
+    <h2 class="text-lg font-semibold text-white tracking-tight mb-1">Vistas Tácticas Black-Litterman <span class="text-emerald-400 text-xs font-normal normal-case">· juicio cualitativo interno</span></h2>
     <p class="text-xs text-zinc-400 mb-4">Tesis de inversión vigentes. No son una serie de mercado verificada -- son la lectura táctica del analista, a diferencia del cambiario/tasas de arriba que sí vienen de BCRA/yfinance.</p>
     <div class="overflow-x-auto">
       <table class="w-full text-left text-sm">
@@ -279,17 +279,31 @@ function terminal() {
       return this.charts[id];
     },
 
-    _tooltipBase() {
-      return {
-        trigger: 'axis',
-        backgroundColor: 'rgba(18,18,21,0.95)',
-        borderColor: 'rgba(255,255,255,0.12)',
-        textStyle: { color: '#fafafa', fontSize: 12, fontFamily: 'JetBrains Mono' }
-      };
+    // Formato de fecha local (dd-mm-yy / dd-mm), nunca el orden ingles mm-dd.
+    fmtFechaCorta(iso) {
+      if (!iso) return 's/d';
+      const [y, m, d] = iso.slice(0, 10).split('-');
+      if (!y || !m || !d) return iso;
+      const resto = iso.slice(10).trim(); // " HH:MM:SS" si vino un timestamp completo
+      return `${d}-${m}-${y.slice(2)}` + (resto ? ' ' + resto.slice(0, 5) : '');
     },
+    fmtFechaEje(iso) {
+      const [, m, d] = iso.slice(0, 10).split('-');
+      return `${d}-${m}`;
+    },
+    // Reemplaza cualquier fecha ISO (con o sin hora) embebida en un string
+    // de fuente por su formato local dd-mm-yy.
+    formatearFuente(texto) {
+      if (!texto) return texto;
+      return texto.replace(/(\d{4})-(\d{2})-(\d{2})(T[\d:.]+Z?)?/g, (_, y, mo, d, t) => {
+        const corto = `${d}-${mo}-${y.slice(2)}`;
+        return t ? corto + ' ' + t.slice(1, 6) : corto;
+      });
+    },
+
     _ejeFechas(serie) {
       return {
-        type: 'category', data: serie.map(p => p.fecha.slice(5)), boundaryGap: false,
+        type: 'category', data: serie.map(p => this.fmtFechaEje(p.fecha)), boundaryGap: false,
         axisLine: { lineStyle: { color: '#3f3f46' } },
         axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', fontSize: 10, interval: Math.ceil(serie.length / 6) }
       };
@@ -299,6 +313,27 @@ function terminal() {
         type: 'value', scale: true,
         axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', fontSize: 10, formatter },
         splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } }
+      };
+    },
+    // Tooltip con fecha completa en formato local (dd-mm-yy, con año) +
+    // valor y descripcion de cada serie -- lo que se ve "donde pongo el
+    // visor" (hover), independiente de las etiquetas fijas (endLabel).
+    _tooltipConFecha(serie, formatearValor, descripcion) {
+      return {
+        trigger: 'axis',
+        backgroundColor: 'rgba(18,18,21,0.95)',
+        borderColor: 'rgba(255,255,255,0.12)',
+        textStyle: { color: '#fafafa', fontSize: 12, fontFamily: 'JetBrains Mono' },
+        formatter: (params) => {
+          if (!params.length) return '';
+          const fecha = this.fmtFechaCorta(serie[params[0].dataIndex]?.fecha);
+          let html = `<div style="font-weight:600;margin-bottom:4px">${fecha}</div>`;
+          params.forEach(p => {
+            html += `<div>${p.marker} ${p.seriesName}: <b>${formatearValor(p.value)}</b></div>`;
+          });
+          if (descripcion) html += `<div style="color:#71717a;font-size:10px;margin-top:4px;max-width:220px;white-space:normal">${descripcion}</div>`;
+          return html;
+        }
       };
     },
 
@@ -316,7 +351,7 @@ function terminal() {
       const oficial = this.historico.oficial_minorista || [], mayorista = this.historico.mayorista_a3500 || [];
       if (!chart || !oficial.length) return;
       chart.setOption({
-        tooltip: this._tooltipBase(),
+        tooltip: this._tooltipConFecha(oficial, (v) => '$' + v.toLocaleString('es-AR', {maximumFractionDigits: 2}), 'Tipo de cambio publicado por BCRA (promedio vendedor / A3500).'),
         legend: { data: ['Oficial', 'Mayorista'], textStyle: { color: '#a1a1aa', fontSize: 10 }, top: 0 },
         grid: { top: 28, right: 70, bottom: 24, left: 55 },
         xAxis: this._ejeFechas(oficial),
@@ -335,7 +370,7 @@ function terminal() {
       const badlar = this.historico.badlar_privados || [], pases = this.historico.pases_1d || [];
       if (!chart || !badlar.length) return;
       chart.setOption({
-        tooltip: this._tooltipBase(),
+        tooltip: this._tooltipConFecha(badlar, (v) => v.toFixed(2) + '%', 'BADLAR: tasa privados a 30/35 días. Pases: tasa BCRA a 1 día (referencia corta).'),
         legend: { data: ['BADLAR', 'Pases 1d'], textStyle: { color: '#a1a1aa', fontSize: 10 }, top: 0 },
         grid: { top: 28, right: 60, bottom: 24, left: 45 },
         xAxis: this._ejeFechas(badlar),
@@ -354,7 +389,7 @@ function terminal() {
       const serie = this.historico.merval || [];
       if (!chart || !serie.length) return;
       chart.setOption({
-        tooltip: this._tooltipBase(),
+        tooltip: this._tooltipConFecha(serie, (v) => v.toLocaleString('es-AR', {maximumFractionDigits: 0}) + ' pts', 'Índice líder de acciones argentinas (BYMA), cierre diario en ARS.'),
         grid: { top: 12, right: 70, bottom: 24, left: 65 },
         xAxis: this._ejeFechas(serie),
         yAxis: this._ejeValor((v) => (v / 1e6).toFixed(2) + 'M'),
@@ -408,7 +443,18 @@ function terminal() {
       });
 
       chart.setOption({
-        tooltip: { ...this._tooltipBase(), valueFormatter: (v) => v.toFixed(2) + '%' },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(18,18,21,0.95)',
+          borderColor: 'rgba(255,255,255,0.12)',
+          textStyle: { color: '#fafafa', fontSize: 12, fontFamily: 'JetBrains Mono' },
+          formatter: (params) => {
+            const p = params[0];
+            return `<div style="font-weight:600;margin-bottom:4px">Tramo ${p.axisValue}</div>`
+              + `<div>${p.marker} TIR estimada: <b>${p.value.toFixed(2)}%</b></div>`
+              + `<div style="color:#71717a;font-size:10px;margin-top:4px;max-width:200px;white-space:normal">Curva parametrica ajustada a bonos soberanos Bonares/Globales.</div>`;
+          }
+        },
         grid: { top: 12, right: 16, bottom: 24, left: 45 },
         xAxis: {
           type: 'category', data: tenores.map(t => t + 'y'), boundaryGap: false,

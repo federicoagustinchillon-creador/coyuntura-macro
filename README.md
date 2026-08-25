@@ -122,27 +122,27 @@ El pipeline ejecutará automáticamente la validación de bases, renderizado de 
 
 ---
 
-## 4. Feeds en Vivo (SecondBrain) y Dashboard Web de Acompañamiento
+## 4. Feeds en Vivo y Dashboard Web de Acompañamiento
 
 Para el consumo entre informes (lunes a jueves), ademas del ciclo editorial
 de PDFs, el ecosistema expone:
 
-- **Conector de feeds en vivo** (`src/sync_secondbrain_macro.py`): antes de
+- **Conector de feeds en vivo** (`src/sync_datos_del_dia.py`): antes de
   cada corrida del pipeline (Paso 0), sincroniza `01_Bases_Datos/
-  datos_del_dia.json` con el registro macro vivo de SecondBrain
-  (`C:\Users\fedea\SecondBrain\core\macro_coyuntura\
-  live_macro_views_registry.json`) -- solo los campos con equivalencia
-  exacta (dolar oficial, CCL, brecha, vistas tacticas Black-Litterman). El
-  resto del contrato sigue siendo carga manual por diseno; ver
-  `implementation_plan.md` para el detalle campo a campo.
+  datos_del_dia.json` contra fuentes oficiales verificables -- BCRA
+  (`api.bcra.gob.ar`) para cambiario/tasas y `yfinance` para el indice
+  Merval, con un registro macro interno como capa adicional para vistas
+  tacticas de inversion. Solo se toman campos con equivalencia exacta y
+  trazabilidad de fuente; el resto del contrato sigue siendo carga manual
+  por diseno. Ver `implementation_plan.md` para el detalle campo a campo.
 
 - **Dashboard web** (`dashboard/`): terminal fintech (FastAPI + Tailwind +
   Alpine.js + Apache ECharts) que sirve en vivo el contenido vigente de
-  `datos_del_dia.json`, re-sincronizando con SecondBrain en cada request.
-  Arranque local:
+  `datos_del_dia.json`, re-sincronizando en cada request. Arranque local:
   ```powershell
   pip install -r dashboard/requirements.txt
   uvicorn dashboard.api:app --reload --port 8420
   ```
   Luego abrir `http://127.0.0.1:8420`. Los campos con borde verde en las
-  tarjetas KPI indican dato vivo de SecondBrain; el resto es carga manual.
+  tarjetas KPI indican dato vivo verificado contra su fuente oficial; el
+  resto es carga manual.

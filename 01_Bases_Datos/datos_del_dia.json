@@ -99,17 +99,17 @@
     "badlar_privados_tna": {
       "valor": 23.625,
       "fecha": "2026-08-25",
-      "fuente": "SecondBrain"
+      "fuente": "registro interno"
     },
     "pases_1d_tna": {
       "valor": 23.12,
       "fecha": "2026-08-25",
-      "fuente": "SecondBrain"
+      "fuente": "registro interno"
     },
     "reservas_brutas_usd_m": {
       "valor": 50660.0,
       "fecha": "2026-08-25",
-      "fuente": "SecondBrain"
+      "fuente": "registro interno"
     }
   }
 }
