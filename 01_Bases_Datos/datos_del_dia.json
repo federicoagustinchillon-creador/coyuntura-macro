@@ -55,19 +55,19 @@
         "ticker": "YPFD",
         "ev_ebitda": 3.8,
         "margen_ebitda": 32.4,
-        "recom": "OVERWEIGHT"
+        "recom": "SOBREPONDERAR"
       },
       {
         "ticker": "PAMP",
         "ev_ebitda": 4.1,
         "margen_ebitda": 38.5,
-        "recom": "OVERWEIGHT"
+        "recom": "SOBREPONDERAR"
       },
       {
         "ticker": "GGAL",
         "ev_ebitda": 6.2,
         "margen_ebitda": 28.5,
-        "recom": "OVERWEIGHT"
+        "recom": "SOBREPONDERAR"
       }
     ]
   }

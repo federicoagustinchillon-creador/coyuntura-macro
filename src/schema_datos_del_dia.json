@@ -241,9 +241,9 @@
               "recom": {
                 "type": "string",
                 "enum": [
-                  "OVERWEIGHT",
+                  "SOBREPONDERAR",
                   "NEUTRAL",
-                  "UNDERWEIGHT"
+                  "SUBPONDERAR"
                 ]
               }
             }

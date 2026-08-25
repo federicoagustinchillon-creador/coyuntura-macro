@@ -420,10 +420,10 @@ def generar_informe_mensual_reportlab():
 
     tabla_tactica_data = [
         [Paragraph("<b>Instrumento / Especie</b>", cell_header_style), Paragraph("<b>TNA / TEM</b>", cell_header_style), Paragraph("<b>Duration / Convex.</b>", cell_header_style), Paragraph("<b>Breakeven / TIR</b>", cell_header_style), Paragraph("<b>Tesis & Ponderación Táctica</b>", cell_header_style)],
-        [Paragraph("Lecap S31O6 (Oct-26)", cell_style_left), Paragraph("35,4% TNA (2,95% TEM)", cell_style_center), Paragraph("68 días · Dur: 0,18", cell_style_center), Paragraph("BE: 2,86% MoM", cell_style_center), Paragraph("<b>OVERWEIGHT</b> · Máximo carry con riesgo tasa mínimo.", cell_style_left)],
-        [Paragraph("Lecap S28N6 (Nov-26)", cell_style_left), Paragraph("36,6% TNA (3,05% TEM)", cell_style_center), Paragraph("96 días · Dur: 0,26", cell_style_center), Paragraph("BE: 2,94% MoM", cell_style_center), Paragraph("<b>OVERWEIGHT</b> · Captura tasa fija antes de recortes BCRA.", cell_style_left)],
+        [Paragraph("Lecap S31O6 (Oct-26)", cell_style_left), Paragraph("35,4% TNA (2,95% TEM)", cell_style_center), Paragraph("68 días · Dur: 0,18", cell_style_center), Paragraph("BE: 2,86% MoM", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Máximo carry con riesgo tasa mínimo.", cell_style_left)],
+        [Paragraph("Lecap S28N6 (Nov-26)", cell_style_left), Paragraph("36,6% TNA (3,05% TEM)", cell_style_center), Paragraph("96 días · Dur: 0,26", cell_style_center), Paragraph("BE: 2,94% MoM", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Captura tasa fija antes de recortes BCRA.", cell_style_left)],
         [Paragraph("Boncer TZX27 (Dic-27)", cell_style_left), Paragraph("CER + 1,10% TIR Real", cell_style_center), Paragraph("1,4 años · Dur: 1,35", cell_style_center), Paragraph("TIR Real: +1,10%", cell_style_center), Paragraph("<b>NEUTRAL</b> · Cobertura si regulados superan el 3,5% MoM.", cell_style_left)],
-        [Paragraph("Bopreal Serie 3 (USD)", cell_style_left), Paragraph("8,40% TIR en USD", cell_style_center), Paragraph("1,8 años · Dur: 1,65", cell_style_center), Paragraph("Paridad: 88,5%", cell_style_center), Paragraph("<b>OVERWEIGHT</b> · Dolarización de excedentes corporativos.", cell_style_left)]
+        [Paragraph("Bopreal Serie 3 (USD)", cell_style_left), Paragraph("8,40% TIR en USD", cell_style_center), Paragraph("1,8 años · Dur: 1,65", cell_style_center), Paragraph("Paridad: 88,5%", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Dolarización de excedentes corporativos.", cell_style_left)]
     ]
     t_tactica = Table(tabla_tactica_data, colWidths=[105, 95, 85, 75, 172])
     t_tactica.setStyle(TableStyle([

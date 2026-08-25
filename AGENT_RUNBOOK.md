@@ -82,9 +82,9 @@ El agente debe consumir y/o actualizar el archivo JSON centralizado bajo el sigu
     "merval_usd_ccl": 1976.92,
     "var_semanal_pct": 1.30,
     "lideres": [
-      {"ticker": "YPFD", "ev_ebitda": 3.8, "margen_ebitda": 32.4, "recom": "OVERWEIGHT"},
-      {"ticker": "PAMP", "ev_ebitda": 4.1, "margen_ebitda": 38.5, "recom": "OVERWEIGHT"},
-      {"ticker": "GGAL", "ev_ebitda": 6.2, "margen_ebitda": 28.5, "recom": "OVERWEIGHT"}
+      {"ticker": "YPFD", "ev_ebitda": 3.8, "margen_ebitda": 32.4, "recom": "SOBREPONDERAR"},
+      {"ticker": "PAMP", "ev_ebitda": 4.1, "margen_ebitda": 38.5, "recom": "SOBREPONDERAR"},
+      {"ticker": "GGAL", "ev_ebitda": 6.2, "margen_ebitda": 28.5, "recom": "SOBREPONDERAR"}
     ]
   }
 }
