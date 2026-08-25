@@ -1,3 +1,13 @@
+> **SUPERADO (2026-08-25 PM):** el mapeo de cambiario/tasas descripto abajo
+> (SecondBrain -> dolar.oficial_bna/ccl/brecha) se dio de baja al encontrar
+> que SecondBrain no coincide con la fuente oficial (~45% de gap en el tipo
+> de cambio). La arquitectura vigente es BCRA + yfinance como fuente
+> primaria (`src/fetch_datos_reales.py`, `src/sync_datos_del_dia.py`) y
+> SecondBrain restringido a las vistas Black-Litterman cualitativas
+> (`src/sync_secondbrain_macro.py`). Este documento queda como registro
+> historico de la primera iteracion; ver los docstrings de los modulos
+> nuevos para el diseño actual.
+
 # Plan: Conector de feeds en vivo SecondBrain -> datos_del_dia.json
 
 ## Objetivo
