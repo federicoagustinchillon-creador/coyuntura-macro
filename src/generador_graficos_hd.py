@@ -387,8 +387,15 @@ def plot_cuyo_redesigned(ax, fig, isac=None):
     especifico que prometia la version anterior, se declara el cambio de
     alcance explicitamente."""
     ax.axis('off')
-    ax1 = fig.add_axes([0.09, 0.11, 0.85, 0.50])
+    # Layout A/B como el resto de las infografias del modulo (EMAE, TCR,
+    # tasas): nivel a la izquierda, variacion mensual a la derecha -- es
+    # la presentacion estandar de un indice sintetico de actividad en un
+    # informe de coyuntura serio (INDEC/OERU siempre publican nivel +
+    # var. m/m juntos, nunca solo la linea de nivel sola).
+    ax1 = fig.add_axes([0.07, 0.11, 0.52, 0.50])
+    ax2 = fig.add_axes([0.66, 0.11, 0.30, 0.50])
     ax1.set_facecolor("#FFFFFF")
+    ax2.set_facecolor("#FFFFFF")
 
     if isac and isac.get("meses"):
         meses = isac["meses"]
@@ -396,19 +403,48 @@ def plot_cuyo_redesigned(ax, fig, isac=None):
         x_idx = np.arange(len(meses))
         meses_lbl = [f"{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][int(m[5:7])-1]}-{m[2:4]}" for m in meses]
 
-        ax1.plot(x_idx, valores, color=C_SLATE, lw=1.8, marker='o', markersize=4, markeredgecolor='white')
-        ax1.annotate(f"{meses_lbl[-1]}: {valores[-1]:.1f} ({isac['var_mensual_ultimo']:+.1f}% MoM)".replace(".", ","),
-                     xy=(x_idx[-1], valores[-1]), xytext=(-8, 12), textcoords="offset points", ha='right',
-                     fontsize=7.5, fontweight='bold', color=C_SLATE,
-                     bbox=dict(boxstyle="round,pad=0.25", fc="#F1F5F9", ec="#CBD5E1", lw=0.7))
-        ax1.set_xticks(x_idx)
-        ax1.set_xticklabels(meses_lbl, fontsize=6.8, rotation=35, ha='right')
-        ax1.set_ylabel("ISAC nacional desestacionalizado (Base 2004=100)", fontsize=7.5, color=C_SLATE)
-        ax1.grid(True, linestyle='--', color=C_GRID, lw=0.6)
-        ax1.set_title("Construcción: ISAC Nacional (proxy -- no AFCP Cuyo específico)", fontsize=8.3, fontweight='bold', color=C_NAVY, loc='left')
+        ax1.fill_between(x_idx, valores, min(valores) * 0.985, color=C_NAVY, alpha=0.08, zorder=1)
+        ax1.plot(x_idx, valores, color=C_NAVY, lw=2.0, marker='o', markersize=4.5,
+                 markerfacecolor='white', markeredgecolor=C_NAVY, markeredgewidth=1.3, zorder=3)
+        ax1.plot(x_idx[-1], valores[-1], marker='o', markersize=7, color=C_NAVY, zorder=4)
+        ax1.annotate(f"{meses_lbl[-1]}: {valores[-1]:.1f}".replace(".", ","),
+                     xy=(x_idx[-1], valores[-1]), xytext=(-10, 14), textcoords="offset points", ha='right',
+                     fontsize=7.6, fontweight='bold', color=C_NAVY,
+                     arrowprops=dict(arrowstyle="-", color=C_NAVY, lw=0.8),
+                     bbox=dict(boxstyle="round,pad=0.3", fc="#E0F2FE", ec="#BAE6FD", lw=0.8), zorder=5)
+        ax1.set_ylim(min(valores) * 0.985, max(valores) * 1.02)
+        tick_step = max(1, len(meses) // 7)
+        tick_pos = list(range(0, len(meses), tick_step))
+        if tick_pos[-1] != len(meses) - 1:
+            tick_pos.append(len(meses) - 1)
+        ax1.set_xticks(tick_pos)
+        ax1.set_xticklabels([meses_lbl[i] for i in tick_pos], fontsize=6.8, rotation=0, color=C_SLATE)
+        ax1.set_ylabel("ISAC nacional desest. (Base 2004=100)", fontsize=7.3, color=C_SLATE)
+        ax1.grid(True, linestyle='--', color=C_GRID, lw=0.6, axis='y')
+        ax1.set_title("A. Nivel (desestacionalizado)", fontsize=7.8, fontweight='bold', color=C_NAVY, loc='left')
+
+        # Panel B: variacion m/m real (misma serie, sin dato nuevo) -- lo
+        # que un informe institucional muestra junto al nivel para separar
+        # tendencia de ruido mes a mes.
+        var_mom = [None] + [round(100 * (valores[i] / valores[i - 1] - 1), 1) for i in range(1, len(valores))]
+        var_mom_v = [v for v in var_mom if v is not None]
+        x_var = np.arange(1, len(valores))
+        colores_var = [C_TEAL if v >= 0 else C_RED for v in var_mom_v]
+        ax2.bar(x_var, var_mom_v, color=colores_var, width=0.62, alpha=0.9, zorder=3)
+        ax2.axhline(0, color="#94A3B8", lw=0.8, zorder=2)
+        ax2.annotate(f"{var_mom_v[-1]:+.1f}%".replace(".", ","), xy=(x_var[-1], var_mom_v[-1]),
+                     xytext=(0, 6 if var_mom_v[-1] >= 0 else -12), textcoords="offset points",
+                     ha='center', fontsize=7.2, fontweight='bold',
+                     color=(C_TEAL if var_mom_v[-1] >= 0 else C_RED))
+        ax2.set_xticks([x_var[0], x_var[-1]])
+        ax2.set_xticklabels([meses_lbl[1], meses_lbl[-1]], fontsize=6.6, color=C_SLATE)
+        ax2.set_ylabel("Var. m/m (%)", fontsize=7.3, color=C_SLATE)
+        ax2.grid(True, linestyle='--', color=C_GRID, lw=0.6, axis='y')
+        ax2.set_title("B. Variación mensual", fontsize=7.8, fontweight='bold', color=C_NAVY, loc='left')
     else:
-        ax1.text(0.5, 0.6, "Sin dato real de ISAC disponible en esta corrida.",
+        ax1.text(0.5, 0.6, "Sin dato real de ISAC\ndisponible en esta corrida.",
                 ha='center', va='center', fontsize=9, fontweight='bold', color=C_SLATE, transform=ax1.transAxes)
+        ax2.axis('off')
 
 # ==============================================================================
 # 4.1 FIGURA 3B: COMPARATIVO REGIONAL CUYO (MENDOZA / SAN JUAN / SAN LUIS)
