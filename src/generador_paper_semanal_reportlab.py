@@ -1,6 +1,6 @@
 """
 ================================================================================
-PAPER MACROECONÓMICO SEMANAL APA 7 — MASTER REPORTLAB ENGINE
+PAPER MACROECONÓMICO SEMANAL APA 7 — MOTOR EDITORIAL REPORTLAB
 ================================================================================
 Autor: Federico Agustín Chillón
 Afiliación: Facultad de Ciencias Económicas — Universidad Nacional de Cuyo
@@ -92,7 +92,7 @@ class NumberedCanvasSemanal(canvas.Canvas):
 
         self.setFont("Georgia", 7.5)
         self.setFillColor(colors.HexColor("#64748B"))
-        self.drawString(left, footer_y, "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO")
+        self.drawString(left, footer_y, "Federico Agustín Chillón · Investigador · Cs. Económicas UNCUYO · Cs. Económicas UNCUYO")
         self.drawRightString(right, footer_y, f"Página {self._pageNumber} de {page_count}")
         self.restoreState()
 
@@ -157,7 +157,7 @@ def generar_paper_semanal_reportlab():
         title="Paper Macroeconómico Semanal APA 7 — Federico Agustín Chillón",
         author="Federico Agustín Chillón",
         subject="Economía Aplicada & Finanzas Cuantitativas — FCE UNCUYO",
-        creator="Federico Agustín Chillón — Lead Macro Strategist & Quantitative Finance",
+        creator="Federico Agustín Chillón — Investigador · Cs. Económicas UNCUYO",
         keywords="Macroeconomía, Finanzas, Curva Soberana, Inflación, Riesgo Sistémico, Federico Agustín Chillón, UNCUYO"
     )
 

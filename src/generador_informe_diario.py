@@ -70,7 +70,7 @@ def add_header_footer_diario(doc, fecha_str="21 de Agosto de 2026"):
         
         footer = section.footer
         p_ftr = footer.paragraphs[0]
-        p_ftr.text = "Federico Agustín Chillón · Lead Macro & Financial Strategist · FCE UNCUYO\t\tMonitor Flash Diario"
+        p_ftr.text = "Federico Agustín Chillón · Investigador · Cs. Económicas UNCUYO · FCE UNCUYO\t\tMonitor Flash Diario"
         p_ftr.runs[0].font.name = "Georgia"
         p_ftr.runs[0].font.size = Pt(7.8)
         p_ftr.runs[0].font.color.rgb = COLOR_MUTED

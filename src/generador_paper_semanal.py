@@ -70,7 +70,7 @@ def add_header_footer_semanal(doc, periodo_str="Semana del 17 al 21 de Agosto de
         
         footer = section.footer
         p_ftr = footer.paragraphs[0]
-        p_ftr.text = "Federico Agustín Chillón · Lead Macro & Financial Strategist · FCE UNCUYO\t\tPaper Semanal APA 7"
+        p_ftr.text = "Federico Agustín Chillón · Investigador · Cs. Económicas UNCUYO · FCE UNCUYO\t\tPaper Semanal APA 7"
         p_ftr.runs[0].font.name = "Georgia"
         p_ftr.runs[0].font.size = Pt(7.8)
         p_ftr.runs[0].font.color.rgb = COLOR_MUTED

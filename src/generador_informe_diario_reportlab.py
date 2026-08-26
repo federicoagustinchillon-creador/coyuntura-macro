@@ -1,6 +1,6 @@
 """
 ================================================================================
-MONITOR DIARIO DE MERCADOS & COYUNTURA FINANCIERA — MASTER REPORTLAB ENGINE
+MONITOR DIARIO DE MERCADOS & COYUNTURA FINANCIERA — MOTOR EDITORIAL REPORTLAB
 ================================================================================
 Autor: Federico Agustín Chillón
 Afiliación: Facultad de Ciencias Económicas — Universidad Nacional de Cuyo
@@ -92,7 +92,7 @@ class NumberedCanvasDiario(canvas.Canvas):
 
         self.setFont("Georgia", 7.5)
         self.setFillColor(colors.HexColor("#64748B"))
-        self.drawString(left, footer_y, "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO")
+        self.drawString(left, footer_y, "Federico Agustín Chillón · Investigador · Cs. Económicas UNCUYO · Cs. Económicas UNCUYO")
         self.drawRightString(right, footer_y, f"Página {self._pageNumber} de {page_count}")
         self.restoreState()
 
@@ -151,7 +151,7 @@ def generar_monitor_diario_reportlab():
         title="Monitor Diario de Mercados Financieros — Federico Agustín Chillón",
         author="Federico Agustín Chillón",
         subject="Economía Aplicada & Finanzas Cuantitativas — FCE UNCUYO",
-        creator="Federico Agustín Chillón — Lead Macro Strategist & Quantitative Finance",
+        creator="Federico Agustín Chillón — Investigador · Cs. Económicas UNCUYO",
         keywords="Macroeconomía, Finanzas, Curva Soberana, Inflación, Riesgo Sistémico, Federico Agustín Chillón, UNCUYO"
     )
 

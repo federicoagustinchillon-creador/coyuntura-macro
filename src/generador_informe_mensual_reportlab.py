@@ -4,7 +4,7 @@ COMPILADOR MAESTRO DE INFORME MENSUAL REPORTLAB (14 PÁGINAS EDITORIALES)
 ================================================================================
 Autor: Federico Agustín Chillón
 Facultad de Ciencias Económicas — Universidad Nacional de Cuyo
-Estándar: Tier-1 Institutional Research (Goldman Sachs GIR / Bridgewater Standard)
+Estándar: Institucional Institutional Research (Goldman Sachs GIR / Bridgewater Standard)
 ================================================================================
 """
 
@@ -111,7 +111,7 @@ class ZeroWhitespaceCanvas(canvas.Canvas):
 
             self.setFont("Georgia", 7.5)
             self.setFillColor(colors.HexColor("#64748B"))
-            self.drawString(left, footer_text_y, "Federico Agustín Chillón · Lead Macro & Financial Strategist · Cs. Económicas UNCUYO")
+            self.drawString(left, footer_text_y, "Federico Agustín Chillón · Investigador · Cs. Económicas UNCUYO · Cs. Económicas UNCUYO")
             self.drawRightString(right, footer_text_y, f"Página {self._pageNumber} de {page_count}")
 
         self.restoreState()
@@ -205,7 +205,7 @@ def generar_informe_mensual_reportlab():
         title="Informe de Coyuntura Macroeconómica & Mercado de Capitales — Agosto 2026",
         author="Federico Agustín Chillón",
         subject="Economía Aplicada & Estrategia de Inversión — FCE UNCUYO",
-        creator="Federico Agustín Chillón — Lead Macro & Financial Strategist",
+        creator="Federico Agustín Chillón — Investigador · Cs. Económicas UNCUYO",
         keywords="Macroeconomía, Finanzas, Curva Soberana, Inflación, Riesgo Sistémico, Federico Agustín Chillón, UNCUYO"
     )
 
@@ -332,7 +332,7 @@ def generar_informe_mensual_reportlab():
     # 6. Tarjeta de Autoría y Metadatos Institucionales de Cierre de Portada
     meta_box = [
         [
-            Paragraph("<b>LEAD MACRO STRATEGIST</b><br/><font color='#0B3C5D' size=8.2><b>Federico Agustín Chillón</b></font><br/><font color='#64748B' size=6.8>Investigador & Estratega Financiero</font>", ParagraphStyle('M1', fontName='Georgia', fontSize=7.4, leading=9.8)),
+            Paragraph("<b>AUTOR / INVESTIGADOR</b><br/><font color='#0B3C5D' size=8.2><b>Federico Agustín Chillón</b></font><br/><font color='#64748B' size=6.8>Facultad de Ciencias Económicas</font>", ParagraphStyle('M1', fontName='Georgia', fontSize=7.4, leading=9.8)),
             Paragraph("<b>FILIACIÓN INSTITUCIONAL</b><br/><font color='#0B3C5D' size=8.2><b>Facultad de Ciencias Económicas</b></font><br/><font color='#64748B' size=6.8>Universidad Nacional de Cuyo (UNCUYO)</font>", ParagraphStyle('M2', fontName='Georgia', fontSize=7.4, leading=9.8)),
             Paragraph("<b>ESPECIFICACIÓN TÉCNICA</b><br/><font color='#0B3C5D' size=8.2><b>Cierre Mensual · Agosto 2026</b></font><br/><font color='#64748B' size=6.8>Modelos Econométricos & 300 DPI HD</font>", ParagraphStyle('M3', fontName='Georgia', fontSize=7.4, leading=9.8))
         ]
@@ -1312,7 +1312,7 @@ def generar_informe_mensual_reportlab():
     # Copiar a 07_Reportes_Ejecutivos_PDF
     consol_dest = os.path.join(OUT_DIR_CONSOL, "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
     shutil.copy2(pdf_path, consol_dest)
-    print(f"Masterpiece PDF re-built and synchronized: {pdf_path}")
+    print(f"Informe Integral PDF re-built and synchronized: {pdf_path}")
     return pdf_path
 
 if __name__ == "__main__":
