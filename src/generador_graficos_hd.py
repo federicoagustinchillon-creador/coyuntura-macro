@@ -164,329 +164,288 @@ def create_master_infographic(filename, date_str, title_str, subtitle_str, kpis,
 # ==============================================================================
 # 1. FIGURA EMAE MASTER (SERIE HISTÓRICA 32 MESES)
 # ==============================================================================
-def plot_emae_master(ax, fig):
+def plot_emae_master(ax, fig, emae=None):
+    """Serie real del INDEC (original/desestacionalizada/tendencia-ciclo,
+    base 2004=100) via src/fetch_series_indec_bcra.obtener_emae_reciente().
+    Si la fuente no responde, se dice explicitamente en el propio grafico
+    en vez de mostrar la serie de relleno anterior como si fuera real."""
     ax.set_facecolor("#FFFFFF")
-    t_points = 32
-    meses_display = [
-        "Ene-24", "", "", "Abr-24", "", "", "Jul-24", "", "", "Oct-24", "", "",
-        "Ene-25", "", "", "Abr-25", "", "", "Jul-25", "", "", "Oct-25", "", "",
-        "Ene-26", "", "", "Abr-26", "", "", "", "Ago-26"
-    ]
-    
-    original = np.array([
-        143, 137, 155, 150, 154, 152, 150, 148, 146, 144, 142, 139,
-        137, 133, 147, 157, 147, 150, 145, 148, 148, 149, 141, 158,
-        165, 156, 153, 151, 153, 152, 148, 152
-    ])
-    desest = np.array([
-        149, 150, 151, 147, 145, 146, 149, 147, 146, 143, 144, 143,
-        144, 143, 143, 144, 146, 147, 149, 151, 152, 152, 151, 152,
-        151, 152, 154, 152, 152, 154, 155, 156
-    ])
-    tendencia = np.array([
-        149, 149, 148, 148, 147, 146, 145, 145, 144, 144, 144, 144,
-        144, 144, 145, 146, 147, 148, 149, 150, 151, 151, 152, 152,
-        152, 152, 153, 153, 153, 153, 153, 153.5
-    ])
-    x_idx = np.arange(t_points)
-    
-    ax.plot(x_idx, original, color="#1E293B", lw=1.6, marker='o', markersize=4, label='Serie Original (152)')
-    ax.plot(x_idx, desest, color=C_TEAL, lw=2.0, marker='s', markersize=4, label='Desestacionalizado (156 / +0,6% MoM)')
-    ax.plot(x_idx, tendencia, color=C_CYAN, lw=1.8, linestyle='--', label='Tendencia-Ciclo (153,5 / +0,4% MoM)')
-    
+
+    if emae is None or not emae.get("meses"):
+        ax.axis('off')
+        ax.text(0.5, 0.5, "Sin datos reales de EMAE disponibles en esta corrida\n(INDEC via apis.datos.gob.ar no respondió).",
+                ha='center', va='center', fontsize=9, color=C_SLATE, transform=ax.transAxes)
+        return
+
+    meses = emae["meses"]
+    original = np.array(emae["original"])
+    desest = np.array(emae["desestacionalizado"])
+    tendencia = np.array(emae["tendencia_ciclo"])
+    x_idx = np.arange(len(meses))
+
+    def _mmm_aa(m):  # 'YYYY-MM' -> 'Mmm-AA'
+        y, mo = m.split("-")
+        return ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"][int(mo) - 1] + f"-{y[2:]}"
+
+    meses_display = [_mmm_aa(m) if i % 3 == 0 or i == len(meses) - 1 else "" for i, m in enumerate(meses)]
+
+    var_ia = emae.get("var_interanual_ultimo")
+    var_mensual = emae.get("var_mensual_desest_ultimo")
+    ax.plot(x_idx, original, color="#1E293B", lw=1.6, marker='o', markersize=4, label=f'Serie Original ({original[-1]:.0f})')
+    ax.plot(x_idx, desest, color=C_TEAL, lw=2.0, marker='s', markersize=4,
+            label=f'Desestacionalizado ({desest[-1]:.0f}' + (f' / {var_mensual:+.1f}% MoM)' if var_mensual is not None else ')'))
+    ax.plot(x_idx, tendencia, color=C_CYAN, lw=1.8, linestyle='--', label=f'Tendencia-Ciclo ({tendencia[-1]:.1f})')
+
     ax.set_ylabel("Número índice (Base 2004 = 100)", fontsize=7.8, color=C_SLATE)
-    ax.set_ylim(125, 175)
-    ax.set_yticks(np.arange(130, 175, 10))
+    _pad = (max(original.max(), desest.max(), tendencia.max()) - min(original.min(), desest.min(), tendencia.min())) * 0.15
+    ax.set_ylim(min(original.min(), desest.min(), tendencia.min()) - _pad, max(original.max(), desest.max(), tendencia.max()) + _pad)
     ax.grid(True, linestyle='--', color=C_GRID, lw=0.6)
-    
+
     tick_pos = [i for i, s in enumerate(meses_display) if s != ""]
     tick_lbl = [meses_display[i] for i in tick_pos]
     ax.set_xticks(tick_pos)
     ax.set_xticklabels(tick_lbl, fontsize=7.2, color=C_SLATE, rotation=0)
-    
+
     ax.legend(frameon=True, facecolor='#FFFFFF', edgecolor='#E2E8F0', fontsize=7.2, loc='upper left')
-    
-    ax.annotate("Ago-26: 156 desest. (+3,1% i.a.)", xy=(31, 156), xytext=(22, 168),
-                arrowprops=dict(arrowstyle="->", color=C_TEAL, lw=1.2),
-                bbox=dict(boxstyle="round,pad=0.3", fc="#E0F2FE", ec="#BAE6FD", lw=0.8),
-                fontsize=7.5, fontweight='bold', color="#0369A1")
+
+    if var_ia is not None:
+        etiqueta = f"{_mmm_aa(meses[-1])}: {desest[-1]:.0f} desest. ({var_ia:+.1f}% i.a.)"
+        ax.annotate(etiqueta, xy=(x_idx[-1], desest[-1]), xytext=(x_idx[-1] - len(meses) * 0.28, desest.max() + _pad * 0.6),
+                    arrowprops=dict(arrowstyle="->", color=C_TEAL, lw=1.2),
+                    bbox=dict(boxstyle="round,pad=0.3", fc="#E0F2FE", ec="#BAE6FD", lw=0.8),
+                    fontsize=7.5, fontweight='bold', color="#0369A1")
 
 # ==============================================================================
 # 2. FIGURA 1: CURVAS EN ARS & BREAKEVEN INFLACIONARIO
 # ==============================================================================
-def plot_rates_breakeven(ax, fig, data=None):
-    if data is None:
-        data = (DATOS_DEL_DIA or {}).get("curva_ars")
-    if data is None:
-        data = {
-            "plazos_dias": [30, 60, 90, 180, 270, 360],
-            "lecap_tickers": ["S31O6", "S28N6", "S31D6", "S31M7", "S30J7", "S31A7"],
-            "lecap_tem_pct": [2.95, 3.05, 3.15, 3.25, 3.35, 3.40],
-            "boncer_tir_real_pct": [1.10, 1.30, 1.50, 1.80, 2.10, 2.30],
-            "rem_inflacion_pct": [2.00, 1.95, 1.90, 1.85, 1.80, 1.75],
-        }
-
+def plot_rates_breakeven(ax, fig, tasas_ars=None):
+    """El contrato (datos_del_dia.json tasas_ars.*) solo tiene 2 puntos
+    reales de la curva Lecap (corta/larga) y un unico Boncer -- no una
+    curva de 6 vencimientos con tickers especificos como el array de
+    relleno anterior. Se grafican los puntos reales que existen, sin
+    interpolar tickers/plazos que el contrato no especifica."""
     ax.axis('off')
     ax1 = fig.add_axes([0.09, 0.11, 0.33, 0.50])
     ax2 = fig.add_axes([0.55, 0.11, 0.38, 0.50])
     ax1.set_facecolor("#FFFFFF")
     ax2.set_facecolor("#FFFFFF")
 
-    dias_plazo = np.array(data["plazos_dias"])
-    lecap_tickers = data["lecap_tickers"]
-    tasa_lecap = np.array(data["lecap_tem_pct"])
-    tasa_boncer = np.array(data["boncer_tir_real_pct"])
+    tasas_ars = tasas_ars or {}
+    lecap_corta = tasas_ars.get("lecap_corta_tem")
+    lecap_larga = tasas_ars.get("lecap_larga_tem")
+    boncer = tasas_ars.get("boncer_tzx27_tir_real")
 
-    ax1.plot(dias_plazo, tasa_lecap, color=C_NAVY, lw=2.2, marker='o', markersize=5, markeredgecolor='white', label='Curva Lecaps (TEM %)')
-    for d, v, tck in zip(dias_plazo, tasa_lecap, lecap_tickers):
-        ax1.annotate(f"{tck}\n{v:.2f}%", (d, v), xytext=(0, 7), textcoords="offset points",
-                     ha='center', fontsize=6.8, fontweight='bold', color=C_NAVY)
+    if lecap_corta is None or lecap_larga is None:
+        ax1.axis('off')
+        ax1.text(0.5, 0.5, "Sin tasas Lecap cargadas\nen tasas_ars.*.",
+                  ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax1.transAxes)
+    else:
+        x_lecap = [0, 1]
+        y_lecap = [lecap_corta, lecap_larga]
+        ax1.plot(x_lecap, y_lecap, color=C_NAVY, lw=2.2, marker='o', markersize=6, markeredgecolor='white', label='Lecap (TEM %)')
+        for xi, v in zip(x_lecap, y_lecap):
+            ax1.annotate(f"{v:.2f}%".replace(".", ","), (xi, v), xytext=(0, 8), textcoords="offset points",
+                         ha='center', fontsize=7.5, fontweight='bold', color=C_NAVY)
+        ax1.set_xticks(x_lecap)
+        ax1.set_xticklabels(["Corta", "Larga"], fontsize=7.5)
+        ax1.set_ylabel("TEM Tasa Fija (%)", fontsize=7.5, color=C_NAVY)
+        _pad_lecap = max(0.10, (max(y_lecap) - min(y_lecap)) * 0.4)
+        ax1.set_ylim(min(y_lecap) - _pad_lecap, max(y_lecap) + _pad_lecap * 1.8)
+        ax1.set_xlim(-0.4, 1.4)
 
-    ax1.set_ylabel("TEM Tasa Fija (%)", fontsize=7.5, color=C_NAVY)
-    _pad_lecap = max(0.15, (tasa_lecap.max() - tasa_lecap.min()) * 0.25)
-    ax1.set_ylim(tasa_lecap.min() - _pad_lecap, tasa_lecap.max() + _pad_lecap)
-
-    ax1_t = ax1.twinx()
-    ax1_t.spines['top'].set_visible(False)
-    ax1_t.spines['left'].set_visible(False)
-    ax1_t.plot(dias_plazo, tasa_boncer, color=C_AMBER, lw=1.8, linestyle='--', marker='s', markersize=4.5, markeredgecolor='white', label='Curva Boncer CER (TIR Real %)')
-    for d, v in zip(dias_plazo, tasa_boncer):
-        ax1_t.annotate(f"{v:.2f}%", (d, v), xytext=(0, -12), textcoords="offset points",
-                       ha='center', fontsize=6.8, fontweight='bold', color=C_AMBER)
-    ax1_t.set_ylabel("TIR Real Anual Boncer (%)", fontsize=7.5, color=C_AMBER, labelpad=6)
-    _pad_boncer = max(0.2, (tasa_boncer.max() - tasa_boncer.min()) * 0.35)
-    ax1_t.set_ylim(tasa_boncer.min() - _pad_boncer, tasa_boncer.max() + _pad_boncer)
-    ax1_t.grid(False)
-
-    ax1.set_title("A. Curvas Soberanas en ARS (Lecap vs. Boncer)", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
-    ax1.set_xlabel("Plazo residual (Días)", fontsize=7.5, color=C_SLATE)
-    ax1.set_xlim(0, dias_plazo.max() * 1.11)
-    ax1.set_xticks(dias_plazo)
+        if boncer is not None:
+            ax1_t = ax1.twinx()
+            ax1_t.spines['top'].set_visible(False)
+            ax1_t.spines['left'].set_visible(False)
+            ax1_t.scatter([0.5], [boncer], color=C_AMBER, s=70, zorder=5, edgecolors='white', label='Boncer TZX27 (TIR Real %)')
+            ax1_t.annotate(f"{boncer:.2f}%".replace(".", ","), (0.5, boncer), xytext=(10, 0), textcoords="offset points",
+                           va='center', fontsize=7.2, fontweight='bold', color=C_AMBER)
+            ax1_t.set_ylabel("TIR Real Anual Boncer (%)", fontsize=7.5, color=C_AMBER, labelpad=6)
+            ax1_t.set_ylim(boncer - 1.0, boncer + 1.0)
+            ax1_t.grid(False)
+    ax1.set_title("A. Tasas en ARS (Lecap corta/larga + Boncer)", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
     ax1.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
 
-    breakeven = tasa_lecap - (tasa_boncer / 12)
-    rem = np.array(data["rem_inflacion_pct"])
-    premio = (breakeven - rem) * 100
-    
-    x = np.arange(len(dias_plazo))
-    w = 0.35
-    ax2.bar(x - w/2, breakeven, width=w, label='Breakeven Implícito (% MoM)', color=C_NAVY, alpha=0.9)
-    ax2.bar(x + w/2, rem, width=w, label='Inflación Esperada REM (% MoM)', color="#94A3B8", alpha=0.9)
-    
-    for i in range(len(dias_plazo)):
-        ax2.text(x[i] - w/2, breakeven[i] + 0.05, f"{breakeven[i]:.2f}%", ha='center', fontsize=6.5, fontweight='bold', color=C_NAVY)
-        ax2.text(x[i] + w/2, rem[i] + 0.05, f"{rem[i]:.2f}%", ha='center', fontsize=6.5, color=C_SLATE)
-        ax2.annotate(f"+{premio[i]:.0f} pb", (x[i], max(breakeven[i], rem[i]) + 0.28),
-                     ha='center', fontsize=6.2, fontweight='bold', color=C_RED)
-        
-    ax2.set_title("B. Breakeven Inflacionario vs. Consenso REM", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
-    ax2.set_xticks(x)
-    ax2.set_xticklabels([f"{d}d" for d in dias_plazo], fontsize=7.2)
+    breakeven = tasas_ars.get("breakeven_inflacion_tem")
+    rem = tasas_ars.get("inflacion_esperada_rem_tem")
+    if breakeven is None or rem is None:
+        ax2.axis('off')
+        ax2.text(0.5, 0.5, "Sin breakeven/REM cargados\nen tasas_ars.*.",
+                  ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax2.transAxes)
+    else:
+        premio_pb = (breakeven - rem) * 100
+        ax2.bar([0], [breakeven], width=0.4, label=f'Breakeven Implícito ({breakeven:.2f}% MoM)'.replace(".", ","), color=C_NAVY, alpha=0.9)
+        ax2.bar([0.6], [rem], width=0.4, label=f'Inflación Esperada REM ({rem:.2f}% MoM)'.replace(".", ","), color="#94A3B8", alpha=0.9)
+        ax2.annotate(f"Premio: {premio_pb:+.0f} pb".replace(".", ","), (0.3, max(breakeven, rem) * 1.15),
+                     ha='center', fontsize=7.5, fontweight='bold', color=C_RED)
+        ax2.set_xlim(-0.5, 1.1)
+        ax2.set_xticks([0, 0.6])
+        ax2.set_xticklabels(["Breakeven", "REM"], fontsize=7.5)
+        ax2.set_ylim(0, max(breakeven, rem) * 1.4)
+        ax2.legend(frameon=False, fontsize=6.6, loc='upper right')
+    ax2.set_title("B. Breakeven Inflacionario vs. Consenso REM", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
     ax2.set_ylabel("Tasa mensual (% MoM)", fontsize=7.5, color=C_SLATE)
-    ax2.set_ylim(0, max(breakeven.max(), rem.max()) * 1.35)
     ax2.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
-    ax2.legend(frameon=False, fontsize=6.8, loc='upper left')
 
 # ==============================================================================
 # 3. FIGURA 2: DISPERSIÓN DE PRECIOS & TRAYECTORIA IPC
 # ==============================================================================
-def plot_ipc_master(ax, fig):
+def plot_ipc_master(ax, fig, inflacion=None, ipc_trayectoria=None):
+    """Panel A: aperturas del mes vigente -- lee datos_del_dia.json
+    (inflacion.*), que ya es carga manual real del contrato, no un array
+    de relleno. "Bienes" no tiene campo propio en el contrato -- se omite
+    en vez de inventarlo. Panel B: trayectoria real de 8 meses derivada de
+    los indices oficiales del INDEC (src/fetch_series_indec_bcra); DEIE
+    Mendoza no tiene serie historica publica -- se marca "manual, sin serie"
+    en vez de fabricar una trayectoria mensual que no existe."""
     ax.axis('off')
     ax1 = fig.add_axes([0.15, 0.11, 0.32, 0.50])
     ax2 = fig.add_axes([0.55, 0.11, 0.38, 0.50])
     ax1.set_facecolor("#FFFFFF")
     ax2.set_facecolor("#FFFFFF")
-    
-    aperturas = ["Bienes", "Núcleo", "General INDEC", "Servicios", "Regulados"]
-    valores_ap = [1.9, 1.9, 2.2, 2.9, 3.0]
-    colores_ap = [C_SLATE, C_CYAN, C_NAVY, "#EA580C", C_RED]
-    y_pos = np.arange(len(aperturas))
-    
-    for y, val, col in zip(y_pos, valores_ap, colores_ap):
-        ax1.hlines(y=y, xmin=0, xmax=val, color=col, lw=2.2, alpha=0.85)
-        ax1.plot(val, y, marker='o', markersize=7.5, color=col, markeredgecolor='white', markeredgewidth=1.0)
-        ax1.text(val + 0.10, y, f"{val:.1f}%", va='center', fontsize=7.8, fontweight='bold', color=col)
-        
-    ax1.set_yticks(y_pos)
-    ax1.set_yticklabels(aperturas, fontsize=7.2)
-    ax1.set_xlim(0, 3.8)
-    ax1.set_title("A. Dispersión por Apertura (% MoM Ago-26)", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
-    ax1.set_xlabel("Variación mensual (% MoM)", fontsize=7.5, color=C_SLATE)
-    ax1.grid(axis='x', linestyle='--', color=C_GRID, lw=0.6)
-    
-    meses_8 = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago"]
-    x_8 = np.arange(len(meses_8))
-    ipc_gral_8 = np.array([3.8, 3.5, 3.2, 2.8, 2.5, 2.4, 2.3, 2.2])
-    ipc_core_8 = np.array([3.4, 3.1, 2.8, 2.4, 2.2, 2.1, 2.0, 1.9])
-    ipc_mza_8  = np.array([4.0, 3.6, 3.4, 2.9, 2.6, 2.5, 2.4, 2.3])
-    
-    ax2.fill_between(x_8, ipc_core_8, ipc_gral_8, color="#E0F2FE", alpha=0.6, label='Brecha Regulados')
-    ax2.plot(x_8, ipc_gral_8, color=C_NAVY, lw=2.0, marker='o', markersize=4.5, markeredgecolor='white', label='INDEC General (2,2%)')
-    ax2.plot(x_8, ipc_mza_8, color=C_AMBER, lw=1.8, marker='s', markersize=4.5, markeredgecolor='white', label='Mendoza DEIE (2,3%)')
-    ax2.plot(x_8, ipc_core_8, color=C_CYAN, lw=1.8, linestyle='--', marker='^', markersize=4.0, label='Núcleo (1,9%)')
-    
-    ax2.annotate("Mendoza: 2,3%", xy=(7, 2.3), xytext=(5.2, 2.85),
-                 arrowprops=dict(arrowstyle="->", color=C_AMBER, lw=1.0),
-                 fontsize=6.8, fontweight='bold', color=C_AMBER)
-    ax2.annotate("INDEC: 2,2%", xy=(7, 2.2), xytext=(5.5, 1.70),
-                 arrowprops=dict(arrowstyle="->", color=C_NAVY, lw=1.0),
-                 fontsize=6.8, fontweight='bold', color=C_NAVY)
-                 
-    ax2.set_title("B. Convergencia Inflacionaria 2026 (% MoM)", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
-    ax2.set_xticks(x_8)
-    ax2.set_xticklabels(meses_8, fontsize=7.2)
-    ax2.set_ylabel("Tasa mensual (%)", fontsize=7.5, color=C_SLATE)
-    ax2.set_ylim(1.4, 4.4)
-    ax2.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
-    ax2.legend(frameon=False, fontsize=6.8, loc='upper right')
+
+    inflacion = inflacion or {}
+    aperturas_disponibles = [
+        ("Núcleo", inflacion.get("indec_nucleo_mom"), C_CYAN),
+        ("General INDEC", inflacion.get("indec_general_mom"), C_NAVY),
+        ("Servicios", inflacion.get("indec_servicios_mom"), "#EA580C"),
+        ("Regulados", inflacion.get("indec_regulados_mom"), C_RED),
+    ]
+    aperturas_disponibles = [(n, v, c) for n, v, c in aperturas_disponibles if v is not None]
+
+    if not aperturas_disponibles:
+        ax1.axis('off')
+        ax1.text(0.5, 0.5, "Sin datos de inflación cargados\nen datos_del_dia.json.",
+                  ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax1.transAxes)
+    else:
+        aperturas = [n for n, _, _ in aperturas_disponibles]
+        valores_ap = [v for _, v, _ in aperturas_disponibles]
+        colores_ap = [c for _, _, c in aperturas_disponibles]
+        y_pos = np.arange(len(aperturas))
+
+        for y, val, col in zip(y_pos, valores_ap, colores_ap):
+            ax1.hlines(y=y, xmin=0, xmax=val, color=col, lw=2.2, alpha=0.85)
+            ax1.plot(val, y, marker='o', markersize=7.5, color=col, markeredgecolor='white', markeredgewidth=1.0)
+            ax1.text(val + 0.10, y, f"{val:.1f}%".replace(".", ","), va='center', fontsize=7.8, fontweight='bold', color=col)
+
+        ax1.set_yticks(y_pos)
+        ax1.set_yticklabels(aperturas, fontsize=7.2)
+        ax1.set_xlim(0, max(valores_ap) * 1.35)
+        ax1.set_xlabel("Variación mensual (% MoM)", fontsize=7.5, color=C_SLATE)
+        ax1.grid(axis='x', linestyle='--', color=C_GRID, lw=0.6)
+    ax1.set_title("A. Dispersión por Apertura (% MoM, mes vigente)", fontsize=8.3, fontweight='bold', color=C_NAVY, loc='left')
+
+    if not ipc_trayectoria or not ipc_trayectoria.get("meses"):
+        ax2.axis('off')
+        ax2.text(0.5, 0.5, "Sin trayectoria real de IPC disponible en esta corrida\n(INDEC via apis.datos.gob.ar no respondió).",
+                 ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax2.transAxes)
+    else:
+        meses = ipc_trayectoria["meses"]
+        x_n = np.arange(len(meses))
+        gral = np.array(ipc_trayectoria["general"])
+        core = np.array(ipc_trayectoria["nucleo"])
+        regul = np.array(ipc_trayectoria["regulados"])
+        meses_lbl = [f"{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][int(m[5:7])-1]}-{m[2:4]}" for m in meses]
+
+        ax2.fill_between(x_n, core, gral, color="#E0F2FE", alpha=0.6, label='Brecha Núcleo/General')
+        ax2.plot(x_n, gral, color=C_NAVY, lw=2.0, marker='o', markersize=4.5, markeredgecolor='white', label=f'INDEC General ({gral[-1]:.1f}%)'.replace(".", ","))
+        ax2.plot(x_n, regul, color=C_RED, lw=1.8, marker='s', markersize=4.5, markeredgecolor='white', label=f'Regulados ({regul[-1]:.1f}%)'.replace(".", ","))
+        ax2.plot(x_n, core, color=C_CYAN, lw=1.8, linestyle='--', marker='^', markersize=4.0, label=f'Núcleo ({core[-1]:.1f}%)'.replace(".", ","))
+
+        ax2.set_xticks(x_n)
+        ax2.set_xticklabels(meses_lbl, fontsize=7.0)
+        ax2.set_ylabel("Tasa mensual (%)", fontsize=7.5, color=C_SLATE)
+        _todos = np.concatenate([gral, core, regul])
+        _pad = (_todos.max() - _todos.min()) * 0.2
+        ax2.set_ylim(_todos.min() - _pad, _todos.max() + _pad)
+        ax2.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
+        ax2.legend(frameon=False, fontsize=6.8, loc='upper right')
+    ax2.set_title("B. Trayectoria IPC Nacional (% MoM, INDEC)", fontsize=8.3, fontweight='bold', color=C_NAVY, loc='left')
 
 # ==============================================================================
 # 4. FIGURA 3: ESTRUCTURA PRODUCTIVA DE CUYO (VINO, PETRÓLEO, CEMENTO)
 # ==============================================================================
 def plot_cuyo_redesigned(ax, fig):
+    """Sin conector real en el repo a INV (vitivinicultura), Secretaría de
+    Energía (hidrocarburos Mendoza) ni AFCP (cemento) -- ninguno publica
+    una API publica sencilla de consumir en vivo (INV publica informes
+    PDF/Excel periodicos, no una serie API). Se declara explicitamente en
+    vez de mostrar produccion vitivinicola/petrolera inventada como si
+    fuera la corrida del mes vigente."""
     ax.axis('off')
-    ax1 = fig.add_axes([0.09, 0.11, 0.40, 0.50])
-    ax2 = fig.add_axes([0.56, 0.11, 0.37, 0.50])
-    ax1.set_facecolor("#FFFFFF")
-    ax2.set_facecolor("#FFFFFF")
-    
-    meses_8 = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago"]
-    x_8 = np.arange(len(meses_8))
-    
-    fracc = np.array([40.2, 41.5, 43.0, 45.2, 46.5, 47.8, 48.9, 50.1])
-    gran  = np.array([14.0, 15.3, 16.1, 17.2, 17.5, 18.0, 18.3, 18.4])
-    total_vino = fracc + gran
-    
-    ax1.bar(x_8, fracc, width=0.45, label='Fraccionado (50,1k hl)', color=C_RED, alpha=0.9)
-    ax1.bar(x_8, gran, width=0.45, bottom=fracc, label='Granel (18,4k hl)', color=C_AMBER, alpha=0.9)
-    ax1.plot(x_8, total_vino, color=C_NAVY, lw=1.8, marker='o', markersize=4, label='Total Despachos (68,5k hl)')
-    
-    ax1.set_title("A. Vitivinicultura: Despachos INV (Miles hl)", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
-    ax1.set_xticks(x_8)
-    ax1.set_xticklabels(meses_8, fontsize=7.2)
-    ax1.set_ylabel("Miles de hectolitros (hl)", fontsize=7.5, color=C_SLATE)
-    ax1.set_ylim(0, 85)
-    ax1.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
-    ax1.legend(frameon=False, fontsize=6.8, loc='upper left')
-    
-    ax1.annotate("68,5k hl", xy=(7, 68.5), xytext=(5.8, 75.0),
-                 arrowprops=dict(arrowstyle="->", color=C_NAVY, lw=1.0),
-                 fontsize=7.2, fontweight='bold', color=C_NAVY)
-            
-    conv = np.array([170, 171, 173, 174, 176, 178, 180, 182])
-    noconv = np.array([15, 17, 19, 21, 23, 26, 28, 30])
-    total_oil = conv + noconv
-    
-    ax2.bar(x_8, conv, width=0.45, label='Convencional (182k m³)', color=C_SLATE, alpha=0.85)
-    ax2.bar(x_8, noconv, width=0.45, bottom=conv, label='Vaca Muerta Mza (30k m³)', color=C_TEAL, alpha=0.85)
-    ax2.plot(x_8, total_oil, color=C_NAVY, lw=1.8, marker='s', markersize=4, label='Total Crudo (212k m³)')
-    
-    ax2.set_title("B. Hidrocarburos en Mendoza (Miles m³)", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
-    ax2.set_xticks(x_8)
-    ax2.set_xticklabels(meses_8, fontsize=7.2)
-    ax2.set_ylabel("Miles de metros cúbicos (m³)", fontsize=7.5, color=C_SLATE)
-    ax2.set_ylim(0, 260)
-    ax2.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
-    ax2.legend(frameon=False, fontsize=6.8, loc='upper left')
-    
-    ax2.annotate("212k m³", xy=(7, 212), xytext=(5.8, 232),
-                 arrowprops=dict(arrowstyle="->", color=C_NAVY, lw=1.0),
-                 fontsize=7.2, fontweight='bold', color=C_NAVY)
+    ax.text(0.5, 0.6, "Vitivinicultura (INV), hidrocarburos (Secretaría de Energía) y\ncemento (AFCP) de Cuyo: sin conector automatizable en el repo.",
+            ha='center', va='center', fontsize=10, fontweight='bold', color=C_SLATE, transform=ax.transAxes)
+    ax.text(0.5, 0.42, "Estas fuentes publican informes periódicos (PDF/Excel), no una API en vivo.\nRequiere carga manual explícita por corrida, o un conector dedicado a futuro.",
+            ha='center', va='center', fontsize=8.2, color=C_GRAY, transform=ax.transAxes)
 
 # ==============================================================================
 # 4.1 FIGURA 3B: COMPARATIVO REGIONAL CUYO (MENDOZA / SAN JUAN / SAN LUIS)
 # ==============================================================================
-def plot_regional_cuyo(ax, fig, regional=None):
+def plot_regional_cuyo(ax, fig, actividad=None):
+    """El contrato (datos_del_dia.json actividad.*) solo tiene la variacion
+    interanual agregada del ISARC por provincia -- NO el nivel del indice
+    ni la desagregacion sectorial (industria/construccion/empleo), que la
+    version anterior de este grafico presentaba con un literal de relleno
+    (`regional_rows`) identico en las 3 provincias en distintas corridas.
+    Panel A: unico dato real disponible. Panel B: se declara explicitamente
+    que no hay fuente automatizable en vez de simular la desagregacion."""
     ax.axis('off')
-    ax1 = fig.add_axes([0.08, 0.11, 0.40, 0.50])
-    ax2 = fig.add_axes([0.56, 0.11, 0.38, 0.50])
+    ax1 = fig.add_axes([0.12, 0.11, 0.36, 0.50])
+    ax2 = fig.add_axes([0.58, 0.11, 0.34, 0.50])
     ax1.set_facecolor("#FFFFFF")
     ax2.set_facecolor("#FFFFFF")
 
-    if regional is None and DATOS_DEL_DIA is not None:
-        regional = DATOS_DEL_DIA.get("regional_cuyo")
-    if regional is None:
-        regional = {
-            "provincias": ["Mendoza", "San Juan", "San Luis"],
-            "isarc_nivel": [104.8, 102.1, 106.4],
-            "isarc_var_interanual_pct": [3.4, 2.1, 5.8],
-            "industria_manufacturera_var_interanual_pct": [2.8, 1.4, 9.7],
-            "construccion_var_interanual_pct": [5.1, -2.3, 14.2],
-            "empleo_registrado_var_interanual_pct": [1.2, 0.5, 3.9],
-        }
+    actividad = actividad or {}
+    provincias_campos = [("Mendoza", "isarc_mendoza_ia_pct"), ("San Juan", "isarc_san_juan_ia_pct"), ("San Luis", "isarc_san_luis_ia_pct")]
+    datos = [(p, actividad.get(c)) for p, c in provincias_campos if actividad.get(c) is not None]
 
-    provincias = regional["provincias"]
-    isarc = regional["isarc_nivel"]
-    isarc_ia = regional["isarc_var_interanual_pct"]
-    colores_prov = [C_NAVY, C_TEAL, C_AMBER]
+    if not datos:
+        ax1.axis('off')
+        ax1.text(0.5, 0.5, "Sin variación ISARC cargada\nen datos_del_dia.json.",
+                  ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax1.transAxes)
+    else:
+        provincias = [p for p, _ in datos]
+        isarc_ia = [v for _, v in datos]
+        colores_prov = [C_NAVY, C_TEAL, C_AMBER][:len(provincias)]
+        x = np.arange(len(provincias))
+        ax1.bar(x, isarc_ia, width=0.52, color=colores_prov, alpha=0.92)
+        ax1.axhline(0, color=C_SLATE, lw=0.8)
+        for i, ia in enumerate(isarc_ia):
+            ax1.annotate(f"{ia:+.1f}%".replace(".", ","), (x[i], ia), xytext=(0, 4 if ia >= 0 else -12), textcoords="offset points",
+                         ha='center', fontsize=8.2, fontweight='bold', color=colores_prov[i])
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(provincias, fontsize=7.6)
+        ax1.set_ylabel("Var. interanual ISARC (%)", fontsize=7.2, color=C_SLATE)
+        _pad = max(abs(v) for v in isarc_ia) * 0.4
+        ax1.set_ylim(min(0, min(isarc_ia)) - _pad, max(isarc_ia) + _pad)
+        ax1.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
+    ax1.set_title("A. ISARC: Variación Interanual por Provincia", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
 
-    x = np.arange(len(provincias))
-    bars = ax1.bar(x, isarc, width=0.52, color=colores_prov, alpha=0.92)
-    ax1.axhline(100, color=C_GRID, lw=1.0, linestyle='--', zorder=0)
-    ax1.text(2.62, 100.3, "Base 100\n(ene-24)", fontsize=6.2, color=C_GRAY, ha='right')
-    for i, (v, ia) in enumerate(zip(isarc, isarc_ia)):
-        ax1.annotate(f"{v:.1f}", (x[i], v), xytext=(0, 4), textcoords="offset points",
-                     ha='center', fontsize=8.2, fontweight='bold', color=colores_prov[i])
-        signo = "+" if ia >= 0 else ""
-        col_ia = C_TEAL if ia >= 0 else C_RED
-        ax1.annotate(f"{signo}{ia:.1f}% i.a.", (x[i], v), xytext=(0, -11), textcoords="offset points",
-                     ha='center', fontsize=6.6, fontweight='bold', color=col_ia)
-
-    ax1.set_title("A. Índice Sintético de Actividad Regional (ISARC)", fontsize=8.3, fontweight='bold', color=C_NAVY, loc='left')
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(provincias, fontsize=7.6)
-    ax1.set_ylabel("Índice (base 100 = ene-2024)", fontsize=7.2, color=C_SLATE)
-    ax1.set_ylim(94, max(isarc) * 1.08)
-    ax1.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
-
-    sectores = ["Industria\nManufacturera", "Construcción", "Empleo\nRegistrado"]
-    datos_sect = [
-        regional["industria_manufacturera_var_interanual_pct"],
-        regional["construccion_var_interanual_pct"],
-        regional["empleo_registrado_var_interanual_pct"],
-    ]
-    y = np.arange(len(sectores))
-    h = 0.24
-    for i, (prov, col) in enumerate(zip(provincias, colores_prov)):
-        vals = [s[i] for s in datos_sect]
-        offset = (i - 1) * h
-        ax2.barh(y + offset, vals, height=h * 0.92, color=col, alpha=0.9, label=prov)
-        for yi, v in zip(y + offset, vals):
-            signo = "+" if v >= 0 else ""
-            ax2.annotate(f"{signo}{v:.1f}%", (v, yi), xytext=(4 if v >= 0 else -4, 0),
-                         textcoords="offset points", va='center',
-                         ha='left' if v >= 0 else 'right', fontsize=6.2, fontweight='bold', color=col)
-
-    ax2.axvline(0, color=C_SLATE, lw=0.8)
-    ax2.set_title("B. Variación Interanual por Sector y Provincia", fontsize=8.3, fontweight='bold', color=C_NAVY, loc='left')
-    ax2.set_yticks(y)
-    ax2.set_yticklabels(sectores, fontsize=7.0)
-    ax2.set_xlabel("Var. i.a. %", fontsize=7.2, color=C_SLATE)
-    xmax = max(abs(v) for s in datos_sect for v in s) * 1.55
-    ax2.set_xlim(-xmax, xmax)
-    ax2.grid(axis='x', linestyle='--', color=C_GRID, lw=0.6)
-    ax2.legend(frameon=False, fontsize=6.4, loc='lower right', ncol=1)
+    ax2.axis('off')
+    ax2.text(0.5, 0.5, "Nivel del índice (base 100) y desagregación\npor sector (industria/construcción/empleo)\nsin fuente pública automatizable.\nRequiere carga manual desde\nDEIE Mendoza / IPEC San Juan / IPEC San Luis.",
+             ha='center', va='center', fontsize=7.8, color=C_SLATE, transform=ax2.transAxes)
+    ax2.set_title("B. Desagregación Sectorial (sin fuente automatizable)", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
 
 # ==============================================================================
 # 5. FIGURA 4: BALANCE CONSOLIDADO BCRA & REGLA DE TAYLOR
 # ==============================================================================
-def plot_monetary_master(ax, fig, historia_monetaria=None, taylor=None):
-    if historia_monetaria is None:
-        historia_monetaria = {
-            "meses": ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago"],
-            "base_m": [21.5, 22.8, 23.9, 24.8, 25.4, 26.2, 26.9, 27.4],
-            "lefi_m": [0.0, 5.0, 12.5, 18.0, 22.8, 26.5, 28.1, 29.3],
-            "pases_m": [32.0, 26.5, 18.2, 11.0, 5.5, 1.2, 0.0, 0.0],
-        }
-    if taylor is None:
-        mon = (DATOS_DEL_DIA or {}).get("monetario", {})
-        taylor = {
-            "meses": historia_monetaria["meses"],
-            "tasa_real_exante": [0.40, 0.50, 0.60, 0.70, 0.80, 0.80, 0.90, mon.get("tasa_real_exante_tem_pct", 0.95)],
-            "r_star": mon.get("r_star_pct", 0.75),
-        }
-
+def plot_monetary_master(ax, fig, historia_monetaria=None, tasa_real_exante_actual=None, r_star=0.75):
+    """historia_monetaria: base monetaria y pases pasivos REALES del BCRA
+    (src/fetch_series_indec_bcra.obtener_monetario_reciente()) -- antes
+    era un array de relleno con una narrativa de "Lefi $29,3 B" que la
+    serie real de BCRA (id=196) contradice: el stock de LEFI esta en 0
+    desde jul-2025 (mecanismo discontinuado), asi que ya no se incluye
+    como componente aparte del stack. tasa_real_exante_actual: calculada
+    por Fisher (tasas_ars.lecap_corta_tem - inflacion_esperada_rem_tem,
+    ambos campos reales del contrato) en src/contexto_informe.py. r_star
+    (tasa neutral) no tiene fuente objetiva -- es un supuesto del analista,
+    se declara como tal en el eje en vez de presentarlo como un dato."""
     ax.axis('off')
+
+    if historia_monetaria is None or not historia_monetaria.get("meses"):
+        ax.text(0.5, 0.5, "Sin serie monetaria real disponible en esta corrida\n(BCRA v4.0 no respondió).",
+                ha='center', va='center', fontsize=9, color=C_SLATE, transform=ax.transAxes)
+        return
     ax1 = fig.add_axes([0.09, 0.11, 0.38, 0.50])
     ax2 = fig.add_axes([0.55, 0.11, 0.38, 0.50])
     ax1.set_facecolor("#FFFFFF")
@@ -495,72 +454,87 @@ def plot_monetary_master(ax, fig, historia_monetaria=None, taylor=None):
     meses_8 = historia_monetaria["meses"]
     x_8 = np.arange(len(meses_8))
     base_m = np.array(historia_monetaria["base_m"])
-    lefi_m = np.array(historia_monetaria["lefi_m"])
     pases_m = np.array(historia_monetaria["pases_m"])
-    base_ult, lefi_ult, pases_ult = base_m[-1], lefi_m[-1], pases_m[-1]
+    base_ult, pases_ult = base_m[-1], pases_m[-1]
 
     def _fmt_b(v):
         return f"${v:.1f} B".replace(".", ",")
 
-    ax1.stackplot(x_8, base_m, lefi_m, pases_m,
-                  labels=[f'Base Ampliada ({_fmt_b(base_ult)})', f'Lefi Tesoro ({_fmt_b(lefi_ult)})', f'Pases BCRA ({_fmt_b(pases_ult)})'],
-                  colors=[C_NAVY, C_TEAL, "#CBD5E1"], alpha=0.9)
-    ax1.set_title("A. Pasivos Monetarios Consolidados ($ B)", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
+    ax1.stackplot(x_8, base_m, pases_m,
+                  labels=[f'Base Monetaria ({_fmt_b(base_ult)})', f'Pases Pasivos ({_fmt_b(pases_ult)})'],
+                  colors=[C_NAVY, "#CBD5E1"], alpha=0.9)
+    ax1.set_title("A. Base Monetaria y Pases Pasivos ($ B, BCRA real)", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
     ax1.set_xticks(x_8)
     ax1.set_xticklabels(meses_8, fontsize=7.2)
     ax1.set_ylabel("Billones de ARS ($ B)", fontsize=7.5, color=C_SLATE)
-    _tope_stack = (base_m + lefi_m + pases_m).max()
+    _tope_stack = (base_m + pases_m).max()
     ax1.set_ylim(0, _tope_stack * 1.20)
     ax1.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
     ax1.legend(frameon=False, fontsize=6.8, loc='upper right')
-
-    _x_label = len(meses_8) - 1.7
     ax1.set_xlim(-0.5, len(meses_8) - 0.3)
-    ax1.text(_x_label, base_ult/2, _fmt_b(base_ult), ha='center', va='center', fontsize=7.2, fontweight='bold', color='white', clip_on=False)
-    ax1.text(_x_label, base_ult + lefi_ult/2, _fmt_b(lefi_ult), ha='center', va='center', fontsize=7.2, fontweight='bold', color='white', clip_on=False)
 
-    tasa_real_exante = np.array(taylor["tasa_real_exante"])
-    r_star = taylor["r_star"]
-    ax2.plot(x_8, tasa_real_exante, color=C_NAVY, lw=2.2, marker='o', markersize=4.5, markeredgecolor='white', label='Tasa Real Ex-Ante (TEM %)')
-    ax2.axhline(y=r_star, color=C_AMBER, linestyle='--', lw=1.5, label=f'Tasa Neutral (r* = {r_star:.2f}%)'.replace(".", ","))
-    ax2.fill_between(x_8, r_star, tasa_real_exante, where=(tasa_real_exante >= r_star), color="#E0F2FE", alpha=0.6, label=f'Brecha Taylor (+{(tasa_real_exante[-1]-r_star)*100:.0f} pb)')
-
-    ax2.annotate(f"{meses_8[-1]}-26: +{tasa_real_exante[-1]:.2f}% TEM\n(Brecha +{(tasa_real_exante[-1]-r_star)*100:.0f} pb)".replace(".", ","),
-                 xy=(len(meses_8)-1, tasa_real_exante[-1]), xytext=(len(meses_8)-3.5, tasa_real_exante.max() + 0.10),
-                 arrowprops=dict(arrowstyle="->", color=C_NAVY, lw=1.0),
-                 bbox=dict(boxstyle="round,pad=0.2", fc="#FFFFFF", ec="#CBD5E1", lw=0.6),
-                 fontsize=6.8, fontweight='bold', color=C_NAVY)
-
-    ax2.set_title("B. Postura Monetaria: Regla de Taylor", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
-    ax2.set_xticks(x_8)
-    ax2.set_xticklabels(meses_8, fontsize=7.2)
+    # Sin serie historica real de tasa real ex-ante (tasas_ars.* es una
+    # instantanea manual del contrato, no una serie de tiempo) -- se
+    # muestra un unico punto real (Fisher: lecap_corta_tem menos
+    # inflacion_esperada_rem_tem, ver src/contexto_informe.py) contra r*,
+    # que es un supuesto del analista y se etiqueta como tal.
+    if tasa_real_exante_actual is None:
+        ax2.axis('off')
+        ax2.text(0.5, 0.5, "Sin tasas cargadas en tasas_ars.*\npara calcular la tasa real ex-ante.",
+                 ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax2.transAxes)
+    else:
+        ax2.bar([0], [tasa_real_exante_actual], width=0.5, color=C_NAVY if tasa_real_exante_actual >= r_star else C_RED)
+        ax2.axhline(y=r_star, color=C_AMBER, linestyle='--', lw=1.5, label=f'r* supuesto por el analista = {r_star:.2f}%'.replace(".", ","))
+        brecha_pb = (tasa_real_exante_actual - r_star) * 100
+        _tasa_fmt = f"{tasa_real_exante_actual:+.2f}".replace(".", ",")
+        ax2.annotate(f"{_tasa_fmt}% TEM\n(Brecha {brecha_pb:+.0f} pb vs. r*)",
+                     xy=(0, tasa_real_exante_actual), xytext=(0.55, tasa_real_exante_actual),
+                     ha='left', va='center', fontsize=7.2, fontweight='bold', color=C_NAVY)
+        ax2.set_xlim(-0.6, 2.2)
+        ax2.set_xticks([])
+        _pad_taylor = max(0.15, abs(tasa_real_exante_actual - r_star) * 0.6)
+        ax2.set_ylim(min(tasa_real_exante_actual, r_star) - _pad_taylor, max(tasa_real_exante_actual, r_star) + _pad_taylor)
+        ax2.legend(frameon=False, fontsize=6.8, loc='lower right')
+    ax2.set_title("B. Postura Monetaria: Regla de Taylor (r* = supuesto)", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
     ax2.set_ylabel("Tasa Efectiva Mensual (%)", fontsize=7.5, color=C_SLATE)
-    _pad_taylor = max(0.15, (tasa_real_exante.max() - tasa_real_exante.min()) * 0.3)
-    ax2.set_ylim(min(tasa_real_exante.min(), r_star) - _pad_taylor, max(tasa_real_exante.max(), r_star) + _pad_taylor * 1.6)
     ax2.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
-    ax2.legend(frameon=False, fontsize=6.8, loc='lower right')
 
 # ==============================================================================
 # 6. FIGURA 5: CURVA SOBERANA EN USD (NELSON-SIEGEL)
 # ==============================================================================
 def plot_sovereign_master(ax, fig, bonos=None, nelson_siegel_params=None, anio_base=2026.5):
+    """Bonos y parametros Nelson-Siegel leidos de datos_del_dia.json
+    (soberano_usd.*) -- antes este chart buscaba DATOS_DEL_DIA.get(
+    "bonos_soberanos") y DATOS_DEL_DIA.get("nelson_siegel") a nivel raiz,
+    claves que no existen en el contrato (viven bajo "soberano_usd"), asi
+    que el lookup siempre fallaba en silencio y caia al array de relleno.
+    El contrato solo tiene 4 bonos (AL30, GD30, GD35, GD38) -- se grafican
+    esos 4 reales en vez de los 8 tickers inventados (AL29/AL35/GD29/GD41
+    no tienen campo en el contrato)."""
+    soberano = (DATOS_DEL_DIA or {}).get("soberano_usd", {})
     if bonos is None:
-        bonos = (DATOS_DEL_DIA or {}).get("bonos_soberanos")
-    if bonos is None:
+        _vencimientos = {"al30": 4.0, "gd30": 4.0, "gd35": 9.0, "gd38": 12.0}
+        _leg = {"al30": "Local", "gd30": "NY", "gd35": "NY", "gd38": "NY"}
         bonos = [
-            {"ticker": "AL29", "leg": "Local", "t": 3.0, "tir": 12.60},
-            {"ticker": "AL30", "leg": "Local", "t": 4.0, "tir": 11.20},
-            {"ticker": "AL35", "leg": "Local", "t": 9.0, "tir": 10.40},
-            {"ticker": "GD29", "leg": "NY", "t": 3.0, "tir": 12.10},
-            {"ticker": "GD30", "leg": "NY", "t": 4.0, "tir": 10.70},
-            {"ticker": "GD35", "leg": "NY", "t": 9.0, "tir": 10.00},
-            {"ticker": "GD38", "leg": "NY", "t": 12.0, "tir": 9.70},
-            {"ticker": "GD41", "leg": "NY", "t": 15.0, "tir": 9.40},
+            {"ticker": k.upper(), "leg": _leg[k], "t": _vencimientos[k], "tir": soberano[f"{k}_tir"]}
+            for k in ("al30", "gd30", "gd35", "gd38") if soberano.get(f"{k}_tir") is not None
         ]
+    if not bonos:
+        ax.axis('off')
+        ax.text(0.5, 0.5, "Sin TIRes de bonos soberanos cargadas\nen datos_del_dia.json.",
+                ha='center', va='center', fontsize=9, color=C_SLATE, transform=ax.transAxes)
+        return
     if nelson_siegel_params is None:
-        nelson_siegel_params = (DATOS_DEL_DIA or {}).get("nelson_siegel")
+        ns = soberano.get("nelson_siegel")
+        nelson_siegel_params = {
+            "b0": ns["beta0"], "b1": ns["beta1"], "b2": ns["beta2"], "tau": ns["tau"],
+            "spread_legislacion_pb": (soberano.get("al30_tir", 0) - soberano.get("gd30_tir", 0)) * 100,
+        } if ns else None
     if nelson_siegel_params is None:
-        nelson_siegel_params = {"b0": 9.40, "b1": 5.60, "b2": -3.20, "tau": 2.40, "spread_legislacion_pb": 50}
+        ax.axis('off')
+        ax.text(0.5, 0.5, "Sin parámetros Nelson-Siegel cargados\nen datos_del_dia.json.",
+                ha='center', va='center', fontsize=9, color=C_SLATE, transform=ax.transAxes)
+        return
 
     al_data = [(b["ticker"], round(anio_base + b["t"], 1), b["tir"]) for b in bonos if b["leg"] == "Local"]
     gd_data = [(b["ticker"], round(anio_base + b["t"], 1), b["tir"]) for b in bonos if b["leg"] == "NY"]
@@ -631,27 +605,35 @@ def plot_sovereign_master(ax, fig, bonos=None, nelson_siegel_params=None, anio_b
 # 7. FIGURA 6: MERCADO CAMBIARIO & FUTUROS MATBA-ROFEX
 # ==============================================================================
 def plot_fx_master(ax, fig, fx=None, rofex=None):
+    """Panel A: cotizaciones reales de datos_del_dia.json (dolar.*) --
+    antes buscaba DATOS_DEL_DIA.get("fx"), una clave que no existe en el
+    contrato (vive como dolar.oficial_bna/mayorista/mep/ccl/blue a nivel
+    raiz), asi que caia siempre al array de relleno. Panel B (Rofex): no
+    hay ningun conector a Matba-Rofex en el repo (requiere feed pago/con
+    cuenta) -- se dice explicitamente en el grafico en vez de simular una
+    curva de futuros con probabilidades de salto inventadas."""
     if fx is None:
-        fx = (DATOS_DEL_DIA or {}).get("fx")
-    if fx is None:
-        fx = [
-            {"short": "Mayorista (A3500)", "cotizacion_ars": 1485.00, "brecha_vs_mayorista_pct": 0.0},
-            {"short": "Minorista (BNA)", "cotizacion_ars": 1515.00, "brecha_vs_mayorista_pct": 2.02},
-            {"short": "MEP (AL30 48hs)", "cotizacion_ars": 1532.33, "brecha_vs_mayorista_pct": 3.19},
-            {"short": "CCL (GD30 Cable)", "cotizacion_ars": 1596.59, "brecha_vs_mayorista_pct": 7.51},
-            {"short": "Informal (Blue)", "cotizacion_ars": 1615.00, "brecha_vs_mayorista_pct": 8.75},
+        dolar = (DATOS_DEL_DIA or {}).get("dolar", {})
+        mayorista = dolar.get("mayorista")
+        _campos = [
+            ("mayorista", "Mayorista (A3500)"), ("oficial_bna", "Minorista (BNA)"),
+            ("mep", "MEP"), ("ccl", "CCL"), ("blue", "Informal (Blue)"),
         ]
+        fx = []
+        for campo, nombre in _campos:
+            val = dolar.get(campo)
+            if val is None:
+                continue
+            brecha = round(100 * (val / mayorista - 1), 2) if mayorista else None
+            fx.append({"short": nombre, "cotizacion_ars": val, "brecha_vs_mayorista_pct": brecha})
     if rofex is None:
         rofex = (DATOS_DEL_DIA or {}).get("rofex")
-    if rofex is None:
-        rofex = {
-            "posiciones": ["Ago-26", "Sep-26", "Oct-26", "Dic-26", "Ago-27"],
-            "tna_pct": [35.2, 36.4, 37.1, 38.5, 41.2],
-            "open_interest_k": [1250, 890, 620, 450, 180],
-            "prob_salto_discreto_pct": [8.5, 12.4, 16.8, 24.5, 34.0],
-        }
 
     ax.axis('off')
+    if not fx:
+        ax.text(0.28, 0.5, "Sin cotizaciones cambiarias\ncargadas en datos_del_dia.json.",
+                ha='center', va='center', fontsize=9, color=C_SLATE, transform=ax.transAxes)
+        return
     ax1 = fig.add_axes([0.18, 0.13, 0.29, 0.45])
     ax2 = fig.add_axes([0.57, 0.13, 0.36, 0.45])
     ax1.set_facecolor("#FFFFFF")
@@ -659,7 +641,10 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
 
     dolares_nom = [r.get("short", r.get("segmento")) for r in fx]
     cotiz_vals = [r["cotizacion_ars"] for r in fx]
-    brechas_m = [f'{r["brecha_vs_mayorista_pct"]:+.1f}%'.replace(".", ",").replace("+0,0%", "0,0%") for r in fx]
+    brechas_m = [
+        (f'{r["brecha_vs_mayorista_pct"]:+.1f}%'.replace(".", ",").replace("+0,0%", "0,0%") if r.get("brecha_vs_mayorista_pct") is not None else "s/d")
+        for r in fx
+    ]
     y_fx = np.arange(len(dolares_nom))
     _paleta_fx = [C_SLATE, C_NAVY, C_AMBER, C_RED, C_GRAY]
     colores_fx = [_paleta_fx[i % len(_paleta_fx)] for i in range(len(dolares_nom))]
@@ -668,7 +653,12 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
     for y, val, col, br in zip(y_fx, cotiz_vals, colores_fx, brechas_m):
         ax1.hlines(y=y, xmin=_xmin_fx, xmax=val, color=col, lw=2.2, alpha=0.85)
         ax1.plot(val, y, marker='o', markersize=6.5, color=col, markeredgecolor='white')
-        ax1.text(val + (max(cotiz_vals) - min(cotiz_vals)) * 0.02, y, f"${val:,.2f} ({br})".replace(",", "X").replace(".", ",").replace("X", "."),
+        # br ya viene formateado en es-AR (coma decimal) desde brechas_m --
+        # antes se aplicaba el swap de separadores de "$val" sobre el string
+        # completo, incluido "br", lo que le invertia la coma decimal a "br"
+        # (ej. "+7,5%" terminaba como "+7.5%"). Se formatea el monto aparte.
+        _val_fmt = f"${val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        ax1.text(val + (max(cotiz_vals) - min(cotiz_vals)) * 0.02, y, f"{_val_fmt} ({br})",
                  va='center', fontsize=6.8, fontweight='bold', color=col)
 
     ax1.set_yticks(y_fx)
@@ -682,6 +672,17 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
     ax1.set_title("A. Cotizaciones Cambiarias y Brechas Spot", fontsize=8.0, fontweight='bold', color=C_NAVY, pad=6, loc='left')
     ax1.set_xlabel("Cotización en Pesos (ARS)", fontsize=7.0, color=C_SLATE, labelpad=2)
     ax1.grid(axis='x', linestyle='--', color=C_GRID, lw=0.6)
+
+    if rofex is None:
+        # Sin conector a Matba-Rofex en el repo (feed de futuros requiere
+        # suscripcion paga o cuenta de bolsa) -- se declara explicitamente
+        # en vez de simular precios, TNA y probabilidad de salto discreto
+        # que no vienen de ningun mercado real.
+        ax2.axis('off')
+        ax2.text(0.5, 0.5, "Sin conector a Matba-Rofex disponible\n(futuros de dólar requieren feed con cuenta de bolsa).\nCarga manual pendiente.",
+                 ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax2.transAxes)
+        ax2.set_title("B. Futuros Matba-Rofex (sin fuente automatizable)", fontsize=8.0, fontweight='bold', color=C_NAVY, pad=6, loc='left')
+        return
 
     posiciones = rofex["posiciones"]
     tna_rofex = rofex["tna_pct"]
@@ -699,7 +700,7 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
     ax2.set_xticklabels(posiciones, fontsize=6.8)
     for lbl in ax2.get_xticklabels() + ax2.get_yticklabels():
         lbl.set_fontfamily('sans-serif')
-    
+
     ax2_t = ax2.twinx()
     ax2_t.spines['top'].set_visible(False)
     ax2_t.spines['left'].set_visible(False)
@@ -719,189 +720,243 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
     for lbl in ax2_t.get_yticklabels():
         lbl.set_fontfamily('sans-serif')
         lbl.set_fontsize(6.8)
-    
+
     ax2.set_title("B. Futuros Matba-Rofex y Prob. Salto", fontsize=8.0, fontweight='bold', color=C_NAVY, pad=6, loc='left')
 
 # ==============================================================================
 # 8. FIGURA 7: RENTA VARIABLE & RADAR DE VALUACIÓN
 # ==============================================================================
-def plot_equity_master(ax, fig):
+def plot_equity_master(ax, fig, variacion_semanal=None, lideres=None):
+    """Panel A: variacion semanal REAL via yfinance (.BA), ver
+    src/fetch_datos_reales.obtener_variacion_semanal_acciones() -- antes
+    era un array de relleno sin ningun ticker verificado contra mercado.
+    Panel B: multiplos EV/EBITDA de datos_del_dia.json (equity.lideres) --
+    solo se grafican los tickers que estan realmente en el contrato (antes
+    incluia VIST/TGNO4 con multiplos inventados sin ningun campo fuente)."""
     ax.axis('off')
     ax1 = fig.add_axes([0.16, 0.11, 0.31, 0.50])
     ax2 = fig.add_axes([0.55, 0.11, 0.38, 0.50])
     ax1.set_facecolor("#FFFFFF")
     ax2.set_facecolor("#FFFFFF")
-    
-    tickers_eq = ["BBAR (BBVA)", "BMA (Macro)", "IMV (S&P Merval)", "GGAL (Galicia)", "PAMP (Pampa)", "TGSU2 (TGS)", "YPFD (YPF)"]
-    var_eq = [1.20, 1.50, 1.30, 1.90, 2.40, 2.80, 3.20]
-    y_eq = np.arange(len(tickers_eq))
-    colores_e = [C_CYAN, C_CYAN, C_NAVY, C_CYAN, C_AMBER, C_AMBER, C_AMBER]
-    
-    for y, val, col in zip(y_eq, var_eq, colores_e):
-        ax1.hlines(y=y, xmin=0, xmax=val, color=col, lw=2.0, alpha=0.85)
-        ax1.plot(val, y, marker='o', markersize=6.5, color=col, markeredgecolor='white')
-        ax1.text(val + 0.08, y, f"+{val:.2f}%", va='center', fontsize=7.2, fontweight='bold', color=col)
-        
-    ax1.set_yticks(y_eq)
-    ax1.set_yticklabels(tickers_eq, fontsize=7.0)
-    ax1.set_xlim(0, 4.0)
-    ax1.set_title("A. Renta Variable: Variación Semanal (%)", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
-    ax1.set_xlabel("Rendimiento semanal en ARS (%)", fontsize=7.5, color=C_SLATE)
-    ax1.grid(axis='x', linestyle='--', color=C_GRID, lw=0.6)
-    
-    tickers_sc = ["YPFD", "PAMP", "TGSU2", "VIST", "TGNO4"]
-    ev_ebitda = [3.8, 4.1, 4.4, 4.8, 5.2]
-    margen_ebitda = [32.4, 38.5, 42.1, 55.0, 36.0]
-    
-    ax2.scatter(ev_ebitda, margen_ebitda, color=C_NAVY, s=90, alpha=0.9, zorder=5, edgecolors='white', linewidths=1.2)
-    for t, x, y in zip(tickers_sc, ev_ebitda, margen_ebitda):
-        offset_x = 0.08
-        offset_y = 0.8 if t != "TGNO4" else -2.5
-        ax2.annotate(f"{t}\n({x:.1f}x, {y:.1f}%)", (x, y), xytext=(x + offset_x, y + offset_y),
-                     fontsize=7.2, fontweight='bold', color=C_NAVY)
-        
-    ax2.axvline(x=4.5, color=C_RED, linestyle='--', lw=1.2, label='Umbral atractivo (< 4,5x)')
-    ax2.set_title("B. Radar Energético: EV/EBITDA vs. Margen", fontsize=8.5, fontweight='bold', color=C_NAVY, loc='left')
-    ax2.set_xlabel("Múltiplo EV/EBITDA (veces)", fontsize=7.5, color=C_SLATE)
-    ax2.set_ylabel("Margen EBITDA (%)", fontsize=7.5, color=C_SLATE)
-    ax2.set_xlim(3.2, 5.8)
-    ax2.set_ylim(25, 62)
-    ax2.grid(True, linestyle='--', color=C_GRID, lw=0.6)
-    ax2.legend(frameon=False, fontsize=6.8, loc='upper left')
+
+    if not variacion_semanal:
+        ax1.axis('off')
+        ax1.text(0.5, 0.5, "Sin variación semanal real disponible\n(yfinance no respondió).",
+                  ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax1.transAxes)
+    else:
+        items = sorted(variacion_semanal.items(), key=lambda kv: kv[1]["var_semanal_pct"])
+        tickers_eq = [tk for tk, _ in items]
+        var_eq = [v["var_semanal_pct"] for _, v in items]
+        y_eq = np.arange(len(tickers_eq))
+        colores_e = [C_TEAL if v >= 0 else C_RED for v in var_eq]
+
+        for y, val, col in zip(y_eq, var_eq, colores_e):
+            ax1.hlines(y=y, xmin=0, xmax=val, color=col, lw=2.0, alpha=0.85)
+            ax1.plot(val, y, marker='o', markersize=6.5, color=col, markeredgecolor='white')
+            ax1.text(val + (0.10 if val >= 0 else -0.10), y, f"{val:+.2f}%".replace(".", ","),
+                      va='center', ha='left' if val >= 0 else 'right', fontsize=7.2, fontweight='bold', color=col)
+
+        ax1.set_yticks(y_eq)
+        ax1.set_yticklabels(tickers_eq, fontsize=7.0)
+        _xmax = max(abs(v) for v in var_eq) * 1.5
+        ax1.set_xlim(-_xmax, _xmax)
+        ax1.axvline(0, color=C_SLATE, lw=0.8)
+        ax1.set_xlabel("Rendimiento semanal en ARS (%)", fontsize=7.5, color=C_SLATE)
+        ax1.grid(axis='x', linestyle='--', color=C_GRID, lw=0.6)
+    ax1.set_title("A. Renta Variable: Variación Semanal Real (%)", fontsize=8.3, fontweight='bold', color=C_NAVY, loc='left')
+
+    lideres = [l for l in (lideres or []) if l.get("ev_ebitda") is not None and l.get("margen_ebitda") is not None]
+    if not lideres:
+        ax2.axis('off')
+        ax2.text(0.5, 0.5, "Sin múltiplos EV/EBITDA cargados\nen datos_del_dia.json.",
+                  ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax2.transAxes)
+    else:
+        ev_ebitda = [l["ev_ebitda"] for l in lideres]
+        margen_ebitda = [l["margen_ebitda"] for l in lideres]
+        ax2.scatter(ev_ebitda, margen_ebitda, color=C_NAVY, s=90, alpha=0.9, zorder=5, edgecolors='white', linewidths=1.2)
+        for l in lideres:
+            ax2.annotate(f"{l['ticker']}\n({l['ev_ebitda']:.1f}x, {l['margen_ebitda']:.1f}%)".replace(".", ","),
+                         (l["ev_ebitda"], l["margen_ebitda"]), xytext=(l["ev_ebitda"] + 0.08, l["margen_ebitda"] + 0.8),
+                         fontsize=7.2, fontweight='bold', color=C_NAVY)
+        _pad_x = (max(ev_ebitda) - min(ev_ebitda)) * 0.3 or 0.5
+        _pad_y = (max(margen_ebitda) - min(margen_ebitda)) * 0.3 or 5
+        ax2.set_xlim(min(ev_ebitda) - _pad_x, max(ev_ebitda) + _pad_x)
+        ax2.set_ylim(min(margen_ebitda) - _pad_y, max(margen_ebitda) + _pad_y)
+        ax2.set_xlabel("Múltiplo EV/EBITDA (veces)", fontsize=7.5, color=C_SLATE)
+        ax2.set_ylabel("Margen EBITDA (%)", fontsize=7.5, color=C_SLATE)
+        ax2.grid(True, linestyle='--', color=C_GRID, lw=0.6)
+    ax2.set_title("B. Radar Energético: EV/EBITDA vs. Margen", fontsize=8.3, fontweight='bold', color=C_NAVY, loc='left')
 
 # ==============================================================================
 # GENERACIÓN DE TODAS LAS INFOGRAFÍAS
 # ==============================================================================
 def generar_todas_las_infografias(*args, **kwargs):
+    """KPIs calculados en vivo desde datos reales (contexto unico en
+    src/contexto_informe.py + src/fetch_series_indec_bcra.py +
+    src/fetch_datos_reales.py) -- antes cada tupla de kpis era un literal
+    fijo desconectado del propio grafico que create_master_infographic
+    renderizaba debajo. Un campo sin fuente real se muestra "s/d", nunca
+    un numero de relleno."""
     print("Iniciando renderizado de infografías vectoriales maestras a 300 DPI...")
-    
+
+    from src.contexto_informe import cargar_contexto, fmt_pct, fmt_num
+    from src.fetch_series_indec_bcra import obtener_emae_reciente, obtener_ipc_trayectoria, obtener_monetario_reciente
+    from src.fetch_datos_reales import obtener_variacion_semanal_acciones
+
+    ctx = cargar_contexto(incluir_series_lentas=False)
+    dolar, tasas_ars, inflacion, actividad, soberano, equity = (
+        ctx["dolar"], ctx["tasas_ars"], ctx["inflacion"], ctx["actividad"], ctx["soberano_usd"], ctx["equity"]
+    )
+
+    try:
+        emae = obtener_emae_reciente()
+    except Exception as e:
+        print(f"      [Infografias] ERROR EMAE: {e}"); emae = None
+    try:
+        ipc_trayectoria = obtener_ipc_trayectoria()
+    except Exception as e:
+        print(f"      [Infografias] ERROR IPC trayectoria: {e}"); ipc_trayectoria = None
+    try:
+        monetario = obtener_monetario_reciente()
+    except Exception as e:
+        print(f"      [Infografias] ERROR monetario BCRA: {e}"); monetario = None
+    try:
+        variacion_semanal = obtener_variacion_semanal_acciones()
+    except Exception as e:
+        print(f"      [Infografias] ERROR variacion semanal acciones: {e}"); variacion_semanal = {}
+
     f0 = create_master_infographic(
         "chart_indec_emae_master.png",
-        "INDEC · SERIE HISTÓRICA 2024-2026",
+        f"INDEC · SERIE HISTÓRICA {emae['meses'][0] if emae else 's/d'} A {emae['meses'][-1] if emae else 's/d'}",
         "Estimador Mensual de Actividad Económica (EMAE)",
         "Evolución de la serie original, desestacionalizada y tendencia-ciclo (Base 2004 = 100)",
         [
-            ("EMAE ORIGINAL", "152,0", "Variación i.a. +3,1%", C_NAVY),
-            ("DESESTACIONALIZADO", "156,0", "Variación mensual +0,6%", C_TEAL),
-            ("TENDENCIA-CICLO", "153,5", "Variación mensual +0,4%", C_CYAN)
+            ("EMAE ORIGINAL", fmt_num(emae["original"][-1], 0) if emae else "s/d", fmt_pct(emae.get("var_interanual_ultimo") if emae else None, 1, True) + " i.a.", C_NAVY),
+            ("DESESTACIONALIZADO", fmt_num(emae["desestacionalizado"][-1], 0) if emae else "s/d", "Variación mensual " + fmt_pct(emae.get("var_mensual_desest_ultimo") if emae else None, 1, True), C_TEAL),
+            ("TENDENCIA-CICLO", fmt_num(emae["tendencia_ciclo"][-1], 1) if emae else "s/d", "Base 2004 = 100", C_CYAN),
         ],
-        plot_emae_master,
-        "Fuente: Instituto Nacional de Estadística y Censos (INDEC). Serie oficial 2024-2026."
+        lambda ax, fig: plot_emae_master(ax, fig, emae),
+        "Fuente: Instituto Nacional de Estadística y Censos (INDEC), vía apis.datos.gob.ar."
     )
-    
+
     f1 = create_master_infographic(
         "chart_indec_1_rates.png",
-        "BYMA / BCRA · CIERRE AGOSTO 2026",
-        "Arbitraje de Tasas en ARS y Breakeven Inflacionario",
-        "Estructura a término de Lecaps a tasa fija vs. Boncer CER y expectativas del REM",
+        "BCRA / CONTRATO MANUAL · TASAS EN ARS",
+        "Tasas en ARS y Breakeven Inflacionario",
+        "Lecap corta/larga a tasa fija vs. Boncer CER y expectativas del REM (carga manual del contrato)",
         [
-            ("LECAP CORTA (S31O6)", "2,95% TEM", "TNA 35,4% · Carry positivo", C_NAVY),
-            ("BREAKEVEN INFLACIÓN", "2,86% MoM", "Premio tasa fija +86 pb s/ REM", C_AMBER),
-            ("INFLACIÓN REM 1M", "2,00% MoM", "Sendero descendente proyectado", C_CYAN)
+            ("LECAP CORTA", fmt_pct(tasas_ars.get("lecap_corta_tem")), "TEM · Instrumento a tasa fija", C_NAVY),
+            ("BREAKEVEN INFLACIÓN", fmt_pct(tasas_ars.get("breakeven_inflacion_tem")), f"Premio " + fmt_num(tasas_ars.get("premio_tasa_fija_pbs"), 0) + " pb s/ REM" if tasas_ars.get("premio_tasa_fija_pbs") is not None else "s/d", C_AMBER),
+            ("INFLACIÓN REM", fmt_pct(tasas_ars.get("inflacion_esperada_rem_tem")), "Mediana REM, 1 mes", C_CYAN),
         ],
-        plot_rates_breakeven,
-        "Fuentes: Bolsas y Mercados Argentinos (ByMA), BCRA y Relevamiento de Expectativas de Mercado (REM)."
+        lambda ax, fig: plot_rates_breakeven(ax, fig, tasas_ars),
+        "Fuente: contrato datos_del_dia.json (tasas_ars.*) -- carga manual, sin conector automatizado a ByMA/Matba."
     )
-    
+
     f2 = create_master_infographic(
         "chart_indec_2_ipc.png",
-        "INDEC / DEIE MENDOZA · AGOSTO 2026",
-        "Dinámica de Precios, Canastas Básicas y Salario Real",
-        "Dispersión por aperturas, convergencia mensual y comparación regional Cuyo vs. Nación",
+        "INDEC · TRAYECTORIA REAL DEL IPC NACIONAL",
+        "Dinámica de Precios: Aperturas del Mes y Trayectoria Nacional",
+        "Dispersión por apertura (carga manual del contrato) y trayectoria real de 8 meses (INDEC)",
         [
-            ("IPC NACIONAL GENERAL", "2,2% MoM", "Núcleo: 1,9% · Regulados: 3,0%", C_NAVY),
-            ("IPC PROVINCIA MENDOZA", "2,3% MoM", "DEIE · Brecha regional +0,10 pp", C_AMBER),
-            ("SALARIO REAL RIPTE", "84,4 pts", "+2,4% acumulado s/ dic-23", C_TEAL)
+            ("IPC NACIONAL GENERAL", fmt_pct(inflacion.get("indec_general_mom")), "Mes vigente, carga manual", C_NAVY),
+            ("NÚCLEO", fmt_pct(inflacion.get("indec_nucleo_mom")), "Mes vigente, carga manual", C_AMBER),
+            ("REGULADOS", fmt_pct(inflacion.get("indec_regulados_mom")), "Mes vigente, carga manual", C_TEAL),
         ],
-        plot_ipc_master,
-        "Fuentes: INDEC, Dirección de Estadísticas e Investigaciones Económicas (DEIE) Mendoza y Secretaría de Trabajo."
+        lambda ax, fig: plot_ipc_master(ax, fig, inflacion, ipc_trayectoria),
+        "Fuentes: INDEC (contrato manual + apis.datos.gob.ar). DEIE Mendoza sin serie histórica pública."
     )
-    
+
     f3 = create_master_infographic(
         "chart_indec_3_cuyo.png",
         "INV / SECRETARÍA DE ENERGÍA / AFCP",
-        "Estructura Productiva y Desagregación Sectorial en Cuyo",
-        "Despachos vitivinícolas totales, extracción hidrocarburífera y despacho de cemento",
+        "Estructura Productiva de Cuyo (sin conector automatizable)",
+        "Vitivinicultura, hidrocarburos y cemento -- fuentes sin API pública en el repo actual",
         [
-            ("DESPACHOS VINO INV", "68,5 mil hl", "50,1k fracc. + 18,4k granel", C_RED),
-            ("PETRÓLEO MENDOZA", "212 mil m³", "182k conv. + 30k no conv.", C_NAVY),
-            ("CEMENTO PORTLAND", "100,4 pts", "AFCP Cuyo · Obra privada", C_SLATE)
+            ("VITIVINICULTURA (INV)", "s/d", "Sin conector automatizable", C_GRAY),
+            ("HIDROCARBUROS (MENDOZA)", "s/d", "Sin conector automatizable", C_GRAY),
+            ("CEMENTO (AFCP)", "s/d", "Sin conector automatizable", C_GRAY),
         ],
         plot_cuyo_redesigned,
-        "Fuentes: Instituto Nacional de Vitivinicultura (INV), Secretaría de Energía de la Nación y AFCP."
+        "Sin fuente automatizable: INV, Secretaría de Energía y AFCP no publican una API en vivo."
     )
- 
+
     f3b = create_master_infographic(
         "chart_indec_3b_regional_cuyo.png",
         "DEIE MENDOZA / IPEC SAN JUAN / IPEC SAN LUIS",
         "Comparativo Regional: Índice Sintético de Actividad (ISARC)",
-        "Desagregación provincial de Cuyo — nivel de actividad, industria, construcción y empleo",
+        "Variación interanual por provincia (contrato manual) -- nivel y desagregación sectorial sin fuente pública",
         [
-            ("ISARC SAN LUIS", "106,4 pts", "+5,8% i.a. · Líder regional", C_AMBER),
-            ("ISARC MENDOZA", "104,8 pts", "+3,4% i.a. · Motor vitivinícola", C_NAVY),
-            ("ISARC SAN JUAN", "102,1 pts", "+2,1% i.a. · Convergencia minera", C_TEAL)
+            ("ISARC MENDOZA", fmt_pct(actividad.get("isarc_mendoza_ia_pct"), 1, True), "Var. i.a., carga manual", C_NAVY),
+            ("ISARC SAN JUAN", fmt_pct(actividad.get("isarc_san_juan_ia_pct"), 1, True), "Var. i.a., carga manual", C_TEAL),
+            ("ISARC SAN LUIS", fmt_pct(actividad.get("isarc_san_luis_ia_pct"), 1, True), "Var. i.a., carga manual", C_AMBER),
         ],
-        plot_regional_cuyo,
-        "Fuentes: DEIE Mendoza, IPEC San Juan, IPEC San Luis y elaboración propia (índice compuesto ISARC)."
+        lambda ax, fig: plot_regional_cuyo(ax, fig, actividad),
+        "Fuente: contrato datos_del_dia.json (actividad.*). Nivel de índice y desagregación sectorial sin fuente automatizable."
     )
- 
+
     f4 = create_master_infographic(
         "chart_indec_4_monetary.png",
         "BANCO CENTRAL DE LA REPÚBLICA ARGENTINA",
-        "Balance Consolidado del BCRA y Regla de Taylor",
-        "Absorción cuasifiscal del Tesoro mediante Lefi y brecha de tasa real ex-ante",
+        "Base Monetaria, Pases Pasivos y Regla de Taylor",
+        "Serie real BCRA (base monetaria + pases) y tasa real ex-ante vs. r* (supuesto del analista)",
         [
-            ("BASE MONETARIA AMPLIADA", "$27,4 B", "Control estricto en términos reales", C_NAVY),
-            ("LEFI TESORO NACIONAL", "$29,3 B", "Pases pasivos BCRA extinguidos ($0 B)", C_TEAL),
-            ("BRECHA DE TAYLOR", "+20 bps", "Tasa real +0,95% vs. Neutral r* 0,75%", C_AMBER)
+            ("BASE MONETARIA", (fmt_num(monetario["base_m"][-1], 1, "$") + " B") if monetario else "s/d", "BCRA v4.0, id=15", C_NAVY),
+            ("PASES PASIVOS", (fmt_num(monetario["pases_m"][-1], 1, "$") + " B") if monetario else "s/d", "BCRA v4.0, id=152", C_TEAL),
+            ("TASA REAL EX-ANTE", fmt_pct(ctx["tasa_real_exante_tem_pct"], 2, True), "Fisher: Lecap corta - REM", C_AMBER),
         ],
-        plot_monetary_master,
-        "Fuentes: Banco Central de la República Argentina (BCRA) y Secretaría de Finanzas."
+        lambda ax, fig: plot_monetary_master(ax, fig, monetario, ctx["tasa_real_exante_tem_pct"]),
+        "Fuentes: Banco Central de la República Argentina (BCRA v4.0) y cálculo propio (Fisher) sobre el contrato."
     )
-    
+
     f5 = create_master_infographic(
         "chart_indec_5_sovereign.png",
-        "BYMA / BLOOMBERG · RESEARCH SOBERANO",
+        "BYMA · RESEARCH SOBERANO",
         "Estructura Temporal Soberana en USD — Modelo Nelson-Siegel",
-        "Curva spot y forward instantánea para títulos Bonares (AL) y Globales (GD)",
+        "Curva spot y forward instantánea para los 4 títulos con TIR cargada en el contrato",
         [
-            ("RIESGO PAÍS (EMBI+)", "506 pb", "Compresión sovereign (-26 pb)", C_NAVY),
-            ("NELSON-SIEGEL NIVEL (β0)", "9,40%", "Tasa asintótica soberana largo plazo", C_RED),
-            ("SPREAD LEGISLACIÓN", "50 bps", "Diferencial promedio Ley Local vs. NY", C_AMBER)
+            ("RIESGO PAÍS (EMBI+)", fmt_num(soberano.get("embi_riesgo_pais_pbs"), 0) + " pb" if soberano.get("embi_riesgo_pais_pbs") is not None else "s/d", "Carga manual del contrato", C_NAVY),
+            ("NELSON-SIEGEL NIVEL (β0)", fmt_pct(soberano.get("nelson_siegel", {}).get("beta0")), "Tasa asintótica soberana largo plazo", C_RED),
+            ("R² DEL AJUSTE", fmt_num(soberano.get("nelson_siegel", {}).get("r2"), 3), "Bondad de ajuste Nelson-Siegel", C_AMBER),
         ],
         plot_sovereign_master,
-        "Fuentes: Bolsas y Mercados Argentinos (ByMA), Bloomberg y estimaciones econométricas propias."
+        "Fuente: contrato datos_del_dia.json (soberano_usd.*) -- carga manual, sin conector automatizado a ByMA."
     )
-    
+
     f6 = create_master_infographic(
         "chart_indec_6_fx.png",
-        "BCRA / MATBA-ROFEX / MIT RESEARCH · CIERRE FINANCIERO",
-        "Microestructura Cambiaria, Rofex y Fragilidad Sistémica",
-        "Brechas spot, futuros y métricas de acoplamiento multivariado (Ratio de Absorción & Mahalanobis)",
+        "BCRA · CIERRE CAMBIARIO",
+        "Microestructura Cambiaria",
+        "Cotizaciones spot reales del contrato. Futuros Matba-Rofex sin conector automatizable.",
         [
-            ("DÓLAR CCL (GD30)", "$1.596,59", "Brecha BNA: 5,39% (7,51% May)", C_RED),
-            ("FUTURO DIC-26", "$1.680,00", "TNA implícita 38,5% · OI 450k", C_NAVY),
-            ("ABSORPTION RATIO", "64,2%", "Régimen Resiliente (<75%)", C_TEAL),
-            ("TURBULENCIA dt", "4,12", "Normal (Umbral Chi2: 11,07)", C_AMBER)
+            ("DÓLAR CCL", fmt_num(dolar.get("ccl"), 2, "$"), f"Brecha oficial: " + fmt_pct(dolar.get("brecha_ccl_oficial_pct"), 2, True), C_RED),
+            ("DÓLAR MAYORISTA (A3500)", fmt_num(dolar.get("mayorista"), 2, "$"), "BCRA v4.0, en vivo", C_NAVY),
+            ("DÓLAR OFICIAL (MINORISTA)", fmt_num(dolar.get("oficial_bna"), 2, "$"), "BCRA v4.0, en vivo", C_TEAL),
         ],
-        plot_fx_master,
-        "Fuentes: BCRA, Matba-Rofex, ByMA y modelo cuantitativo de fragilidad de activos cruzados."
+        lambda ax, fig: plot_fx_master(ax, fig),
+        "Fuente: BCRA v4.0 + contrato manual (dolar.*). Sin conector a Matba-Rofex (feed pago)."
     )
-    
+
+    _var_merval = equity.get("var_semanal_pct")
+    _lideres_reales = [l for l in equity.get("lideres", []) if l.get("ticker", "").replace("D", "") in [t for t in variacion_semanal]] if variacion_semanal else []
     f7 = create_master_infographic(
         "chart_indec_7_equity.png",
-        "BYMA / NYSE · RADAR DE MERCADO",
-        "Renta Variable Líder y Radar Sectorial Energético",
-        "Rendimientos semanales en ARS y múltiplos de valuación EV/EBITDA vs. margen operativo",
+        "BYMA (YFINANCE) · RADAR DE MERCADO",
+        "Renta Variable Líder: Retornos Reales y Múltiplos del Contrato",
+        "Rendimientos semanales reales (yfinance) y múltiplos EV/EBITDA de los tickers cargados en el contrato",
         [
-            ("S&P MERVAL (IMV)", "+1,30%", "Panel líder traccionado por energía", C_NAVY),
-            ("YPFD (YPF S.A.)", "+3,20%", "EV/EBITDA 3,8x · Margen 32,4%", C_AMBER),
-            ("TGSU2 (TGS)", "+2,80%", "EV/EBITDA 4,4x · Margen 42,1%", C_CYAN)
+            ("S&P MERVAL", fmt_pct(_var_merval, 2, True), "Carga manual del contrato", C_NAVY),
+            (list(variacion_semanal.keys())[0] if variacion_semanal else "s/d",
+             fmt_pct(list(variacion_semanal.values())[0]["var_semanal_pct"], 2, True) if variacion_semanal else "s/d",
+             "Variación semanal real (yfinance)", C_AMBER),
+            (equity.get("lideres", [{}])[0].get("ticker", "s/d") if equity.get("lideres") else "s/d",
+             (fmt_num(equity["lideres"][0].get("ev_ebitda"), 1) + "x EV/EBITDA") if equity.get("lideres") else "s/d",
+             "Carga manual del contrato", C_CYAN),
         ],
-        plot_equity_master,
-        "Fuentes: Bolsas y Mercados Argentinos (ByMA), New York Stock Exchange (NYSE) y balances corporativos."
+        lambda ax, fig: plot_equity_master(ax, fig, variacion_semanal, equity.get("lideres", [])),
+        "Fuentes: Bolsas y Mercados Argentinos (BYMA) vía yfinance (retornos) y contrato manual (múltiplos)."
     )
-    
+
     f8 = _crear_infografia_tcr()
 
     print("Todas las infografías maestras fueron generadas con éxito y sin solapamientos.")

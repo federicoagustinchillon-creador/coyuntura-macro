@@ -121,6 +121,35 @@ def obtener_merval_historial(dias=90):
         return []
 
 
+TICKERS_LIDERES_BYMA = ["YPFD.BA", "PAMP.BA", "GGAL.BA", "BMA.BA", "BBAR.BA", "TGSU2.BA"]
+
+
+def obtener_variacion_semanal_acciones(tickers=None):
+    """Variacion semanal real (cierre a cierre, ultimos 2 cierres separados
+    ~5 ruedas) de acciones lideres de BYMA, via yfinance (sufijo .BA).
+    Devuelve {'YPFD': {'var_semanal_pct': .., 'cierre_ars': ..}, ...} --
+    un ticker que yfinance no resuelve queda ausente del resultado, nunca
+    se rellena con un valor de ejemplo."""
+    tickers = tickers or TICKERS_LIDERES_BYMA
+    resultado = {}
+    try:
+        import yfinance as yf
+        for tk in tickers:
+            try:
+                hist = yf.Ticker(tk).history(period="10d")
+                if len(hist) < 2:
+                    continue
+                cierre_hoy = float(hist["Close"].iloc[-1])
+                cierre_semana = float(hist["Close"].iloc[-6] if len(hist) >= 6 else hist["Close"].iloc[0])
+                var_pct = round(100 * (cierre_hoy / cierre_semana - 1), 2)
+                resultado[tk.replace(".BA", "")] = {"var_semanal_pct": var_pct, "cierre_ars": round(cierre_hoy, 2)}
+            except Exception as e:
+                print(f"      [yfinance] ERROR consultando {tk}: {e}")
+    except Exception as e:
+        print(f"      [yfinance] ERROR general en obtener_variacion_semanal_acciones: {e}")
+    return resultado
+
+
 def obtener_historicos_dashboard(dias=90):
     """Agrupa los historiales reales que consume el dashboard (un solo punto
     de entrada para no duplicar la logica de ventana de fechas)."""
