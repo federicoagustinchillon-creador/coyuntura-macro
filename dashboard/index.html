@@ -288,25 +288,42 @@ function terminal() {
     },
 
     // Formato de fecha local (dd-mm-yy / dd-mm), nunca el orden ingles mm-dd.
+    //
+    // Distincion importante: una fecha "pura" (YYYY-MM-DD, ej. la que
+    // devuelve el BCRA) es un dia calendario y se muestra tal cual. Un
+    // timestamp con hora y sufijo Z/offset (ej. dolarapi.com, que publica en
+    // UTC) es un INSTANTE real y hay que convertirlo a hora de Argentina
+    // antes de mostrarlo -- sin esto, entre las 21:00 y las 24:00 hora local
+    // el reloj UTC ya paso la medianoche y el dashboard mostraba una fecha
+    // que todavia no habia llegado ("manana" visto desde Buenos Aires).
     fmtFechaCorta(iso) {
       if (!iso) return 's/d';
+      const esInstante = /T.*([Zz]|[+-]\d{2}:?\d{2})$/.test(iso);
+      if (esInstante) {
+        const fecha = new Date(iso);
+        if (!Number.isNaN(fecha.getTime())) {
+          const p = new Intl.DateTimeFormat('es-AR', {
+            timeZone: 'America/Argentina/Buenos_Aires',
+            day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+          }).formatToParts(fecha).reduce((acc, x) => (acc[x.type] = x.value, acc), {});
+          return `${p.day}-${p.month}-${p.year} ${p.hour}:${p.minute}`;
+        }
+      }
       const [y, m, d] = iso.slice(0, 10).split('-');
       if (!y || !m || !d) return iso;
-      const resto = iso.slice(10).trim(); // " HH:MM:SS" si vino un timestamp completo
+      const resto = iso.slice(10).trim(); // " HH:MM:SS" si vino un timestamp sin Z (poco frecuente, no es un instante UTC)
       return `${d}-${m}-${y.slice(2)}` + (resto ? ' ' + resto.slice(0, 5) : '');
     },
     fmtFechaEje(iso) {
       const [, m, d] = iso.slice(0, 10).split('-');
       return `${d}-${m}`;
     },
-    // Reemplaza cualquier fecha ISO (con o sin hora) embebida en un string
-    // de fuente por su formato local dd-mm-yy.
+    // Reemplaza cualquier fecha ISO (con o sin hora/Z) embebida en un string
+    // de fuente por su formato local -- reusa fmtFechaCorta para no duplicar
+    // la logica de conversion de zona horaria en dos lugares distintos.
     formatearFuente(texto) {
       if (!texto) return texto;
-      return texto.replace(/(\d{4})-(\d{2})-(\d{2})(T[\d:.]+Z?)?/g, (_, y, mo, d, t) => {
-        const corto = `${d}-${mo}-${y.slice(2)}`;
-        return t ? corto + ' ' + t.slice(1, 6) : corto;
-      });
+      return texto.replace(/\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:[Zz]|[+-]\d{2}:?\d{2})?)?/g, (m) => this.fmtFechaCorta(m));
     },
 
     _ejeFechas(serie) {
@@ -431,10 +448,27 @@ function terminal() {
     esVivo(k) {
       return this.camposSincronizados.some(c => c.startsWith('dolar.' + k));
     },
+    // El registro interno tagea cada campo LIVE con su identificador tecnico
+    // real (nombre de variable/endpoint del proveedor, ej.
+    // "BCRA_v4.0_monetarias(id=4)") -- utilisimo para depurar, ilegible para
+    // cualquiera fuera del pipeline (un recruiter, un comite). Se traduce a
+    // una etiqueta legible antes de mostrarla; si aparece un identificador
+    // nuevo que todavia no esta mapeado, se muestra tal cual en vez de
+    // ocultarlo (mejor "raro" que fabricar una etiqueta falsa).
+    _ETIQUETAS_FUENTE: {
+      'BCRA_v4.0_monetarias(id=4)': 'BCRA (oficial)',
+      'BCRA_v4.0_monetarias(id=5)': 'BCRA (mayorista)',
+      'dolarapi.com/contadoconliqui': 'DolarAPI (CCL)',
+    },
     fuenteDolar(k) {
       const match = this.camposSincronizados.find(c => c.startsWith('dolar.' + k));
-      if (match && match.includes('[')) return match.slice(match.indexOf('[') + 1, match.indexOf(']'));
-      return 'carga manual';
+      if (!match || !match.includes('[')) return 'carga manual';
+      const bruto = match.slice(match.indexOf('[') + 1, match.indexOf(']'));
+      const i = bruto.indexOf(':'); // separa "id:fecha" -- el id nunca trae ':', la fecha siempre
+      const id = i === -1 ? bruto : bruto.slice(0, i);
+      const fecha = i === -1 ? '' : bruto.slice(i + 1);
+      const etiqueta = this._ETIQUETAS_FUENTE[id] || id;
+      return fecha ? `${etiqueta}:${fecha}` : etiqueta;
     },
     fmtDolar(k) {
       const v = this.datos.dolar ? this.datos.dolar[k] : undefined;
