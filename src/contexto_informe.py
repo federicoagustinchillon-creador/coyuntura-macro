@@ -83,6 +83,41 @@ def cargar_contexto(incluir_series_lentas=True):
     except Exception:
         pass
 
+    # Fuentes secundarias reales (ver src/fetch_series_secundarias.py):
+    # tapan huecos que la auditoria marco "sin fuente automatizable" con
+    # datos reales aunque de segunda mano, en vez de dejar "s/d" repetido
+    # por todo el informe -- pedido explicito del usuario.
+    try:
+        from src.fetch_series_secundarias import obtener_riesgo_pais_variacion
+        ctx["riesgo_pais_variacion_1d"] = obtener_riesgo_pais_variacion(dias=1)
+        ctx["riesgo_pais_variacion_30d"] = obtener_riesgo_pais_variacion(dias=30)
+    except Exception as e:
+        print(f"      [Contexto] ERROR riesgo_pais_variacion: {e}")
+        ctx["riesgo_pais_variacion_1d"] = ctx["riesgo_pais_variacion_30d"] = None
+
+    try:
+        from src.fetch_series_secundarias import obtener_ripte_reciente
+        ctx["ripte"] = obtener_ripte_reciente()
+    except Exception as e:
+        print(f"      [Contexto] ERROR ripte: {e}")
+        ctx["ripte"] = None
+
+    try:
+        from src.fetch_series_secundarias import obtener_isac_reciente
+        ctx["isac"] = obtener_isac_reciente()
+    except Exception as e:
+        print(f"      [Contexto] ERROR isac: {e}")
+        ctx["isac"] = None
+
+    try:
+        from src.modelos_riesgo import calcular_dolar_futuro_implicito
+        ctx["dolar_futuro_implicito"] = calcular_dolar_futuro_implicito(
+            ctx["dolar"].get("mayorista"), ctx["tasas_ars"].get("lecap_corta_tem")
+        )
+    except Exception as e:
+        print(f"      [Contexto] ERROR dolar_futuro_implicito: {e}")
+        ctx["dolar_futuro_implicito"] = None
+
     if not incluir_series_lentas:
         return ctx
 
@@ -90,6 +125,7 @@ def cargar_contexto(incluir_series_lentas=True):
         ("emae_historico", lambda: __import__("src.fetch_series_indec_bcra", fromlist=["obtener_emae_reciente"]).obtener_emae_reciente()),
         ("ipc_trayectoria", lambda: __import__("src.fetch_series_indec_bcra", fromlist=["obtener_ipc_trayectoria"]).obtener_ipc_trayectoria()),
         ("monetario_historico", lambda: __import__("src.fetch_series_indec_bcra", fromlist=["obtener_monetario_reciente"]).obtener_monetario_reciente()),
+        ("riesgo_sistemico", lambda: __import__("src.modelos_riesgo", fromlist=["calcular_absorption_ratio_y_turbulencia"]).calcular_absorption_ratio_y_turbulencia()),
     ]:
         try:
             ctx[clave] = funcion()

@@ -10,6 +10,8 @@ atribución de cartera y referencias bibliográficas formales APA 7, sin espacio
 
 import os
 import sys
+import math
+from datetime import datetime, timedelta
 import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -20,6 +22,45 @@ import win32com.client
 import pandas as pd
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+from src.contexto_informe import cargar_contexto, fmt_pct, fmt_num, fmt_o_manual
+
+SIN_FUENTE = "s/d (carga manual pendiente)"
+
+
+def _calcular_periodo_semanal(fecha_iso):
+    """Semana calendario (lunes a viernes) que contiene la fecha real del
+    contrato (`datos_del_dia.json['fecha']`). Reemplaza el periodo fijo
+    hardcodeado -- si no hay fecha en el contrato, cae a la fecha de
+    ejecucion (`datetime.now()`), nunca a un periodo inventado distinto
+    del que corresponde a la corrida real."""
+    try:
+        fecha = datetime.strptime(fecha_iso, "%Y-%m-%d") if fecha_iso else datetime.now()
+    except (ValueError, TypeError):
+        fecha = datetime.now()
+    lunes = fecha - timedelta(days=fecha.weekday())
+    viernes = lunes + timedelta(days=4)
+    meses_es = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+                "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    if lunes.month == viernes.month:
+        return f"Semana del {lunes.day} al {viernes.day} de {meses_es[viernes.month]} de {viernes.year}"
+    return f"Semana del {lunes.day} de {meses_es[lunes.month]} al {viernes.day} de {meses_es[viernes.month]} de {viernes.year}"
+
+
+def _ns_forward_instantaneo(beta0, beta1, beta2, tau, t):
+    """Tasa forward instantanea f(t) del modelo de Nelson & Siegel (1987)
+    evaluada en los parametros REALES calibrados del contrato
+    (soberano_usd.nelson_siegel), no en un valor de relleno. Formula
+    estandar: f(t) = beta0 + beta1*e^(-t/tau) + beta2*(t/tau)*e^(-t/tau).
+    Devuelve None si falta algun parametro -- no fabrica una tasa forward
+    sin los betas que la definen."""
+    if None in (beta0, beta1, beta2, tau) or tau == 0:
+        return None
+    x = t / tau
+    e = math.exp(-x)
+    return beta0 + beta1 * e + beta2 * x * e
 
 COLOR_NAVY = RGBColor(12, 35, 64)       # Oxford Navy #0C2340
 COLOR_WINE = RGBColor(114, 47, 55)      # Deep Wine #722F37
@@ -59,7 +100,8 @@ def set_cell_borders(cell, top="CBD5E1", bottom="CBD5E1", left=None, right=None,
             tcBorders.append(b_el)
     tcPr.append(tcBorders)
 
-def add_header_footer_semanal(doc, periodo_str="Semana del 17 al 21 de Agosto de 2026"):
+def add_header_footer_semanal(doc, periodo_str=None):
+    periodo_str = periodo_str or _calcular_periodo_semanal(None)
     for i, section in enumerate(doc.sections):
         header = section.header
         p_hdr = header.paragraphs[0]
@@ -161,9 +203,51 @@ def formatear_tabla_apa7(tabla, col_widths, headers, data_rows, font_size=7.2, a
         for i, w in enumerate(col_widths):
             row.cells[i].width = Inches(w)
 
-def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str="Semana del 17 al 21 de Agosto de 2026"):
+def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str=None):
+    # Contexto unico de datos reales (ver src/contexto_informe.py) -- este
+    # generador NO cargaba datos_del_dia.json antes de esta correccion, por
+    # lo que todos los numeros del cuerpo del paper eran literales de
+    # plantilla. incluir_series_lentas=True porque la Seccion 1.1 necesita
+    # la serie mensual real de Base Monetaria y Pases Pasivos del BCRA
+    # (src/fetch_series_indec_bcra.obtener_monetario_reciente).
+    ctx = cargar_contexto(incluir_series_lentas=True)
+    periodo_str = periodo_str or _calcular_periodo_semanal(ctx.get("fecha"))
+
+    dolar = ctx["dolar"]
+    tasas_ars = ctx["tasas_ars"]
+    inflacion = ctx["inflacion"]
+    soberano = ctx["soberano_usd"]
+    ns = soberano.get("nelson_siegel", {})
+    ref_bcra = ctx["tasas_bcra_referencia"]
+    monetario = ctx.get("monetario_historico")
+    ripte = ctx.get("ripte")
+
+    def _campo_ref(clave):
+        """Extrae 'valor' de un campo de tasas_bcra_referencia (dict con
+        valor/fecha/fuente) o None si no esta cargado."""
+        d = ref_bcra.get(clave)
+        return d.get("valor") if isinstance(d, dict) else None
+
+    reservas_brutas = _campo_ref("reservas_brutas_usd_m")
+    pases_tna = _campo_ref("pases_1d_tna")
+    dolar_futuro = ctx.get("dolar_futuro_implicito")  # CIP teorico, NO cotizacion Rofex real
+
+    if monetario and monetario.get("base_m"):
+        base_monetaria_billones = monetario["base_m"][-1]
+        pases_stock_billones = monetario["pases_m"][-1]
+    else:
+        base_monetaria_billones = None
+        pases_stock_billones = None
+
+    def _pct(v, signo=False):
+        """fmt_pct con 2 decimales -- varios campos reales del contrato
+        (ej. pases_1d_tna=23,12; gd35_tir=9,65; tasa_real_exante=0,95)
+        requieren 2 decimales para no perder precision frente al 1 decimal
+        por defecto de fmt_pct."""
+        return fmt_pct(v, decimales=2, signo=signo)
+
     doc = docx.Document()
-    
+
     for section in doc.sections:
         section.top_margin = Inches(0.50)
         section.bottom_margin = Inches(0.50)
@@ -200,9 +284,10 @@ def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str="Semana d
     r_at = p_ab.add_run("RESUMEN EJECUTIVO & PALABRAS CLAVE:\n")
     r_at.font.name = "Georgia"; r_at.font.size = Pt(7.6); r_at.font.bold = True; r_at.font.color.rgb = COLOR_NAVY
     
+    embi_str = fmt_num(soberano.get("embi_riesgo_pais_pbs"), 0)
     r_atx = p_ab.add_run(
-        "El presente documento examina la microestructura macro-financiera argentina al cierre de la tercera semana de agosto de 2026. Se modela paramétricamente la curva soberana en moneda extranjera mediante la metodología de Nelson-Siegel, verificando compresión del EMBI+ hacia 506 pb. En el mercado en moneda local, se cuantifica la prima real ex-ante en letras de tasa fija (Lecaps) frente a las expectativas inflacionarias del REM, analizando la sustentabilidad del carry trade y la extinción definitiva de los pasivos cuasifiscales del BCRA.\n"
-        "Palabras Clave: Nelson-Siegel, Arbitraje de Tasas, Saneamiento Cuasifiscal, Carry Trade, Brecha Cambiaria, RIGI."
+        f"El presente documento examina la microestructura macro-financiera argentina correspondiente a la {periodo_str.lower()}. Se modela paramétricamente la curva soberana en moneda extranjera mediante la metodología de Nelson-Siegel, verificando un riesgo país (EMBI+) de {embi_str} pb. En el mercado en moneda local, se cuantifica la prima real ex-ante en letras de tasa fija (Lecaps) frente a las expectativas inflacionarias del REM, analizando la sustentabilidad del carry trade y el estado vigente de los instrumentos de absorción monetaria del BCRA.\n"
+        "Palabras Clave: Nelson-Siegel, Arbitraje de Tasas, Absorción Monetaria, Carry Trade, Brecha Cambiaria, RIGI."
     )
     r_atx.font.name = "Georgia"; r_atx.font.size = Pt(7.4); r_atx.font.color.rgb = COLOR_CHARCOAL
     
@@ -211,37 +296,57 @@ def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str="Semana d
     h1.paragraph_format.space_before = Pt(4); h1.paragraph_format.space_after = Pt(2)
     for r in h1.runs: r.font.name = "Georgia"; r.font.size = Pt(9.5); r.font.bold = True; r.font.color.rgb = COLOR_NAVY
     
-    add_body(doc, "La economía argentina consolidó su anclaje fiscal y monetario durante la semana analizada. El superávit primario de caja del Sector Público Nacional permitió prescindir de financiamiento monetario directo e indirecto. El traspaso integral de la deuda remunerada del BCRA hacia Letras Fiscales de Liquidez (Lefi) emitidas por la Secretaría de Finanzas totalizó $29,3 billones, fijando la tasa de política monetaria en 35,00% TNA (2,91% TEM) y desacoplando la creación endógena de dinero del balance de la autoridad monetaria.", font_size=8.2, space_after=2.5)
-    add_body(doc, "En materia de precios, la convergencia inflacionaria hacia el 2,2% mensual a nivel nacional (INDEC) y 2,3% en Mendoza (DEIE) reafirma la efectividad del crawling peg al 2% mensual como ancla cambiaria intermedia. La inflación núcleo (1,9% MoM) convalida la desaceleración del pass-through, mitigando presiones sobre el salario real RIPTE (+2,4% MoM) y fijando la Canasta Básica Total en Mendoza en $963.000.", font_size=8.2, space_after=2.5)
-    add_body(doc, "La estabilidad cambiaria en el segmento financiero (Dólar CCL en $1.596,59 con brecha del 5,39% sobre el BNA) consolida un entorno de previsibilidad que reduce la demanda precautoria de dólares y estimula la remonetización del crédito privado en pesos.", font_size=8.2, space_after=2.5)
+    add_body(doc, f"La economía argentina consolidó su anclaje fiscal y monetario durante la semana analizada. El superávit primario de caja del Sector Público Nacional permitió prescindir de financiamiento monetario directo e indirecto. Las Letras Fiscales de Liquidez (Lefi), instrumento que había absorbido la deuda remunerada del BCRA, se encuentran discontinuadas desde julio de 2025 (stock verificado en $0 vía series BCRA v4.0); la absorción de liquidez opera hoy mediante Pases Pasivos a 1 día, con una tasa de referencia de {_pct(pases_tna)} TNA, desacoplando la creación endógena de dinero del balance de la autoridad monetaria.", font_size=8.2, space_after=2.5)
+    # RIPTE: fuente secundaria real (Secretaria de Trabajo via
+    # apis.datos.gob.ar, ver src/fetch_series_secundarias.py) -- es
+    # NOMINAL (pesos corrientes), no deflactada, se aclara en el texto en
+    # vez de llamarlo "salario real" sin mas.
+    if ripte and ripte.get("var_mensual_ultimo") is not None:
+        _ripte_txt = (f"La Remuneración Imponible Promedio de los Trabajadores Estables (RIPTE) creció "
+                      f"{_pct(ripte['var_mensual_ultimo'])} mensual en términos nominales (Secretaría de Trabajo; "
+                      f"no deflactada por inflación)")
+    else:
+        _ripte_txt = f"El salario nominal (RIPTE) no cuenta con dato disponible en esta corrida ({SIN_FUENTE})"
+    add_body(doc, f"En materia de precios, la convergencia inflacionaria hacia el {_pct(inflacion.get('indec_general_mom'))} mensual a nivel nacional (INDEC) y {_pct(inflacion.get('deie_mendoza_mom'))} en Mendoza (DEIE) reafirma la efectividad del esquema cambiario vigente como ancla nominal intermedia. La inflación núcleo ({_pct(inflacion.get('indec_nucleo_mom'))} MoM) convalida la desaceleración del pass-through. {_ripte_txt}; la Canasta Básica Total en Mendoza se ubica en {fmt_num(inflacion.get('canasta_basica_total_mza'), 0, '$')}.", font_size=8.2, space_after=2.5)
+    ccl_vs_mayorista_pct = round(100 * (dolar["ccl"] / dolar["mayorista"] - 1), 2) if dolar.get("ccl") and dolar.get("mayorista") else None
+    add_body(doc, f"La estabilidad cambiaria en el segmento financiero (Dólar CCL en {fmt_num(dolar.get('ccl'), 2, '$')} con brecha del {_pct(dolar.get('brecha_ccl_oficial_pct'))} sobre el dólar oficial BNA y {_pct(ccl_vs_mayorista_pct)} sobre el mayorista) consolida un entorno de previsibilidad que reduce la demanda precautoria de dólares y estimula la remonetización del crédito privado en pesos.", font_size=8.2, space_after=2.5)
     
     # 1.1 Dinámica Cuasifiscal y Regla de Taylor
     h11 = doc.add_heading("1.1 Mecanismo de Transmisión Cuasifiscal, Regla de Taylor y Balance BCRA", level=3)
     h11.paragraph_format.space_before = Pt(3); h11.paragraph_format.space_after = Pt(2)
     for r in h11.runs: r.font.name = "Georgia"; r.font.size = Pt(8.6); r.font.bold = True; r.font.color.rgb = COLOR_WINE
     
-    add_body(doc, "Bajo el enfoque de Sargent & Wallace (1981), la eliminación del déficit cuasifiscal mitiga el canal de expectativas racionales que asociaba los pasivos remunerados a emisión futura. Al absorber liquidez con títulos del Tesoro respaldados por superávit primario, el multiplicador monetario secundario opera estrictamente acotado por los encajes no remunerados, consolidando una Base Monetaria de $27,4 billones y reservas brutas en USD 28.500 millones.", font_size=8.2, space_after=2.5)
-    add_body(doc, "La ecuación de Fisher ex-ante (1 + i) = (1 + r)(1 + π^e) valida que con una tasa nominal de Lefi de 2,91% mensual y expectativas del REM de 2,00%, la tasa de interés real (+0,95% mensual) opera en terreno contractivo, garantizando la convergencia desinflacionaria.", font_size=8.2, space_after=2.5)
-    
+    add_body(doc, f"Bajo el enfoque de Sargent & Wallace (1981), la disciplina fiscal mitiga el canal de expectativas racionales que asociaba los pasivos remunerados a emisión futura. Al absorber liquidez con Pases Pasivos respaldados por superávit primario, el multiplicador monetario secundario opera acotado por los encajes no remunerados, consolidando una Base Monetaria de {fmt_o_manual(base_monetaria_billones, lambda v: fmt_num(v, 2, '$') + ' Billones (BCRA v4.0)')} y reservas brutas en {fmt_o_manual(reservas_brutas, lambda v: fmt_num(v, 0, 'USD ') + ' millones')}.", font_size=8.2, space_after=2.5)
+    add_body(doc, f"La ecuación de Fisher ex-ante (1 + i) = (1 + r)(1 + π^e) valida que con una TEM de Lecap corta de {_pct(tasas_ars.get('lecap_corta_tem'))} y expectativas del REM de {_pct(tasas_ars.get('inflacion_esperada_rem_tem'))}, la tasa de interés real ex-ante ({_pct(ctx.get('tasa_real_exante_tem_pct'), signo=True)} mensual) opera en terreno contractivo, garantizando la convergencia desinflacionaria. (Nota: se reemplaza la referencia de Lefi por la Lecap corta como instrumento de tasa fija de referencia, dado que el mecanismo de Lefi está discontinuado desde jul-2025.)", font_size=8.2, space_after=2.5)
+
     crear_cuadro_formula(
         doc,
         "Regla de Taylor (1993) & Brecha Contractiva de Política Monetaria",
-        "i_t = r* + π_t + 0,5 · (π_t - π*) + 0,5 · y_gap   ==>   i_real = 2,91% TEM vs r* = 0,75% mensual",
-        "La tasa real ex-ante de Lefi (+0,95% mensual) se sitúa 20 bps por encima de la tasa neutral (r* = 0,75%), estableciendo una postura monetaria contractiva que garantiza el anclaje desinflacionario."
+        f"i_t = r* + π_t + 0,5 · (π_t - π*) + 0,5 · y_gap   ==>   i_real = {_pct(ctx.get('tasa_real_exante_tem_pct'), signo=True)} TEM vs r* = 0,75% mensual (supuesto del analista)",
+        f"La tasa real ex-ante de la Lecap corta ({_pct(ctx.get('tasa_real_exante_tem_pct'), signo=True)} mensual) se compara contra una tasa neutral r* = 0,75% mensual, que es un supuesto del analista y no un dato observado (no existe en el repositorio una estimación econométrica de r* para Argentina), estableciendo una postura monetaria contractiva que favorece el anclaje desinflacionario."
     )
     
+    # Fuentes reales: Base Monetaria y stock de Pases via BCRA v4.0
+    # (obtener_monetario_reciente, ids 15/152). Lefi confirmado en stock $0
+    # desde jul-2025 (mecanismo discontinuado) -- se declara explicitamente
+    # en vez de mostrar el monto de plantilla ($29,3 B) como si siguiera
+    # vigente. La TNA de Pases (tasas_bcra_referencia.pases_1d_tna) es un
+    # campo real independiente del stock y NO es 0,00% como decia la
+    # plantilla -- esa era una contradiccion (instrumento "extinto" con
+    # tasa de referencia vigente reportada en 0%). Reservas Netas y
+    # Depositos Privados/Caucion no tienen fuente automatizable en el repo.
     t_mon = doc.add_table(rows=1, cols=4)
     formatear_tabla_apa7(
         t_mon,
         col_widths=[2.40, 1.40, 1.50, 1.90],
         headers=["Agregado / Instrumento Monetario", "Stock Vigente", "Tasa Nominal Anual", "Condición de Equilibrio"],
         data_rows=[
-            ["Base Monetaria Ampliada", "$27,40 Billones", "-", "Anclaje de agregados reales."],
-            ["Letras Fiscales de Liquidez (Lefi)", "$29,30 Billones", "35,00% TNA (2,91% TEM)", "Absorción sin emisión cuasifiscal."],
-            ["Pases Pasivos BCRA (1 Día)", "$0,00 Billones", "0,00% TNA", "Extinción total de costo cuasifiscal."],
-            ["Reservas Internacionales Brutas", "USD 28.500 M", "-", "Acumulación neta en el MULC."],
-            ["Reservas Netas (Métrica FMI)", "-USD 1.200 M", "-", "Recuperación de solidez externa."],
-            ["Depósitos Privados en ARS", "$38,50 Billones", "32,50% TNA (Caución)", "Remonetización del sistema."]
+            ["Base Monetaria Ampliada", fmt_o_manual(base_monetaria_billones, lambda v: fmt_num(v, 2, "$") + " Billones"), "-", "Anclaje de agregados reales."],
+            ["Letras Fiscales de Liquidez (Lefi)", "$0,00 Billones", "Mecanismo discontinuado (jul-2025)", "Reemplazado por Pases Pasivos."],
+            ["Pases Pasivos BCRA (1 Día)", fmt_o_manual(pases_stock_billones, lambda v: fmt_num(v, 2, "$") + " Billones"), _pct(pases_tna) + " TNA", "Instrumento vigente de absorción."],
+            ["Reservas Internacionales Brutas", fmt_o_manual(reservas_brutas, lambda v: fmt_num(v, 0, "USD ") + " M"), "-", "Registro interno BCRA."],
+            ["Reservas Netas (Métrica FMI)", SIN_FUENTE, "-", "Sin conector automatizable en el repo."],
+            ["Depósitos Privados en ARS", SIN_FUENTE, SIN_FUENTE, "Sin conector automatizable en el repo."]
         ],
         alignments=[WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.RIGHT, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.LEFT],
         font_size=7.0
@@ -256,34 +361,50 @@ def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str="Semana d
     h2.paragraph_format.space_before = Pt(0); h2.paragraph_format.space_after = Pt(2)
     for r in h2.runs: r.font.name = "Georgia"; r.font.size = Pt(9.5); r.font.bold = True; r.font.color.rgb = COLOR_NAVY
     
-    add_body(doc, "Las cotizaciones del tipo de cambio financiero operaron en calma con un spread comprimido: el Dólar CCL finalizó en $1.596,59 (brecha del 5,39% respecto al BNA y 7,51% sobre el mayorista Com. 'A' 3500 de $1.485,00). El volumen operado en el segmento mayorista totalizó USD 380M diarios con intervención compradora del BCRA (+USD 85M en la rueda).", font_size=8.2, space_after=2.5)
-    add_body(doc, "En el mercado de futuros Matba-Rofex, el interés abierto totalizó 1,25M contratos con concentración en las posiciones a 30 y 60 días. Las tasas nominales anuales implícitas oscilaron entre 35,20% (Sep-26) y 39,15% (Nov-26), reflejando una base CIP prácticamente cerrada frente a la curva de letras en pesos.", font_size=8.2, space_after=2.5)
-    
+    add_body(doc, f"Las cotizaciones del tipo de cambio financiero operaron con un spread comprimido: el Dólar CCL finalizó en {fmt_num(dolar.get('ccl'), 2, '$')} (brecha del {_pct(dolar.get('brecha_ccl_oficial_pct'))} respecto al oficial BNA y {_pct(ccl_vs_mayorista_pct)} sobre el mayorista Com. 'A' 3500 de {fmt_num(dolar.get('mayorista'), 2, '$')}). El volumen operado en el segmento mayorista y la intervención compradora/vendedora del BCRA en la rueda no tienen fuente automatizable en este contrato ({SIN_FUENTE}).", font_size=8.2, space_after=2.5)
+    add_body(doc, f"El mercado de futuros Matba-Rofex (interés abierto, tasas nominales implícitas por posición) no cuenta con conector automatizado en el repositorio ({SIN_FUENTE}). En su lugar, la tabla siguiente muestra un dólar futuro teórico derivado por paridad de tasas cubierta (CIP) sobre datos reales del contrato -- un modelo, no una cotización de mercado observada.", font_size=8.2, space_after=2.5)
+
     crear_cuadro_formula(
         doc,
         "Fórmula de Retorno en USD por Carry Trade & Paridad CIP (Covered Interest Parity)",
         "R_USD = [(1 + TEM_lecap) / (1 + Δe_esperada)] - 1   |   CIP_Basis = (1 + i_ARS) - [(F_T / S_0) · (1 + i_USD)]",
-        "Para una TEM de 2,95% en Lecaps y un crawling peg de 2,00% mensual, el rendimiento esperado en moneda dura asciende a +0,93% mensual (+11,76% anualizado), incentivando el fondeo en caución bursátil."
+        f"Para una TEM de {_pct(tasas_ars.get('lecap_corta_tem'))} en Lecap corta y una inflación esperada REM de {_pct(tasas_ars.get('inflacion_esperada_rem_tem'))} mensual (usada como proxy de Δe_esperada, dado que el contrato no incluye una serie propia de ritmo de devaluación/crawling peg), el rendimiento esperado en moneda dura asciende a {_pct(ctx.get('tasa_real_exante_tem_pct'), signo=True)} mensual, incentivando el fondeo en caución bursátil. F_T/S_0 (base CIP con futuros Rofex) queda sin cálculo: ver nota sobre ausencia de conector Matba-Rofex."
     )
     
-    t_fx_sem = doc.add_table(rows=1, cols=5)
+    # Sin conector a Matba-Rofex en el repo (ver src/fetch_datos_reales.py):
+    # en vez de una tabla de futuros Rofex 100% "s/d" (precio/TNA/interes
+    # abierto de relleno, como hacia la plantilla anterior), se muestran las
+    # dos cotizaciones spot reales del contrato y el dolar futuro CIP real
+    # (src/modelos_riesgo.calcular_dolar_futuro_implicito), declarado
+    # explicitamente como modelo y no como cotizacion de mercado.
+    _dolar_futuro_por_dias = {c["dias"]: c for c in dolar_futuro["curva"]} if dolar_futuro else {}
+    t_fx_sem = doc.add_table(rows=1, cols=4)
+    fila_spot = [
+        ["Dólar Mayorista (A 3500)", fmt_num(dolar.get("mayorista"), 2, "$"), "-", "0,00% (Base)"],
+        ["Dólar CCL Cable", fmt_num(dolar.get("ccl"), 2, "$"), "-", _pct(ccl_vs_mayorista_pct, signo=True)],
+    ]
+    filas_cip = []
+    for _dias, _label in ((30, "Futuro CIP 30d (teórico)"), (90, "Futuro CIP 90d (teórico)"), (180, "Futuro CIP 180d (teórico)")):
+        _c = _dolar_futuro_por_dias.get(_dias)
+        filas_cip.append([
+            _label,
+            fmt_num(_c["futuro_implicito"], 2, "$") if _c else SIN_FUENTE,
+            _pct(_c["tna_implicita_pct"]) if _c else SIN_FUENTE,
+            "Modelo CIP, no cotización Rofex",
+        ])
     formatear_tabla_apa7(
         t_fx_sem,
-        col_widths=[1.80, 1.20, 1.20, 1.30, 1.70],
-        headers=["Posición / Segmento", "Cotización Spot", "TNA Implícita", "Brecha Oficial", "Interés Abierto / Volumen"],
-        data_rows=[
-            ["Dólar Mayorista (A 3500)", "$1.485,00", "-", "0,00% (Base)", "USD 380M operado"],
-            ["Dólar CCL Cable (GD30)", "$1.596,59", "-", "+7,51%", "USD 95M operado"],
-            ["Futuro Rofex Sep-26", "$1.530,00", "35,20% TNA", "+3,03%", "620k contratos abiertos"],
-            ["Futuro Rofex Oct-26", "$1.580,00", "36,40% TNA", "+6,40%", "280k contratos abiertos"],
-            ["Futuro Rofex Nov-26", "$1.635,00", "37,10% TNA", "+10,10%", "190k contratos abiertos"],
-            ["Futuro Rofex Dic-26", "$1.690,00", "38,50% TNA", "+13,80%", "160k contratos abiertos"]
-        ],
-        alignments=[WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.RIGHT, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.RIGHT, WD_ALIGN_PARAGRAPH.LEFT],
+        col_widths=[2.00, 1.30, 1.30, 2.60],
+        headers=["Posición / Segmento", "Cotización / Futuro Implícito", "TNA Implícita", "Brecha Oficial / Nota"],
+        data_rows=fila_spot + filas_cip,
+        alignments=[WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.RIGHT, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.LEFT],
         font_size=7.0
     )
     
-    fig3_path = os.path.join(BASE_DIR, "03_Figuras_HD", "master_extracted_images", "img_p11_1_13.png")
+    # img_p11_1_13.png era un resto huerfano de una version vieja del
+    # pipeline (pre-matplotlib, datos desactualizados) -- se apunta al
+    # chart real y ya corregido que genera src/generador_graficos_hd.py.
+    fig3_path = os.path.join(BASE_DIR, "03_Figuras_HD", "chart_indec_6_fx.png")
     if os.path.exists(fig3_path):
         p_pic = doc.add_paragraph()
         p_pic.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -304,34 +425,46 @@ def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str="Semana d
     h3.paragraph_format.space_before = Pt(0); h3.paragraph_format.space_after = Pt(2)
     for r in h3.runs: r.font.name = "Georgia"; r.font.size = Pt(9.5); r.font.bold = True; r.font.color.rgb = COLOR_NAVY
     
-    add_body(doc, "La curva soberana en moneda extranjera operó con un desplazamiento descendente en sus rendimientos, ubicando a los Globales Ley NY entre 9,70% (GD38) y 10,70% (GD30), mientras los Bonares Ley Local operaron con un spread de legislación promedio de 50 pb. El ajuste econométrico bajo el modelo paramétrico de Nelson-Siegel valida una curva con pendiente positiva normalizada y R² = 0,984.", font_size=8.2, space_after=2.5)
-    add_body(doc, "La curva forward instantánea f(t) proyecta tasas terminales del 8,80% a partir de los 10 años, convalidando el atractivo de los títulos con cupones step-up crecientes (GD38) frente al tramo ultralargo (GD41), garantizando retornos por roll-down superiores al 4,5% semestral.", font_size=8.2, space_after=2.5)
-    
+    spread_legislacion_pb = round((soberano["al30_tir"] - soberano["gd30_tir"]) * 100, 0) if soberano.get("al30_tir") is not None and soberano.get("gd30_tir") is not None else None
+    add_body(doc, f"La curva soberana en moneda extranjera ubicó a los Globales Ley NY entre {_pct(soberano.get('gd38_tir'))} (GD38) y {_pct(soberano.get('gd30_tir'))} (GD30), mientras el único par Ley Local/Ley NY con TIR real disponible en el contrato (AL30 vs. GD30) mostró un spread de legislación de {fmt_o_manual(spread_legislacion_pb, lambda v: fmt_num(v, 0) + ' pb')} -- no se dispone de un promedio multi-tramo verificable por falta de TIR real de AL35/GD41 en el contrato. El ajuste econométrico bajo el modelo paramétrico de Nelson-Siegel valida una curva con R² = {fmt_num(ns.get('r2'), 3)}.", font_size=8.2, space_after=2.5)
+    forward_10y = _ns_forward_instantaneo(ns.get("beta0"), ns.get("beta1"), ns.get("beta2"), ns.get("tau"), 10)
+    add_body(doc, f"La curva forward instantánea f(t), calculada analíticamente a partir de los parámetros reales de Nelson-Siegel del contrato, proyecta una tasa terminal de {fmt_o_manual(forward_10y, fmt_pct)} a los 10 años. El atractivo relativo de los cupones step-up (GD38) frente al tramo ultralargo (GD41) y el retorno por roll-down no tienen fuente automatizable en el repositorio (no existe motor de pricing de bonos): {SIN_FUENTE}.", font_size=8.2, space_after=2.5)
+
     crear_cuadro_formula(
         doc,
         "Modelo Paramétrico de Curva de Rendimientos (Nelson & Siegel, 1987)",
         "y(t) = β₀ + β₁ · [(1 - e^{-t/τ}) / (t/τ)] + β₂ · [(1 - e^{-t/τ}) / (t/τ) - e^{-t/τ}]",
-        "Parámetros calibrados: Nivel β₀ = 9,20% (asíntota de largo plazo), Pendiente β₁ = +2,85%, Curvatura β₂ = -1,15% y Decaimiento τ = 2,40 (RMSE = 14 bps)."
+        f"Parámetros calibrados (fuente: contrato real soberano_usd.nelson_siegel): Nivel β₀ = {_pct(ns.get('beta0'))} (asíntota de largo plazo), Pendiente β₁ = {_pct(ns.get('beta1'), signo=True)}, Curvatura β₂ = {_pct(ns.get('beta2'), signo=True)}, Decaimiento τ = {fmt_num(ns.get('tau'), 2)} y R² = {fmt_num(ns.get('r2'), 3)}. RMSE del ajuste: sin fuente automatizable ({SIN_FUENTE})."
     )
     
-    t_bon_sem = doc.add_table(rows=1, cols=6)
+    # TIR: real cuando el contrato tiene el campo (GD30/AL30/GD35/GD38).
+    # AL35 y GD41 se retiran de la tabla -- el contrato no trae TIR para
+    # ninguno de los dos, y no queda ningun otro campo real que mostrar en
+    # esa fila (no vale la pena una fila 100% "s/d"). Precio Spot,
+    # Duration/Convexidad y Roll-Down tampoco se muestran: el repositorio
+    # no tiene motor de pricing de bonos ni cronogramas de cupones/
+    # amortizacion verificados para calcular Macaulay duration real -- en
+    # vez de 3 columnas enteras de relleno, se retiran y se declara la
+    # ausencia una sola vez en el texto de arriba.
+    t_bon_sem = doc.add_table(rows=1, cols=3)
     formatear_tabla_apa7(
         t_bon_sem,
-        col_widths=[1.30, 1.10, 1.10, 1.10, 1.20, 1.40],
-        headers=["Título / Ticker", "Legislación", "Precio Spot", "TIR Anual", "Duration / Cvx", "Roll-Down 6M"],
+        col_widths=[2.20, 1.60, 1.60],
+        headers=["Título / Ticker", "Legislación", "TIR Anual"],
         data_rows=[
-            ["Global 2030 (GD30)", "Nueva York", "USD 69,80", "10,70%", "Dur: 2,78 · 11,2x", "+3,8% en USD"],
-            ["Bonar 2030 (AL30)", "Argentina", "USD 67,50", "11,20%", "Dur: 2,78 · 10,8x", "+4,1% en USD"],
-            ["Global 2035 (GD35)", "Nueva York", "USD 58,20", "10,00%", "Dur: 5,40 · 33,5x", "+5,2% en USD"],
-            ["Bonar 2035 (AL35)", "Argentina", "USD 56,10", "10,40%", "Dur: 5,40 · 32,8x", "+5,5% en USD"],
-            ["Global 2038 (GD38)", "Nueva York", "USD 60,90", "9,70%", "Dur: 5,81 · 37,2x", "+6,1% en USD"],
-            ["Global 2041 (GD41)", "Nueva York", "USD 54,30", "9,50%", "Dur: 7,10 · 52,1x", "+6,8% en USD"]
+            ["Global 2030 (GD30)", "Nueva York", _pct(soberano.get("gd30_tir"))],
+            ["Bonar 2030 (AL30)", "Argentina", _pct(soberano.get("al30_tir"))],
+            ["Global 2035 (GD35)", "Nueva York", _pct(soberano.get("gd35_tir"))],
+            ["Global 2038 (GD38)", "Nueva York", _pct(soberano.get("gd38_tir"))],
         ],
-        alignments=[WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.RIGHT, WD_ALIGN_PARAGRAPH.RIGHT, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.RIGHT],
+        alignments=[WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.RIGHT],
         font_size=7.0
     )
     
-    fig1_path = os.path.join(BASE_DIR, "03_Figuras_HD", "master_extracted_images", "img_p10_1_12.png")
+    # img_p10_1_12.png era un resto huerfano de una version vieja del
+    # pipeline (pre-matplotlib, datos desactualizados) -- se apunta al
+    # chart real y ya corregido que genera src/generador_graficos_hd.py.
+    fig1_path = os.path.join(BASE_DIR, "03_Figuras_HD", "chart_indec_5_sovereign.png")
     if os.path.exists(fig1_path):
         p_pic = doc.add_paragraph()
         p_pic.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -352,21 +485,21 @@ def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str="Semana d
     h4.paragraph_format.space_before = Pt(0); h4.paragraph_format.space_after = Pt(2)
     for r in h4.runs: r.font.name = "Georgia"; r.font.size = Pt(9.5); r.font.bold = True; r.font.color.rgb = COLOR_NAVY
     
-    add_body(doc, "A partir de la expansión de segundo orden de Taylor para la sensibilidad del precio de los títulos de deuda soberana, se proyectan los retornos totales en USD ante diversos escenarios de compresión y ampliación del spread crediticio (EMBI+).", font_size=8.2, space_after=2.5)
-    add_body(doc, "La gestión de calce de plazos (Asset-Liability Management, ALM) para carteras institucionales requiere ponderar la convexidad positiva en entornos de compresión de tasas, maximizando la relación retorno-riesgo sin asumir riesgos de iliquidez.", font_size=8.2, space_after=2.5)
-    
+    add_body(doc, "A partir de la expansión de segundo orden de Taylor para la sensibilidad del precio de los títulos de deuda soberana, se proyectan escenarios ilustrativos de retorno total en USD ante compresión y ampliación del spread crediticio (EMBI+).", font_size=8.2, space_after=2.5)
+    add_body(doc, f"Advertencia metodológica: el repositorio no cuenta con motor de pricing de bonos ni con cronogramas de cupones/amortización verificados para los títulos soberanos argentinos, por lo que los valores de duration y convexidad usados a continuación son un supuesto ilustrativo del analista (no un cálculo de Macaulay/modified duration verificado) y los retornos resultantes son una proyección propia sujeta a revisión, no un resultado de mercado observado.", font_size=8.2, space_after=2.5)
+
     crear_cuadro_formula(
         doc,
         "Aproximación de Precios por Modified Duration y Convexidad (Taylor)",
         "ΔP / P ≈ -D_mod · Δy + ½ · C · (Δy)²",
-        "Demuestra que ante una compresión de spread de -300 pb, el bono GD38 (Dur: 5,81 | Conv: 37,2x) genera un upside del +18,45% en USD, superando ampliamente a los tramos cortos."
+        f"Bajo un supuesto ilustrativo de Duration = 5,81 y Convexidad = 37,2x para el tramo largo (GD38, {_pct(soberano.get('gd38_tir'))} TIR real), una compresión de spread de -300 pb generaría un upside proyectado de +18,45% en USD. Esta cifra es una estimación propia del analista, no un cálculo verificado por un motor de pricing."
     )
-    
+
     t_sens = doc.add_table(rows=1, cols=4)
     formatear_tabla_apa7(
         t_sens,
         col_widths=[2.40, 1.60, 1.60, 1.60],
-        headers=["Shock de Spread Soberano", "Retorno GD38 (Conv: 37,2x)", "Retorno GD35 (Conv: 33,5x)", "Retorno AL30 (Conv: 10,8x)"],
+        headers=["Shock de Spread Soberano*", "Retorno GD38* (supuesto)", "Retorno GD35* (supuesto)", "Retorno AL30* (supuesto)"],
         data_rows=[
             ["Compresión -300 pb (Hacia 200 pb EMBI)", "+18,45% en USD", "+16,20% en USD", "+8,50% en USD"],
             ["Compresión -200 pb (Hacia 300 pb EMBI)", "+12,10% en USD", "+10,60% en USD", "+5,60% en USD"],
@@ -377,8 +510,12 @@ def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str="Semana d
         alignments=[WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.RIGHT, WD_ALIGN_PARAGRAPH.RIGHT, WD_ALIGN_PARAGRAPH.RIGHT],
         font_size=7.0
     )
-    
-    # Tabla de Asignación Táctica de Cartera
+    add_body(doc, "* Proyección propia del analista bajo supuestos ilustrativos de duration/convexidad; no constituye un cálculo de duration/convexity verificado con motor de pricing de bonos ni cronogramas de cupones reales.", font_size=6.6, space_after=2.5)
+
+    # Tabla de Asignación Táctica de Cartera: recomendación de research del
+    # analista (vistas tácticas Black-Litterman), no un dato de mercado
+    # observado -- se aclara explícitamente antes de la tabla.
+    add_body(doc, "La siguiente asignación de cartera es una recomendación de research del analista (síntesis de las vistas tácticas Black-Litterman vigentes), no un dato de mercado observado.", font_size=8.2, space_after=2.5)
     t_alloc = doc.add_table(rows=1, cols=5)
     formatear_tabla_apa7(
         t_alloc,
@@ -424,7 +561,7 @@ def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str="Semana d
     print("Paper Semanal DOCX generado:", ruta_salida_docx)
     return ruta_salida_docx
 
-def compilar_y_exportar_paper_semanal(ruta_docx: str, ruta_pdf: str, periodo_str="Semana del 17 al 21 de Agosto de 2026"):
+def compilar_y_exportar_paper_semanal(ruta_docx: str, ruta_pdf: str, periodo_str=None):
     compilar_paper_semanal_completo(ruta_docx, periodo_str)
     import pythoncom
     pythoncom.CoInitialize()
@@ -441,6 +578,7 @@ def compilar_y_exportar_paper_semanal(ruta_docx: str, ruta_pdf: str, periodo_str
         pythoncom.CoUninitialize()
 
 if __name__ == "__main__":
-    p_docx = os.path.join(BASE_DIR, "05_Informes_Semanales_APA7", "2026-08-21_Paper_Macroeconomico_Semanal.docx")
+    fecha_archivo = datetime.now().strftime("%Y-%m-%d")
+    p_docx = os.path.join(BASE_DIR, "05_Informes_Semanales_APA7", f"{fecha_archivo}_Paper_Macroeconomico_Semanal.docx")
     p_pdf = p_docx.replace(".docx", ".pdf")
     compilar_y_exportar_paper_semanal(p_docx, p_pdf)

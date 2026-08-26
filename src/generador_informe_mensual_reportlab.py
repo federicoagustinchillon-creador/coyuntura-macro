@@ -20,11 +20,51 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 import sys
+from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 from src.fetch_tcr_bilateral import cargar_cache as cargar_cache_tcr  # noqa: E402
+from src.contexto_informe import cargar_contexto, fmt_num  # noqa: E402
+from src.fetch_datos_reales import obtener_variacion_semanal_acciones, obtener_merval_reciente  # noqa: E402
+
+# Nombres de mes en espanol -- se evita depender de locale del sistema
+# operativo (inconsistente entre Windows/Linux) para algo tan simple.
+MESES_ES = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+            "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+
+SIN_FUENTE = "s/d (sin conector automatizado en el repo -- carga manual)"
+
+
+def _fmt1(v, decimales=1, signo=False):
+    """Formatea un numero real en es-AR (coma decimal) o 's/d' si no hay
+    dato -- nunca fabrica un valor cuando el campo no existe."""
+    if v is None:
+        return "s/d"
+    prefijo = "+" if signo and v >= 0 else ""
+    return f"{prefijo}{v:.{decimales}f}".replace(".", ",")
+
+
+def _acumulado_anio_calendario(meses, valores, anio, valor_mes_vigente):
+    """Acumulado compuesto (no simple suma) de variaciones mensuales reales
+    del INDEC (src/fetch_series_indec_bcra.obtener_ipc_trayectoria) para el
+    anio calendario `anio`, agregando el mes vigente del contrato principal
+    (todavia no incorporado a esa trayectoria historica, que llega hasta el
+    mes anterior). Devuelve (acumulado_pct, cantidad_de_meses) -- (None, 0)
+    si no hay ningun mes real disponible para ese anio."""
+    factor = 1.0
+    n = 0
+    for m, v in zip(meses or [], valores or []):
+        if m.startswith(str(anio)) and v is not None:
+            factor *= (1 + v / 100)
+            n += 1
+    if valor_mes_vigente is not None:
+        factor *= (1 + valor_mes_vigente / 100)
+        n += 1
+    if n == 0:
+        return None, 0
+    return round(100 * (factor - 1), 1), n
 
 DIR_FIG = os.path.join(BASE_DIR, "03_Figuras_HD")
 OUT_DIR_MENSUAL = os.path.join(BASE_DIR, "06_Informes_Mensuales_OERU")
@@ -52,6 +92,14 @@ try:
     pdfmetrics.registerFontFamily('Georgia', normal='Georgia', bold='Georgia-Bold', italic='Georgia-Italic', boldItalic='Georgia-BoldItalic')
 except Exception:
     pass
+
+# Estado compartido minimo para que el header/footer de ZeroWhitespaceCanvas
+# (clase a nivel de modulo, sin acceso directo a las variables locales de
+# generar_informe_mensual_reportlab) muestre el periodo real de la corrida
+# en vez de "AGOSTO 2026" fijo. Se completa al principio de la funcion, antes
+# de doc.build().
+_INFORME_PERIODO = {"header": "PERÍODO S/D"}
+
 
 class ZeroWhitespaceCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
@@ -104,7 +152,7 @@ class ZeroWhitespaceCanvas(canvas.Canvas):
         if self._pageNumber > 1:
             self.setFont("Georgia", 7.5)
             self.setFillColor(colors.HexColor("#64748B"))
-            self.drawString(left, header_text_y, "INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · AGOSTO 2026")
+            self.drawString(left, header_text_y, f"INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · {_INFORME_PERIODO['header']}")
             self.drawRightString(right, header_text_y, "FEDERICO AGUSTÍN CHILLÓN")
             
             self.setStrokeColor(colors.HexColor("#CBD5E1"))
@@ -200,6 +248,87 @@ def _find_image(filename):
     return p
 
 def generar_informe_mensual_reportlab():
+    # ------------------------------------------------------------------
+    # Carga unica de datos reales (ver src/contexto_informe.py). Corrige el
+    # hallazgo central de la auditoria: el mismo concepto (EMBI+, Nelson-
+    # Siegel, tasa de pases, brecha CCL) aparecia con valores DISTINTOS
+    # entre secciones de este mismo archivo porque cada bloque escribia su
+    # propio numero de memoria en vez de leer de un unico lugar. De aca en
+    # adelante todo el documento lee de `ctx`.
+    # ------------------------------------------------------------------
+    ctx = cargar_contexto(incluir_series_lentas=True)
+    dolar = ctx["dolar"]
+    tasas_ars = ctx["tasas_ars"]
+    inflacion = ctx["inflacion"]
+    actividad = ctx["actividad"]
+    soberano = ctx["soberano_usd"]
+    ns = soberano.get("nelson_siegel", {})
+    equity = ctx["equity"]
+    tasas_bcra = ctx["tasas_bcra_referencia"]
+    tasa_real_exante = ctx["tasa_real_exante_tem_pct"]
+    emae_hist = ctx.get("emae_historico")
+    ipc_tray = ctx.get("ipc_trayectoria")
+    monetario_hist = ctx.get("monetario_historico")
+    # Fuentes secundarias reales agregadas por otro agente a contexto_informe.py
+    # en paralelo a esta correccion (ver src/fetch_series_secundarias.py y
+    # src/modelos_riesgo.py) -- tapan huecos que esta misma auditoria marcaba
+    # "sin fuente automatizable": RIPTE nominal, variacion del EMBI+, y el
+    # Ratio de Absorcion / Turbulencia de Mahalanobis calculados sobre series
+    # reales (en vez de los 64,2%/4,12 fijos que citaba el texto original).
+    riesgo_sistemico = ctx.get("riesgo_sistemico")
+    ripte = ctx.get("ripte")
+    riesgo_pais_var_30d = ctx.get("riesgo_pais_variacion_30d")
+    dolar_futuro = ctx.get("dolar_futuro_implicito")  # CIP teorico, NO cotizacion Rofex real
+
+    if riesgo_sistemico:
+        _ar_txt = f"{_fmt1(riesgo_sistemico['absorption_ratio_pct'])}%"
+        _turb_txt = _fmt1(riesgo_sistemico['turbulencia_dt'], decimales=2)
+        _turb_umbral_txt = _fmt1(riesgo_sistemico['umbral_chi2_95'], decimales=2)
+        _regimen_txt = riesgo_sistemico['regimen'] or "s/d"
+        _riesgo_sist_fuente = riesgo_sistemico['fuente']
+    else:
+        _ar_txt = _turb_txt = _turb_umbral_txt = "s/d"
+        _regimen_txt = "s/d"
+        _riesgo_sist_fuente = f"Sin datos suficientes para calcularlo en esta corrida: {SIN_FUENTE}"
+
+    if ripte:
+        _ripte_txt = f"{_fmt1(ripte['var_mensual_ultimo'], signo=True)}% MoM nominal"
+        if ripte.get("var_interanual_ultimo") is not None:
+            _ripte_txt += f" ({_fmt1(ripte['var_interanual_ultimo'], signo=True)}% i.a. nominal)"
+        _ripte_txt += " -- RIPTE nacional (Secretaría de Trabajo), nominal, no deflactado por inflación"
+    else:
+        _ripte_txt = SIN_FUENTE
+
+    if riesgo_pais_var_30d and riesgo_pais_var_30d.get("variacion_pb") is not None:
+        _embi_var_30d_txt = f" ({_fmt1(riesgo_pais_var_30d['variacion_pb'], decimales=0, signo=True)} pb en 30 días, fuente secundaria ArgentinaDatos)"
+    else:
+        _embi_var_30d_txt = ""
+
+    fecha_str = ctx.get("fecha")
+    try:
+        fecha_dt = datetime.strptime(fecha_str, "%Y-%m-%d") if fecha_str else datetime.now()
+    except ValueError:
+        fecha_dt = datetime.now()
+    mes_nombre = MESES_ES[fecha_dt.month]
+    anio_informe = fecha_dt.year
+    periodo_header = f"{mes_nombre.upper()} {anio_informe}"
+    periodo_texto = f"{mes_nombre.lower()} de {anio_informe}"  # ej. "agosto de 2026", para prosa
+    periodo_texto_cap = f"{mes_nombre} de {anio_informe}"      # ej. "Agosto de 2026", para titulos
+    _INFORME_PERIODO["header"] = periodo_header
+
+    # Retornos semanales reales de acciones lideres (yfinance .BA) -- usados
+    # en la seccion de Renta Variable (Pagina 13) en vez de rangos inventados.
+    try:
+        variaciones_acciones = obtener_variacion_semanal_acciones()
+    except Exception as e:
+        print(f"      [Informe Mensual] ERROR trayendo variaciones semanales de acciones: {e}")
+        variaciones_acciones = {}
+
+    # NOTA: el nombre de archivo de salida se mantiene fijo (referenciado por
+    # 02_Scripts_Automatizacion/verificar_estado_ecosistema.py y
+    # pipeline_coyuntura_master.py) -- no se parametriza aca para no romper
+    # esos otros scripts; solo el contenido interno del documento (metadatos,
+    # encabezados, cuerpo) refleja el periodo real de la corrida.
     pdf_path = os.path.join(OUT_DIR_MENSUAL, "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
     doc = SimpleDocTemplate(
         pdf_path,
@@ -208,7 +337,7 @@ def generar_informe_mensual_reportlab():
         rightMargin=40,
         topMargin=36,
         bottomMargin=36,
-        title="Informe de Coyuntura Macroeconómica & Mercado de Capitales — Agosto 2026",
+        title=f"Informe de Coyuntura Macroeconómica & Mercado de Capitales — {periodo_texto_cap}",
         author="Federico Agustín Chillón",
         subject="Economía Aplicada & Estrategia de Inversión — FCE UNCUYO",
         creator="Federico Agustín Chillón — Investigador · Cs. Económicas UNCUYO",
@@ -243,7 +372,7 @@ def generar_informe_mensual_reportlab():
     pill_data = [
         [
             Paragraph("<font color='#0284C7'>●</font>&nbsp;&nbsp;<font color='#0369A1'><b>INFORME MENSUAL DE COYUNTURA · EDICIÓN INTEGRAL (VOL. IV)</b></font>", ParagraphStyle('PB_L', fontName='Georgia', fontSize=7.5, leading=9.5)),
-            Paragraph("<font color='#64748B'><b>CIERRE DE MES · AGOSTO 2026</b></font>", ParagraphStyle('PB_R', fontName='Georgia', fontSize=7.5, leading=9.5, alignment=TA_RIGHT))
+            Paragraph(f"<font color='#64748B'><b>CIERRE DE MES · {periodo_header}</b></font>", ParagraphStyle('PB_R', fontName='Georgia', fontSize=7.5, leading=9.5, alignment=TA_RIGHT))
         ]
     ]
     t_pill = Table(pill_data, colWidths=[360, 172])
@@ -266,24 +395,26 @@ def generar_informe_mensual_reportlab():
     # 4. Matriz Ejecutiva de los 4 Pilares Macroeconómicos (2x2 Grid con diseño Card Flotante)
     col_w = 262
     p1 = ("<b>1. RÉGIMEN MONETARIO & PRECIOS</b><br/>"
-          "<font size=7.2 color='#64748B'>• IPC Nacional: <b>1,8% m/m</b> (35,4% i.a.) | Cuyo: <b>1,7% m/m</b><br/>"
-          "• Inflación núcleo en 1,5% m/m con ancla fiscal consolidada.<br/>"
-          "• Tasa real neutral de Taylor ex-ante: <b>+8,5% anual</b>.</font>")
+          f"<font size=7.2 color='#64748B'>• IPC Nacional: <b>{_fmt1(inflacion.get('indec_general_mom'))}% m/m</b> | "
+          f"DEIE Mendoza: <b>{_fmt1(inflacion.get('deie_mendoza_mom'))}% m/m</b><br/>"
+          f"• Inflación núcleo en <b>{_fmt1(inflacion.get('indec_nucleo_mom'))}% m/m</b> con ancla fiscal consolidada.<br/>"
+          f"• Tasa real ex-ante (Fisher, Lecap corta vs. REM): <b>{_fmt1(tasa_real_exante, signo=True)}% mensual</b>.</font>")
 
     p2 = ("<b>2. RENTA FIJA & DEUDA SOBERANA</b><br/>"
-          "<font size=7.2 color='#64748B'>• Curva Nelson-Siegel hard dollar: nivel &beta;<sub>0</sub> = <b>9,40%</b><br/>"
-          "• Riesgo País (EMBI) en <b>680 pb</b>; GD35 rinde <b>11,2% TIR</b>.<br/>"
-          "• Lecap corta S31O6 con TEM de <b>3,24% m/m</b> (carry atractivo).</font>")
+          f"<font size=7.2 color='#64748B'>• Curva Nelson-Siegel hard dollar: nivel &beta;<sub>0</sub> = <b>{_fmt1(ns.get('beta0'))}%</b><br/>"
+          f"• Riesgo País (EMBI+) en <b>{fmt_num(soberano.get('embi_riesgo_pais_pbs'), 0)} pb</b>; GD35 rinde <b>{_fmt1(soberano.get('gd35_tir'))}% TIR</b>.<br/>"
+          f"• Lecap tramo corto con TEM de <b>{_fmt1(tasas_ars.get('lecap_corta_tem'))}% m/m</b> (el contrato no especifica un ticker puntual).</font>")
 
     p3 = ("<b>3. MICROESTRUCTURA CAMBIARIA</b><br/>"
-          "<font size=7.2 color='#64748B'>• Dólar CCL: <b>$1.596,59</b> | Brecha mayorista: <b>7,51%</b> (5,39% BNA)<br/>"
-          "• Rofex Dic-26: TNA implícita <b>38,5%</b> (prob. salto: 24,5%)<br/>"
-          "• Compresión de volatilidad implícita en tramos cortos.</font>")
+          f"<font size=7.2 color='#64748B'>• Dólar CCL: <b>${fmt_num(dolar.get('ccl'), 2)}</b> | Brecha CCL/oficial: <b>{_fmt1(dolar.get('brecha_ccl_oficial_pct'))}%</b><br/>"
+          f"• Dólar futuro CIP a 30d (teórico, no cotización Rofex): <b>${fmt_num(dolar_futuro['curva'][0]['futuro_implicito'], 2) if dolar_futuro else 's/d'}</b><br/>"
+          "• Ratio de Absorción / Turbulencia de Mahalanobis: ver Pág. 12 (sección de riesgo sistémico).</font>")
 
     p4 = ("<b>4. ACTIVIDAD & RIESGO SISTÉMICO</b><br/>"
-          "<font size=7.2 color='#64748B'>• EMAE: <b>+0,6% s.e.</b> m/m; ISARC Cuyo: <b>+0,9% s.e.</b><br/>"
-          "• Ratio de Absorción PCA: <b>64,2%</b> (régimen resiliente &lt;75%)<br/>"
-          "• Turbulencia de Mahalanobis: <b>4,12</b> (&chi;² crítico: 11,07).</font>")
+          f"<font size=7.2 color='#64748B'>• EMAE desestacionalizado: <b>{_fmt1(actividad.get('emae_desestacionalizado_mom_pct'), signo=True)}% m/m</b> "
+          f"({_fmt1(actividad.get('emae_interanual_pct'), signo=True)}% i.a.)<br/>"
+          f"• ISARC i.a.: Mendoza <b>{_fmt1(actividad.get('isarc_mendoza_ia_pct'), signo=True)}%</b> · San Luis <b>{_fmt1(actividad.get('isarc_san_luis_ia_pct'), signo=True)}%</b><br/>"
+          f"• Ratio de Absorción: <b>{_ar_txt}</b> · Turbulencia de Mahalanobis: <b>{_turb_txt}</b> (régimen: {_regimen_txt}).</font>")
 
     cell_p1 = Paragraph(p1, ParagraphStyle('P1', fontName='Georgia', fontSize=7.8, leading=10.5, textColor=DARK_TEXT))
     cell_p2 = Paragraph(p2, ParagraphStyle('P2', fontName='Georgia', fontSize=7.8, leading=10.5, textColor=DARK_TEXT))
@@ -310,12 +441,12 @@ def generar_informe_mensual_reportlab():
     # 5. Tarjeta de Tesis Central y Dictamen Estratégico (Con barra lateral Oxford Navy)
     tesis_text = (
         "<b>DIAGNÓSTICO EJECUTIVO & TESIS CENTRAL DE MERCADO</b><br/>"
-        "La economía argentina transita una fase de consolidación de su ancla nominal y desaceleración inflacionaria "
-        "(IPC en 1,8% m/m), respaldada por el equilibrio fiscal primario y financiero del Sector Público Nacional. "
-        "En el frente financiero, la curva soberana en USD normaliza su pendiente forward instantánea con un EMBI en torno a 680 pb, "
-        "mientras que la brecha cambiaria CCL se estabiliza en 7,51% y las métricas de acoplamiento multivariado "
-        "(Ratio de Absorción en 64,2% y Turbulencia en 4,12) confirman un <b>régimen de mercado resiliente</b>. "
-        "En este contexto, la estrategia de asignación de activos pondera un <b>40% en Lecaps cortas (carry trade)</b>, "
+        f"La economía argentina transita una fase de consolidación de su ancla nominal y desaceleración inflacionaria "
+        f"(IPC en {_fmt1(inflacion.get('indec_general_mom'))}% m/m), respaldada por el equilibrio fiscal primario y financiero del Sector Público Nacional. "
+        f"En el frente financiero, la curva soberana en USD normaliza su pendiente forward instantánea con un EMBI+ en torno a {fmt_num(soberano.get('embi_riesgo_pais_pbs'), 0)} pb, "
+        f"mientras que la brecha cambiaria CCL/oficial se ubica en {_fmt1(dolar.get('brecha_ccl_oficial_pct'))}% (Ratio de Absorción: {_ar_txt}, Turbulencia de Mahalanobis: "
+        f"{_turb_txt}, régimen {_regimen_txt}). "
+        "En este contexto, la estrategia de asignación de activos <b>(juicio del analista, no dato de mercado)</b> pondera un <b>40% en Lecaps cortas (carry trade)</b>, "
         "un <b>30% en Globales hard dollar (GD35/GD38 por convexidad)</b>, un <b>15% en Boncer</b>, un <b>10% en Bopreal Serie 3</b> "
         "y un <b>5% táctico en Renta Variable energética</b>."
     )
@@ -340,7 +471,7 @@ def generar_informe_mensual_reportlab():
         [
             Paragraph("<b>AUTOR / INVESTIGADOR</b><br/><font color='#0B3C5D' size=8.2><b>Federico Agustín Chillón</b></font><br/><font color='#64748B' size=6.8>Facultad de Ciencias Económicas</font>", ParagraphStyle('M1', fontName='Georgia', fontSize=7.4, leading=9.8)),
             Paragraph("<b>FILIACIÓN INSTITUCIONAL</b><br/><font color='#0B3C5D' size=8.2><b>Facultad de Ciencias Económicas</b></font><br/><font color='#64748B' size=6.8>Universidad Nacional de Cuyo (UNCUYO)</font>", ParagraphStyle('M2', fontName='Georgia', fontSize=7.4, leading=9.8)),
-            Paragraph("<b>ESPECIFICACIÓN TÉCNICA</b><br/><font color='#0B3C5D' size=8.2><b>Cierre Mensual · Agosto 2026</b></font><br/><font color='#64748B' size=6.8>Modelos Econométricos & 300 DPI HD</font>", ParagraphStyle('M3', fontName='Georgia', fontSize=7.4, leading=9.8))
+            Paragraph(f"<b>ESPECIFICACIÓN TÉCNICA</b><br/><font color='#0B3C5D' size=8.2><b>Cierre Mensual · {periodo_texto_cap}</b></font><br/><font color='#64748B' size=6.8>Modelos Econométricos & 300 DPI HD</font>", ParagraphStyle('M3', fontName='Georgia', fontSize=7.4, leading=9.8))
         ]
     ]
     t_meta = Table(meta_box, colWidths=[177, 178, 177])
@@ -360,19 +491,28 @@ def generar_informe_mensual_reportlab():
     # 4. Matriz Ejecutiva de los 4 Pilares Macroeconómicos
     pilar_tasas = (
         "<font color='#0B3C5D'><b>1. TASAS & ARBITRAJE EN ARS</b></font><br/>"
-        "La tasa fija en Lecaps cortas (S31O6 en 2,95% TEM) otorga un premio de +95 pb reales ex-ante sobre la inflación esperada del REM (2,00%). Con un breakeven implícito de 2,86% mensual, la estrategia óptima maximiza exposición en el tramo corto para capturar el carry trade real sin riesgo de duration."
+        f"Lecap tramo corto (sin ticker puntual en el contrato) en {_fmt1(tasas_ars.get('lecap_corta_tem'))}% TEM otorga un premio de "
+        f"+{fmt_num(tasas_ars.get('premio_tasa_fija_pbs'), 0)} pb ex-ante sobre el REM ({_fmt1(tasas_ars.get('inflacion_esperada_rem_tem'))}%). "
+        f"Breakeven implícito: {_fmt1(tasas_ars.get('breakeven_inflacion_tem'))}% mensual; la estrategia óptima maximiza exposición en el tramo corto."
     )
     pilar_precios = (
         "<font color='#0B3C5D'><b>2. PRECIOS & CONVERGENCIA</b></font><br/>"
-        "El IPC Nacional registró 2,2% MoM (Mendoza DEIE: 2,3%), traccionado por regulados (3,0%) y servicios (2,9%). El ancla cambiaria y el orden fiscal contienen a los bienes transables en 1,9% MoM. La Canasta Básica Total mendocina se ubicó en $963.000, con el RIPTE formal avanzando +2,4% en el año."
+        f"IPC Nacional {_fmt1(inflacion.get('indec_general_mom'))}% MoM (Mendoza DEIE: {_fmt1(inflacion.get('deie_mendoza_mom'))}%), traccionado por regulados "
+        f"({_fmt1(inflacion.get('indec_regulados_mom'))}%) y servicios ({_fmt1(inflacion.get('indec_servicios_mom'))}%); núcleo en "
+        f"{_fmt1(inflacion.get('indec_nucleo_mom'))}% (sin rubro \"bienes\" propio en el contrato). CBT Mendoza: "
+        f"${fmt_num(inflacion.get('canasta_basica_total_mza'), 0)}. RIPTE: {_ripte_txt}."
     )
     pilar_soberano = (
         "<font color='#0B3C5D'><b>3. CURVA SOBERANA EN USD</b></font><br/>"
-        "El ajuste paramétrico Nelson-Siegel (R²=0,984) ubica el nivel asintótico β₀ en 9,40%. La compresión del riesgo país hacia 506 pb reduce el costo de fondeo y convalida extender duration en Globales largos (GD35/GD38), que ofrecen una convexidad superior a 33x ante compresión de spreads."
+        f"Nelson-Siegel (R²={_fmt1(ns.get('r2'), decimales=3)}) ubica el nivel asintótico β₀ en {_fmt1(ns.get('beta0'))}%. La compresión del riesgo país hacia "
+        f"{fmt_num(soberano.get('embi_riesgo_pais_pbs'), 0)} pb favorece extender duration en Globales largos (GD35/GD38); convexidad ante compresión de "
+        "spreads: estimación propia, sin motor de pricing en el repositorio (ver Pág. 11)."
     )
     pilar_regional = (
         "<font color='#0B3C5D'><b>4. ACTIVIDAD Y CUYO (ISARC)</b></font><br/>"
-        "El EMAE consolidó un alza interanual de +3,1%, liderado por minería e hidrocarburos (+14,2%). El Indicador Sintético Regional (ISARC) muestra a San Luis expandiéndose al +5,8% i.a. por tracción industrial y construcción (+14,2%), seguido por Mendoza (+3,4%) y San Juan (+2,1%)."
+        f"EMAE i.a.: {_fmt1(actividad.get('emae_interanual_pct'), signo=True)}% (sin desagregación sectorial en el contrato). ISARC i.a.: San Luis "
+        f"{_fmt1(actividad.get('isarc_san_luis_ia_pct'), signo=True)}%, Mendoza {_fmt1(actividad.get('isarc_mendoza_ia_pct'), signo=True)}%, San Juan "
+        f"{_fmt1(actividad.get('isarc_san_juan_ia_pct'), signo=True)}% (nivel del índice y desagregación provincial: sin fuente)."
     )
 
     pilar_p_style = ParagraphStyle('PilP', fontName='Georgia', fontSize=7.2, leading=9.8, textColor=DARK_TEXT, alignment=TA_JUSTIFY)
@@ -401,8 +541,10 @@ def generar_informe_mensual_reportlab():
     # 5. Tesis Estratégica Central (Card Elegante)
     tesis_content = (
         "<font color='#0B3C5D'><b>TESIS ESTRATÉGICA PARA COMITÉS DE INVERSIÓN:</b></font> "
-        "La combinación de superávit fiscal primario y absorción monetaria cuasifiscal mediante Lefi ($29,3 billones) mantiene ancladas las expectativas cambiarias y reduce la volatilidad implícita en Rofex (35,2% TNA). "
-        "En este régimen de transición, la asignación táctica óptima consiste en capturar rendimientos reales en pesos en Lecaps cortas (S31O6) mientras se mantiene sobreponderación en bonos globales GD35/GD38 para maximizar el retorno total ante la normalización del crédito soberano internacional."
+        f"Las Letras Fiscales de Liquidez (Lefi) están discontinuadas desde julio de 2025 (stock real $0, BCRA id=196) -- la absorción bancaria opera hoy vía "
+        f"la tasa de pases pasivos a 1 día ({_fmt1(tasas_bcra.get('pases_1d_tna', {}).get('valor'))}% TNA), que junto con el superávit fiscal primario mantiene "
+        f"ancladas las expectativas cambiarias (volatilidad implícita en Matba-Rofex: {SIN_FUENTE}). La asignación táctica óptima consiste en capturar "
+        "rendimientos reales en Lecaps del tramo corto y sobreponderar bonos globales GD35/GD38."
     )
     t_tesis_card = Table([[Paragraph(tesis_content, ParagraphStyle('TC_P', fontName='Georgia', fontSize=7.4, leading=10.2, textColor=SLATE, alignment=TA_JUSTIFY))]], colWidths=[532])
     t_tesis_card.setStyle(TableStyle([
@@ -421,7 +563,7 @@ def generar_informe_mensual_reportlab():
     autor_signature_table = Table([
         [
             Paragraph("<font color='#0B3C5D' size=8.0><b>Federico Agustín Chillón</b></font><br/><font color='#64748B' size=7.0>Lead Quantitative Macro & Financial Strategist<br/>Facultad de Ciencias Económicas — Universidad Nacional de Cuyo</font>", ParagraphStyle('SigL', fontName='Georgia', leading=9.5)),
-            Paragraph("<font color='#64748B' size=7.0><b>Repositorio Oficial & Pipelines:</b><br/>github.com/federicoagustinchillon-creador/coyuntura-macro<br/>Mendoza, Argentina · Agosto de 2026</font>", ParagraphStyle('SigR', fontName='Georgia', alignment=TA_RIGHT, leading=9.5))
+            Paragraph(f"<font color='#64748B' size=7.0><b>Repositorio Oficial & Pipelines:</b><br/>github.com/federicoagustinchillon-creador/coyuntura-macro<br/>Mendoza, Argentina · {periodo_texto_cap}</font>", ParagraphStyle('SigR', fontName='Georgia', alignment=TA_RIGHT, leading=9.5))
         ]
     ], colWidths=[280, 252])
     autor_signature_table.setStyle(TableStyle([
@@ -539,16 +681,29 @@ def generar_informe_mensual_reportlab():
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
-        "El diagnóstico macroeconómico al cierre de agosto de 2026 confirma la vigencia y efectividad del ancla fiscal y monetaria. La convergencia inflacionaria hacia el 2% mensual (IPC INDEC: 2,2% MoM vs. Mendoza DEIE: 2,3% MoM) estuvo liderada por el reacomodamiento de <b>precios regulados (3,0% MoM)</b> y <b>servicios privados (2,9% MoM)</b>, que explicaron la mayor incidencia alcista, compensados por la estabilidad en <b>bienes transables (1,9% MoM)</b> y la <b>inflación núcleo (1,9% MoM)</b>. En el frente monetario, la tasa real ex-ante (+0,95% mensual TEM Lecap vs. REM) opera como barrera contra la dolarización de carteras, sustentada en la absorción del Tesoro mediante Lefi ($29,3 billones) y el equilibrio presupuestario primario.",
+        f"El diagnóstico macroeconómico al cierre de {periodo_texto} confirma la vigencia y efectividad del ancla fiscal y monetaria. La convergencia inflacionaria "
+        f"(IPC INDEC: {_fmt1(inflacion.get('indec_general_mom'))}% MoM vs. Mendoza DEIE: {_fmt1(inflacion.get('deie_mendoza_mom'))}% MoM) estuvo liderada por el reacomodamiento de "
+        f"<b>precios regulados ({_fmt1(inflacion.get('indec_regulados_mom'))}% MoM)</b> y <b>servicios privados ({_fmt1(inflacion.get('indec_servicios_mom'))}% MoM)</b>, que explicaron la mayor "
+        f"incidencia alcista, compensados por la estabilidad en la <b>inflación núcleo ({_fmt1(inflacion.get('indec_nucleo_mom'))}% MoM)</b> -- el contrato no discrimina un rubro "
+        f"\"bienes transables\" separado. En el frente monetario, la tasa real ex-ante ({_fmt1(tasa_real_exante, signo=True)}% mensual TEM Lecap vs. REM) opera como barrera contra la "
+        f"dolarización de carteras. La absorción bancaria de liquidez ya no opera vía Lefi (mecanismo discontinuado desde julio de 2025, stock real en $0) sino vía la tasa de pases "
+        f"pasivos a 1 día ({_fmt1(tasas_bcra.get('pases_1d_tna', {}).get('valor'))}% TNA) y el equilibrio presupuestario primario.",
         body_style
     ))
     elements.append(Paragraph(
-        "En el plano sociopolítico y distributivo, la estabilidad cambiaria convive con tensiones en el ingreso disponible: el salario real formal (RIPTE) alcanza 84,4 puntos (+2,4% acumulado en 2026), pero el sector no registrado enfrenta una pérdida de poder de compra superior al 18% respecto a 2023. La Canasta Básica Total en Mendoza ($963.000) exige ingresos crecientes para superar el umbral de pobreza, mientras el endeudamiento de los hogares en créditos de consumo exhibe una mora del 17,2%. A nivel soberano, la compresión del EMBI+ hacia 506 pb reduce el costo de fondeo y habilita la rotación de carteras hacia tramos medios-largos de Globales con elevado potencial de revalorización de capital.",
+        f"En el plano sociopolítico y distributivo, la Canasta Básica Total en Mendoza (${fmt_num(inflacion.get('canasta_basica_total_mza'), 0)}) exige ingresos crecientes para superar "
+        f"el umbral de pobreza. RIPTE: {_ripte_txt}. La pérdida de poder de compra del sector no registrado y la mora en créditos de consumo no tienen fuente automatizable en el "
+        f"repositorio: {SIN_FUENTE}. A nivel soberano, el EMBI+ se ubica en {fmt_num(soberano.get('embi_riesgo_pais_pbs'), 0)} pb{_embi_var_30d_txt}, "
+        "lo que reduce el costo de fondeo y habilita la rotación de carteras hacia tramos medios-largos de Globales con elevado potencial de revalorización de capital.",
         body_style
     ))
     elements.append(Spacer(1, 2))
 
     elements.append(Paragraph("<b>Matriz de Escenarios Macroeconómicos a 12 Meses:</b>", h2_style))
+    elements.append(Paragraph(
+        "<i>Proyección y juicio del analista -- probabilidades, rangos y estrategia son escenarios de research, no datos de mercado observados ni un modelo econométrico formal de proyección.</i>",
+        fig_caption
+    ))
 
     escenarios_table_data = [
         [
@@ -565,7 +720,7 @@ def generar_informe_mensual_reportlab():
             Paragraph("$1.750 - $1.850", cell_style_center),
             Paragraph("28% - 32% anual", cell_style_center),
             Paragraph("9,50% (Upside +12%)", cell_style_center),
-            Paragraph("Carry en Lecaps cortas (S31O6) + sobreponderar tramo GD35/GD38.", cell_style_left)
+            Paragraph("Carry en Lecaps del tramo corto + sobreponderar tramo GD35/GD38.", cell_style_left)
         ],
         [
             Paragraph("<b>Bull (Salida de Cepo)</b>", cell_style_left),
@@ -602,11 +757,11 @@ def generar_informe_mensual_reportlab():
     elements.append(t_esc)
     elements.append(Spacer(1, 2.5))
 
-    elements.append(Paragraph("<b>Guía de Asignación Táctica de Carteras (Asset Allocation Recomendado):</b>", h2_style))
+    elements.append(Paragraph("<b>Guía de Asignación Táctica de Carteras (Asset Allocation Recomendado -- criterio del analista):</b>", h2_style))
     carteras_data = [
         [Paragraph("<b>Perfil de Inversor</b>", cell_header_style), Paragraph("<b>Horizonte</b>", cell_header_style), Paragraph("<b>Composición Recomendada (% Cartera)</b>", cell_header_style), Paragraph("<b>Tesis de Rendimiento / Cobertura</b>", cell_header_style)],
-        [Paragraph("<b>Conservador (Treasury)</b>", cell_style_left), Paragraph("30 - 60 días", cell_style_center), Paragraph("<b>70%</b> Lecap Corta (S31O6) + <b>30%</b> Boncer TZX26", cell_style_left), Paragraph("Captura de TEM 2,95% con mínima volatilidad en pesos.", cell_style_left)],
-        [Paragraph("<b>Moderado (Institucional)</b>", cell_style_left), Paragraph("90 - 180 días", cell_style_center), Paragraph("<b>40%</b> Lecap S28N6 + <b>20%</b> TZX27 + <b>25%</b> GD35/GD38 + <b>15%</b> Bopreal 3", cell_style_left), Paragraph("Balance carry real positivo con potencial compresión USD.", cell_style_left)],
+        [Paragraph("<b>Conservador (Treasury)</b>", cell_style_left), Paragraph("30 - 60 días", cell_style_center), Paragraph("<b>70%</b> Lecap tramo corto + <b>30%</b> Boncer TZX27", cell_style_left), Paragraph(f"Captura de TEM {_fmt1(tasas_ars.get('lecap_corta_tem'))}% con mínima volatilidad en pesos.", cell_style_left)],
+        [Paragraph("<b>Moderado (Institucional)</b>", cell_style_left), Paragraph("90 - 180 días", cell_style_center), Paragraph("<b>40%</b> Lecap tramo largo + <b>20%</b> TZX27 + <b>25%</b> GD35/GD38 + <b>15%</b> Bopreal 3", cell_style_left), Paragraph("Balance carry real positivo con potencial compresión USD.", cell_style_left)],
         [Paragraph("<b>Agresivo (Total Return)</b>", cell_style_left), Paragraph("+12 meses", cell_style_center), Paragraph("<b>20%</b> Lecaps + <b>45%</b> Globales GD35/GD38 + <b>35%</b> Equity (YPF, PAMP, TGS)", cell_style_left), Paragraph("Maximizar convexidad soberana e inversión RIGI energética.", cell_style_left)]
     ]
     t_cart = Table(carteras_data, colWidths=[105, 65, 210, 152])
@@ -630,10 +785,10 @@ def generar_informe_mensual_reportlab():
     elements.append(Paragraph("<b>Termómetro de Presión Cambiaria y Semáforo de Riesgo Soberano:</b>", h2_style))
     termometro_data = [
         [Paragraph("<b>Variable / Indicador Clave</b>", cell_header_style), Paragraph("<b>Nivel Observado</b>", cell_header_style), Paragraph("<b>Estado / Semáforo</b>", cell_header_style), Paragraph("<b>Lectura de Mercado & Vulnerabilidad</b>", cell_header_style)],
-        [Paragraph("Brecha Cambiaria CCL / Oficial", cell_style_left), Paragraph("5,39% (CCL $1.596)", cell_style_center), Paragraph("<b>Baja Presión</b>", cell_style_center), Paragraph("Oferta exportadora del blend 80/20 contiene la volatilidad financiera.", cell_style_left)],
-        [Paragraph("Demanda de Hedge Rofex a 30d", cell_style_left), Paragraph("35,2% TNA Implícita", cell_style_center), Paragraph("<b>Estable</b>", cell_style_center), Paragraph("Curva de futuros alineada con el crawling peg sin prima de salto.", cell_style_left)],
-        [Paragraph("Spread EMBI+ Argentina (J.P. Morgan)", cell_style_left), Paragraph("506 pb (-42 pb MoM)", cell_style_center), Paragraph("<b>En Compresión</b>", cell_style_center), Paragraph("Mejora en paridades soberanas anticipa retorno a mercados voluntarios.", cell_style_left)],
-        [Paragraph("Absorción Bancaria vía Lefi (Tesoro)", cell_style_left), Paragraph("$29,3 Billones", cell_style_center), Paragraph("<b>Controlado</b>", cell_style_center), Paragraph("Esterilización no monetaria sustentada en superávit fiscal primario.", cell_style_left)]
+        [Paragraph("Brecha Cambiaria CCL / Oficial", cell_style_left), Paragraph(f"{_fmt1(dolar.get('brecha_ccl_oficial_pct'))}% (CCL ${fmt_num(dolar.get('ccl'), 2)})", cell_style_center), Paragraph("<b>Baja Presión</b>", cell_style_center), Paragraph("Oferta exportadora del blend 80/20 contiene la volatilidad financiera.", cell_style_left)],
+        [Paragraph("Dólar Futuro CIP a 30d (teórico)", cell_style_left), Paragraph(f"${fmt_num(dolar_futuro['curva'][0]['futuro_implicito'], 2)} ({_fmt1(dolar_futuro['curva'][0]['tna_implicita_pct'])}% TNA)" if dolar_futuro else SIN_FUENTE, cell_style_center), Paragraph("<b>Modelo, no mercado</b>", cell_style_center), Paragraph("Paridad de tasas cubierta (CIP) sobre datos reales; no es una cotización de Matba-Rofex (sin conector a ese mercado en el repositorio).", cell_style_left)],
+        [Paragraph("Spread EMBI+ Argentina (J.P. Morgan)", cell_style_left), Paragraph(f"{fmt_num(soberano.get('embi_riesgo_pais_pbs'), 0)} pb{_embi_var_30d_txt}", cell_style_center), Paragraph("<b>Nivel Vigente</b>", cell_style_center), Paragraph("Nivel: contrato manual. Variación 30d: fuente secundaria ArgentinaDatos (no JP Morgan/Bloomberg directo).", cell_style_left)],
+        [Paragraph("Tasa de Pases Pasivos BCRA (1 día)", cell_style_left), Paragraph(f"{_fmt1(tasas_bcra.get('pases_1d_tna', {}).get('valor'))}% TNA", cell_style_center), Paragraph("<b>Vigente</b>", cell_style_center), Paragraph("Mecanismo de esterilización bancaria vigente; Lefi está discontinuado desde jul-2025 (stock real $0).", cell_style_left)]
     ]
     t_ter = Table(termometro_data, colWidths=[130, 85, 75, 242])
     t_ter.setStyle(TableStyle([
@@ -660,24 +815,36 @@ def generar_informe_mensual_reportlab():
     elements.append(Paragraph("1. Arbitraje de Tasas en ARS, Breakeven y Recomendaciones de Cartera", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
+    _breakeven_mensual = tasas_ars.get("breakeven_inflacion_tem")
+    _breakeven_anualizado = round(100 * ((1 + _breakeven_mensual / 100) ** 12 - 1), 2) if _breakeven_mensual is not None else None
     elements.append(Paragraph(
-        "El mercado de deuda en pesos refleja una marcada preferencia por el carry trade de corto plazo. La curva de Lecaps (tasa fija) opera con TEMs de entre 2,95% (30 días) y 3,40% (360 días), mientras los títulos Boncer indexados por CER rinden tasas reales positivas de entre +1,10% y +2,30% anual. A partir de esta estructura, el <b>breakeven de inflación implícita</b> se sitúa en 2,86% mensual para el tramo corto y 3,21% para el tramo anualizado.",
+        f"El mercado de deuda en pesos refleja una marcada preferencia por el carry trade de corto plazo. La curva de Lecaps (tasa fija) opera con TEMs de "
+        f"{_fmt1(tasas_ars.get('lecap_corta_tem'))}% (tramo corto) a {_fmt1(tasas_ars.get('lecap_larga_tem'))}% (tramo largo) -- el contrato no especifica plazos "
+        f"en días ni tickers puntuales para estos dos puntos. El único título Boncer con dato real es TZX27, con TIR real de +{_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}% anual "
+        f"({SIN_FUENTE} para otros Boncer como TZX28). A partir de esta estructura, el <b>breakeven de inflación implícita</b> se sitúa en {_fmt1(_breakeven_mensual)}% mensual para el "
+        f"tramo corto y {_fmt1(_breakeven_anualizado)}% anualizado (derivado por capitalización compuesta simple del dato mensual, no una serie anualizada observada aparte).",
         body_style
     ))
     elements.append(Paragraph(
-        "Dado que las expectativas del REM proyectan una inflación mensual descendente hacia el 1,75%-2,00%, la tasa fija ofrece un premio de entre 86 y 146 pb mensuales sobre la inflación esperada. La estrategia táctica óptima consiste en maximizar exposición en Lecaps cortas (S31O6 / S28N6) para capturar el diferencial de rendimiento real sin asumir el riesgo de extensión de duration.",
+        f"Dado que el REM proyecta una inflación mensual de {_fmt1(tasas_ars.get('inflacion_esperada_rem_tem'))}% (el contrato solo trae este punto, no un sendero descendente), "
+        f"la tasa fija ofrece un premio de {fmt_num(tasas_ars.get('premio_tasa_fija_pbs'), 0)} pb mensuales sobre la inflación esperada. La estrategia táctica óptima consiste en "
+        "maximizar exposición en Lecaps del tramo corto para capturar el diferencial de rendimiento real sin asumir el riesgo de extensión de duration.",
         body_style
     ))
     elements.append(Spacer(1, 2))
     elements.append(Image(_find_image("chart_indec_1_rates.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
+    _lecap_corta_tem = tasas_ars.get("lecap_corta_tem")
+    _lecap_larga_tem = tasas_ars.get("lecap_larga_tem")
+    _lecap_corta_tna = round(_lecap_corta_tem * 12, 1) if _lecap_corta_tem is not None else None  # TNA simple (TEM x 12), no compuesta
+    _lecap_larga_tna = round(_lecap_larga_tem * 12, 1) if _lecap_larga_tem is not None else None
     tabla_tactica_data = [
         [Paragraph("<b>Instrumento / Especie</b>", cell_header_style), Paragraph("<b>TNA / TEM</b>", cell_header_style), Paragraph("<b>Duration / Convex.</b>", cell_header_style), Paragraph("<b>Breakeven / TIR</b>", cell_header_style), Paragraph("<b>Tesis & Ponderación Táctica</b>", cell_header_style)],
-        [Paragraph("Lecap S31O6 (Oct-26)", cell_style_left), Paragraph("35,4% TNA (2,95% TEM)", cell_style_center), Paragraph("68 días · Dur: 0,18", cell_style_center), Paragraph("BE: 2,86% MoM", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Máximo carry con riesgo tasa mínimo.", cell_style_left)],
-        [Paragraph("Lecap S28N6 (Nov-26)", cell_style_left), Paragraph("36,6% TNA (3,05% TEM)", cell_style_center), Paragraph("96 días · Dur: 0,26", cell_style_center), Paragraph("BE: 2,94% MoM", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Captura tasa fija antes de recortes BCRA.", cell_style_left)],
-        [Paragraph("Boncer TZX27 (Dic-27)", cell_style_left), Paragraph("CER + 1,10% TIR Real", cell_style_center), Paragraph("1,4 años · Dur: 1,35", cell_style_center), Paragraph("TIR Real: +1,10%", cell_style_center), Paragraph("<b>NEUTRAL</b> · Cobertura si regulados superan el 3,5% MoM.", cell_style_left)],
-        [Paragraph("Bopreal Serie 3 (USD)", cell_style_left), Paragraph("8,40% TIR en USD", cell_style_center), Paragraph("1,8 años · Dur: 1,65", cell_style_center), Paragraph("Paridad: 88,5%", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Dolarización de excedentes corporativos.", cell_style_left)]
+        [Paragraph("Lecap (tramo corto)", cell_style_left), Paragraph(f"{_fmt1(_lecap_corta_tna)}% TNA ({_fmt1(_lecap_corta_tem)}% TEM)", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(f"BE: {_fmt1(tasas_ars.get('breakeven_inflacion_tem'))}% MoM", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Máximo carry con riesgo tasa mínimo. El contrato no especifica ticker ni plazo en días.", cell_style_left)],
+        [Paragraph("Lecap (tramo largo)", cell_style_left), Paragraph(f"{_fmt1(_lecap_larga_tna)}% TNA ({_fmt1(_lecap_larga_tem)}% TEM)", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("BE: s/d (contrato trae un único breakeven, sin desagregar por tramo)", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Captura tasa fija en el tramo largo de la curva Lecap.", cell_style_left)],
+        [Paragraph("Boncer TZX27", cell_style_left), Paragraph(f"CER + {_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}% TIR Real", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(f"TIR Real: +{_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}%", cell_style_center), Paragraph("<b>NEUTRAL</b> · Cobertura si regulados aceleran por encima de la tasa fija.", cell_style_left)],
+        [Paragraph("Bopreal Serie 3 (USD)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Sin campo en el contrato de datos (no hay motor de pricing de bonos en pesos/Bopreal en el repositorio).", cell_style_left)]
     ]
     t_tactica = Table(tabla_tactica_data, colWidths=[105, 95, 85, 75, 172])
     t_tactica.setStyle(TableStyle([
@@ -705,11 +872,16 @@ def generar_informe_mensual_reportlab():
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
-        "La dinámica de precios de agosto confirmó la consolidación del sendero desinflacionario nacional (2,2% MoM) y provincial (Mendoza: 2,3% MoM). Por orden de incidencia relativa, los aumentos estuvieron encabezados por los <b>precios regulados (3,0% INDEC; 3,3% DEIE)</b> y los <b>servicios privados (2,9% MoM)</b>, explicados por actualizaciones en tarifas de energía eléctrica, gas de red y transporte interurbano en Cuyo. Como contrapartida, los <b>bienes transables (1,9% MoM)</b> y los <b>alimentos (1,8% MoM)</b> actuaron como anclas de convergencia.",
+        f"La dinámica de precios de {periodo_texto} confirmó la consolidación del sendero desinflacionario nacional ({_fmt1(inflacion.get('indec_general_mom'))}% MoM) y provincial "
+        f"(Mendoza: {_fmt1(inflacion.get('deie_mendoza_mom'))}% MoM). Por orden de incidencia relativa, los aumentos estuvieron encabezados por los <b>precios regulados "
+        f"({_fmt1(inflacion.get('indec_regulados_mom'))}% INDEC; {SIN_FUENTE} para la apertura DEIE de regulados)</b> y los <b>servicios privados ({_fmt1(inflacion.get('indec_servicios_mom'))}% MoM)</b>. "
+        f"Como contrapartida, la <b>inflación núcleo ({_fmt1(inflacion.get('indec_nucleo_mom'))}% MoM)</b> actuó como ancla de convergencia; el contrato no discrimina aperturas propias de "
+        f"\"bienes transables\" ni de \"alimentos\": {SIN_FUENTE}.",
         body_style
     ))
     elements.append(Paragraph(
-        "En el plano social, la valorización de las canastas en Mendoza sitúa la Canasta Básica Alimentaria (CBA) en $433.000 y la Total (CBT) en $963.000 para una familia tipo. Aunque el salario real registrado (RIPTE) acumula una mejora del 2,4% en el año, la heterogeneidad en el mercado laboral presiona el consumo de bienes no transables y sostiene la demanda de financiamiento para gastos corrientes.",
+        f"En el plano social, la valorización de las canastas en Mendoza sitúa la Canasta Básica Alimentaria (CBA) en ${fmt_num(inflacion.get('canasta_basica_alimentaria_mza'), 0)} y la "
+        f"Total (CBT) en ${fmt_num(inflacion.get('canasta_basica_total_mza'), 0)} para una familia tipo. RIPTE (nominal, no deflactado): {_ripte_txt}.",
         body_style
     ))
     elements.append(Spacer(1, 2))
@@ -717,11 +889,11 @@ def generar_informe_mensual_reportlab():
     elements.append(Spacer(1, 4))
 
     tabla_social_data = [
-        [Paragraph("<b>Indicador Social / Canasta (Mendoza)</b>", cell_header_style), Paragraph("<b>Valor Ago-26</b>", cell_header_style), Paragraph("<b>Variación MoM</b>", cell_header_style), Paragraph("<b>Cobertura / Brecha de Ingresos</b>", cell_header_style)],
-        [Paragraph("Canasta Básica Alimentaria (CBA Mendoza)", cell_style_left), Paragraph("$433.000", cell_style_center), Paragraph("+1,8% MoM", cell_style_center), Paragraph("Línea de Indigencia · Requiere 1,2 salarios mínimos informales.", cell_style_left)],
-        [Paragraph("Canasta Básica Total (CBT Mendoza)", cell_style_left), Paragraph("$963.000", cell_style_center), Paragraph("+2,3% MoM", cell_style_center), Paragraph("Línea de Pobreza · Brecha del 18% frente a ingresos no registrados.", cell_style_left)],
-        [Paragraph("Salario Real Formal (RIPTE)", cell_style_left), Paragraph("84,4 pts", cell_style_center), Paragraph("+0,3% MoM", cell_style_center), Paragraph("+2,4% acum. vs. Dic-2023 · Cobertura del 100% de la CBT.", cell_style_left)],
-        [Paragraph("Mora en Créditos de Consumo (Fintech)", cell_style_left), Paragraph("17,2%", cell_style_center), Paragraph("+0,8 pp MoM", cell_style_center), Paragraph("Tensión en financiamiento de gastos corrientes en familias.", cell_style_left)]
+        [Paragraph("<b>Indicador Social / Canasta (Mendoza)</b>", cell_header_style), Paragraph(f"<b>Valor {mes_nombre[:3]}-{str(anio_informe)[2:]}</b>", cell_header_style), Paragraph("<b>Variación MoM</b>", cell_header_style), Paragraph("<b>Cobertura / Brecha de Ingresos</b>", cell_header_style)],
+        [Paragraph("Canasta Básica Alimentaria (CBA Mendoza)", cell_style_left), Paragraph(f"${fmt_num(inflacion.get('canasta_basica_alimentaria_mza'), 0)}", cell_style_center), Paragraph("s/d (contrato no trae variación, solo nivel)", cell_style_center), Paragraph("Línea de Indigencia (umbral de ingresos requerido: carga manual).", cell_style_left)],
+        [Paragraph("Canasta Básica Total (CBT Mendoza)", cell_style_left), Paragraph(f"${fmt_num(inflacion.get('canasta_basica_total_mza'), 0)}", cell_style_center), Paragraph("s/d (contrato no trae variación, solo nivel)", cell_style_center), Paragraph("Línea de Pobreza (brecha frente a ingresos no registrados: carga manual).", cell_style_left)],
+        [Paragraph("Salario Formal Nominal (RIPTE)", cell_style_left), Paragraph(f"${fmt_num(ripte['valores'][-1], 0)}" if ripte else SIN_FUENTE, cell_style_center), Paragraph(f"{_fmt1(ripte.get('var_mensual_ultimo'), signo=True)}% MoM" if ripte else SIN_FUENTE, cell_style_center), Paragraph("RIPTE nacional nominal (Secretaría de Trabajo) -- no deflactado por inflación, no es \"salario real\".", cell_style_left)],
+        [Paragraph("Mora en Créditos de Consumo", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Sin conector automatizado en el repositorio.", cell_style_left)]
     ]
     t_soc = Table(tabla_social_data, colWidths=[172, 75, 75, 210])
     t_soc.setStyle(TableStyle([
@@ -746,25 +918,41 @@ def generar_informe_mensual_reportlab():
     # PÁGINA 6: CUADRO 1 (TABLA IPC Y TRANSMISIÓN COMPLETA)
     # =============================================================
     elements.append(Paragraph("Cuadro 1. Índice de Precios al Consumidor (IPC) y Canales de Transmisión", h1_style))
-    elements.append(Paragraph("<i>Variación mensual, acumulada e interanual según aperturas por orden de incidencia relativa. Agosto de 2026, en porcentaje.</i>", ParagraphStyle('ST', fontName='Georgia-Italic', fontSize=7.5, textColor=MUTED, spaceAfter=4)))
+    elements.append(Paragraph(f"<i>Variación mensual, acumulada e interanual según aperturas por orden de incidencia relativa. {periodo_texto_cap}, en porcentaje.</i>", ParagraphStyle('ST', fontName='Georgia-Italic', fontSize=7.5, textColor=MUTED, spaceAfter=4)))
+
+    # Acumulado real del anio calendario: producto compuesto de la trayectoria
+    # mensual real del INDEC (src/fetch_series_indec_bcra.obtener_ipc_trayectoria,
+    # que llega hasta el mes anterior) mas el mes vigente del contrato principal.
+    # Interanual: el contrato y los fetchers disponibles no traen el nivel de
+    # indice de hace 12 meses -- se marca explicitamente sin fuente en vez de
+    # aproximarlo.
+    _acum_general, _n_acum = _acumulado_anio_calendario(
+        (ipc_tray or {}).get("meses"), (ipc_tray or {}).get("general"), anio_informe, inflacion.get("indec_general_mom"))
+    _acum_nucleo, _ = _acumulado_anio_calendario(
+        (ipc_tray or {}).get("meses"), (ipc_tray or {}).get("nucleo"), anio_informe, inflacion.get("indec_nucleo_mom"))
+    _acum_regulados, _ = _acumulado_anio_calendario(
+        (ipc_tray or {}).get("meses"), (ipc_tray or {}).get("regulados"), anio_informe, inflacion.get("indec_regulados_mom"))
+    _col_acum_header = f"Acum. {anio_informe} ({_n_acum} meses)" if _n_acum else f"Acum. {anio_informe}"
+    _col_mensual_header = f"Mensual ({mes_nombre[:3]}-{str(anio_informe)[2:]})"
+    _ia_sd = "s/d (sin nivel de índice a 12 meses en el repo)"
 
     tabla_ipc_data = [
         [
             Paragraph("<b>Apertura / Jurisdicción</b>", cell_header_style),
-            Paragraph("<b>Mensual (Ago-26)</b>", cell_header_style),
-            Paragraph("<b>Acum. 2026 (8 meses)</b>", cell_header_style),
+            Paragraph(f"<b>{_col_mensual_header}</b>", cell_header_style),
+            Paragraph(f"<b>{_col_acum_header}</b>", cell_header_style),
             Paragraph("<b>Interanual (i.a.)</b>", cell_header_style)
         ],
-        [Paragraph("<b>Precios Regulados (Mayor Incidencia)</b>", cell_style_left), Paragraph("3,0%", cell_style_center), Paragraph("29,1%", cell_style_center), Paragraph("48,4%", cell_style_center)],
-        [Paragraph("Servicios (INDEC)", cell_style_left), Paragraph("2,9%", cell_style_center), Paragraph("24,8%", cell_style_center), Paragraph("41,2%", cell_style_center)],
-        [Paragraph("Provincia de Mendoza (DEIE General)", cell_style_left), Paragraph("2,3%", cell_style_center), Paragraph("19,4%", cell_style_center), Paragraph("32,8%", cell_style_center)],
-        [Paragraph("  Vivienda, agua, electricidad y gas (DEIE)", cell_style_left), Paragraph("3,3%", cell_style_center), Paragraph("33,2%", cell_style_center), Paragraph("54,1%", cell_style_center)],
-        [Paragraph("  Transporte y comunicaciones (DEIE)", cell_style_left), Paragraph("2,7%", cell_style_center), Paragraph("26,4%", cell_style_center), Paragraph("43,8%", cell_style_center)],
-        [Paragraph("Nivel General Nacional (INDEC)", cell_style_left), Paragraph("2,2%", cell_style_center), Paragraph("18,5%", cell_style_center), Paragraph("31,4%", cell_style_center)],
-        [Paragraph("IPC Núcleo (INDEC)", cell_style_left), Paragraph("1,9%", cell_style_center), Paragraph("15,9%", cell_style_center), Paragraph("26,5%", cell_style_center)],
-        [Paragraph("Bienes (INDEC)", cell_style_left), Paragraph("1,9%", cell_style_center), Paragraph("16,2%", cell_style_center), Paragraph("28,0%", cell_style_center)],
-        [Paragraph("  Alimentos y bebidas (DEIE Mendoza)", cell_style_left), Paragraph("1,8%", cell_style_center), Paragraph("15,1%", cell_style_center), Paragraph("25,4%", cell_style_center)],
-        [Paragraph("Estacionales (INDEC)", cell_style_left), Paragraph("1,4%", cell_style_center), Paragraph("12,4%", cell_style_center), Paragraph("21,0%", cell_style_center)]
+        [Paragraph("<b>Precios Regulados (Mayor Incidencia)</b>", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_regulados_mom'))}%", cell_style_center), Paragraph(f"{_fmt1(_acum_regulados)}%", cell_style_center), Paragraph(_ia_sd, cell_style_center)],
+        [Paragraph("Servicios (INDEC)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_servicios_mom'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
+        [Paragraph("Provincia de Mendoza (DEIE General)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('deie_mendoza_mom'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
+        [Paragraph("  Vivienda, agua, electricidad y gas (DEIE)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
+        [Paragraph("  Transporte y comunicaciones (DEIE)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
+        [Paragraph("Nivel General Nacional (INDEC)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_general_mom'))}%", cell_style_center), Paragraph(f"{_fmt1(_acum_general)}%", cell_style_center), Paragraph(_ia_sd, cell_style_center)],
+        [Paragraph("IPC Núcleo (INDEC)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_nucleo_mom'))}%", cell_style_center), Paragraph(f"{_fmt1(_acum_nucleo)}%", cell_style_center), Paragraph(_ia_sd, cell_style_center)],
+        [Paragraph("Bienes (INDEC)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
+        [Paragraph("  Alimentos y bebidas (DEIE Mendoza)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
+        [Paragraph("Estacionales (INDEC)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)]
     ]
 
     t_ipc = Table(tabla_ipc_data, colWidths=[232, 100, 100, 100])
@@ -790,16 +978,16 @@ def generar_informe_mensual_reportlab():
     ]))
     elements.append(t_ipc)
     elements.append(Spacer(1, 2.5))
-    elements.append(Paragraph("<i>Fuente:</i> INDEC y DEIE Mendoza. Ordenado por incidencia decreciente.", fig_caption))
+    elements.append(Paragraph("<i>Fuente:</i> INDEC y DEIE Mendoza (columnas mensuales); acumulado del año calendario derivado por capitalización compuesta de la trayectoria real INDEC (src/fetch_series_indec_bcra.py). Ordenado por incidencia decreciente.", fig_caption))
     elements.append(Spacer(1, 2.5))
 
-    elements.append(Paragraph("<b>Canales de Transmisión y Elasticidad de Pass-Through a Precios:</b>", h2_style))
+    elements.append(Paragraph("<b>Canales de Transmisión y Elasticidad de Pass-Through a Precios (estimación cualitativa del analista, no medición econométrica):</b>", h2_style))
     tabla_passthrough_data = [
         [Paragraph("<b>Canal de Transmisión / Rubro</b>", cell_header_style), Paragraph("<b>Incidencia en IPC (pp)</b>", cell_header_style), Paragraph("<b>Elasticidad / Pass-Through</b>", cell_header_style), Paragraph("<b>Implicancia para Empresas y Consumo</b>", cell_header_style)],
-        [Paragraph("Tarifas de Electricidad y Gas de Red", cell_style_left), Paragraph("+0,65 pp", cell_style_center), Paragraph("Directo (100% regulado)", cell_style_center), Paragraph("Aumento en costos fijos de PyMEs industriales y riego agrícola.", cell_style_left)],
-        [Paragraph("Combustibles y Fletes Interurbanos", cell_style_left), Paragraph("+0,48 pp", cell_style_center), Paragraph("Rápido (60% a 30 días)", cell_style_center), Paragraph("Presión en logística de bodegas y distribución de alimentos.", cell_style_left)],
-        [Paragraph("Alimentos Secos y Productos de Almacén", cell_style_left), Paragraph("+0,42 pp", cell_style_center), Paragraph("Moderado (anclado por FX)", cell_style_center), Paragraph("Migración del consumidor hacia segundas y terceras marcas.", cell_style_left)],
-        [Paragraph("Indumentaria y Calzado", cell_style_left), Paragraph("+0,12 pp", cell_style_center), Paragraph("Bajo (competencia importada)", cell_style_center), Paragraph("Caída en márgenes comerciales por necesidad de liquidar stock.", cell_style_left)]
+        [Paragraph("Tarifas de Electricidad y Gas de Red", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Directo (100% regulado) -- estimación cualitativa", cell_style_center), Paragraph("Aumento en costos fijos de PyMEs industriales y riego agrícola.", cell_style_left)],
+        [Paragraph("Combustibles y Fletes Interurbanos", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Rápido -- estimación cualitativa, sin medición", cell_style_center), Paragraph("Presión en logística de bodegas y distribución de alimentos.", cell_style_left)],
+        [Paragraph("Alimentos Secos y Productos de Almacén", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Moderado -- estimación cualitativa, sin medición", cell_style_center), Paragraph("Migración del consumidor hacia segundas y terceras marcas.", cell_style_left)],
+        [Paragraph("Indumentaria y Calzado", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Bajo -- estimación cualitativa, sin medición", cell_style_center), Paragraph("Caída en márgenes comerciales por necesidad de liquidar stock.", cell_style_left)]
     ]
     t_pt = Table(tabla_passthrough_data, colWidths=[162, 85, 95, 190])
     t_pt.setStyle(TableStyle([
@@ -821,7 +1009,12 @@ def generar_informe_mensual_reportlab():
 
     analisis_pt_box = Table([
         [Paragraph("<b>EVALUACIÓN EMPÍRICA DE LA DISPERSIÓN DE PRECIOS RELATIVOS</b>", ParagraphStyle('PTH', fontName='Georgia-Bold', fontSize=7.4, textColor=PRIMARY))],
-        [Paragraph("La divergencia entre la variación de bienes (1,9% MoM) y servicios/regulados (3,0% MoM) ratifica que el proceso desinflacionario transita su fase de corrección de precios relativos. La estabilidad cambiaria funciona como ancla para los transables, mientras las tarifas absorben el retraso acumulado del período 2019-2023. Para las tesorerías corporativas, la estabilidad del tipo de cambio mayorista y la compresión del IPIM (1,4% MoM) permiten proyectar un alivio en costos de reposición hacia el cuarto trimestre de 2026.", ParagraphStyle('PTB', fontName='Georgia', fontSize=6.8, leading=9.0, textColor=SLATE))]
+        [Paragraph(
+            f"La divergencia entre la inflación núcleo ({_fmt1(inflacion.get('indec_nucleo_mom'))}% MoM) y servicios/regulados "
+            f"({_fmt1(inflacion.get('indec_servicios_mom'))}%/{_fmt1(inflacion.get('indec_regulados_mom'))}% MoM) ratifica que el proceso desinflacionario transita su fase de "
+            f"corrección de precios relativos; el contrato no discrimina un rubro \"bienes\" aparte de núcleo. La estabilidad del tipo de cambio mayorista (${fmt_num(dolar.get('mayorista'), 2)}) "
+            f"funciona como ancla para los transables. El Índice de Precios Internos Mayoristas (IPIM) no tiene fuente automatizable en el repositorio: {SIN_FUENTE}.",
+            ParagraphStyle('PTB', fontName='Georgia', fontSize=6.8, leading=9.0, textColor=SLATE))]
     ], colWidths=[532])
     analisis_pt_box.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), BG_CARD),
@@ -838,7 +1031,13 @@ def generar_informe_mensual_reportlab():
     # Conclusiones Microsectoriales de Fijación de Precios
     micro_pricing_box = Table([
         [Paragraph("<b>DIRECTRICES DE PRICING Y POLÍTICA DE STOCKS PARA EMPRESAS</b>", ParagraphStyle('MPH', fontName='Georgia-Bold', fontSize=7.4, textColor=PRIMARY))],
-        [Paragraph("• <b>Comercio Mayorista y Retail:</b> Se recomienda rotación rápida de inventarios sobre márgenes unitarios, evitando acumulación de stock apalancado a tasas reales del 35% TNA.<br/>• <b>Industria Agroalimentaria:</b> Aprovechar estabilidad en costos de granos para pactar compras a plazo fijo en ARS con descuento financiero superior al 3% mensual.<br/>• <b>Empresas de Servicios:</b> Incorporar cláusulas de indexación escalonadas en contratos corporativos basadas en 50% IPC Núcleo y 50% RIPTE para preservar el valor real de los honorarios.", ParagraphStyle('MPB', fontName='Georgia', fontSize=6.8, leading=9.0, textColor=DARK_TEXT))]
+        [Paragraph(
+            f"• <b>Comercio Mayorista y Retail:</b> Se recomienda rotación rápida de inventarios sobre márgenes unitarios, evitando acumulación de stock apalancado a tasas del "
+            f"{_fmt1(round(tasas_ars.get('lecap_corta_tem') * 12, 1) if tasas_ars.get('lecap_corta_tem') is not None else None)}% TNA (Lecap tramo corto, TEM x 12).<br/>"
+            f"• <b>Industria Agroalimentaria:</b> Aprovechar estabilidad en costos de granos para pactar compras a plazo fijo en ARS con descuento financiero de referencia sobre la tasa fija corta.<br/>"
+            f"• <b>Empresas de Servicios:</b> Incorporar cláusulas de indexación escalonadas en contratos corporativos basadas en IPC Núcleo ({_fmt1(inflacion.get('indec_nucleo_mom'))}% MoM) "
+            f"y RIPTE nominal ({_ripte_txt}).",
+            ParagraphStyle('MPB', fontName='Georgia', fontSize=6.8, leading=9.0, textColor=DARK_TEXT))]
     ], colWidths=[532])
     micro_pricing_box.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F0FDF4")),
@@ -859,44 +1058,34 @@ def generar_informe_mensual_reportlab():
     elements.append(Paragraph("3. Estimador Mensual de Actividad Económica (EMAE)", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
+    _emae_tendencia_mom = None
+    if emae_hist and len(emae_hist.get("tendencia_ciclo", [])) >= 2:
+        _t_serie = emae_hist["tendencia_ciclo"]
+        _emae_tendencia_mom = round(100 * (_t_serie[-1] / _t_serie[-2] - 1), 2)
+    _tendencia_txt = (
+        f"La tendencia-ciclo (serie real INDEC, src/fetch_series_indec_bcra.py) avanzó {_fmt1(_emae_tendencia_mom, signo=True)}% mensual"
+        if _emae_tendencia_mom is not None else f"La tendencia-ciclo mensual: {SIN_FUENTE}"
+    )
     elements.append(Paragraph(
-        "El Estimador Mensual de Actividad Económica (EMAE) creció 3,1% en la comparación interanual y avanzó 0,6% en su medición desestacionalizada respecto al mes previo. La tendencia-ciclo consolidó una tasa positiva de 0,4% mensual, ratificando la superación del piso de actividad registrado durante el primer trimestre de 2026. La reactivación económica exhibe un patrón asimétrico traccionado principalmente por los sectores transables y exportadores.",
+        f"El Estimador Mensual de Actividad Económica (EMAE) creció {_fmt1(actividad.get('emae_interanual_pct'), signo=True)}% en la comparación interanual y avanzó "
+        f"{_fmt1(actividad.get('emae_desestacionalizado_mom_pct'), signo=True)}% en su medición desestacionalizada respecto al mes previo. {_tendencia_txt}, ratificando la "
+        "trayectoria de recuperación de la actividad.",
         body_style
     ))
     elements.append(Paragraph(
-        "Por orden de dinamismo, la <b>minería e hidrocarburos (+14,2% i.a.)</b> y el <b>agro (+8,5% i.a.)</b> encabezan la expansión, mientras que el <b>comercio minorista (-1,8% i.a.)</b> y la <b>industria manufacturera no vinculada a energía (-0,5% i.a.)</b> acumulan los mayores rezagos relativos. Este comportamiento responde a la recomposición gradual del ingreso disponible en un entorno de disciplina fiscal.",
+        f"El contrato de datos no desagrega el EMAE por sector de actividad (minería, agro, comercio, industria, intermediación financiera, construcción): la desagregación "
+        f"sectorial con variación i.a./MoM que solía mostrarse aquí no tiene fuente automatizable en el repositorio: {SIN_FUENTE} y se omite en vez de presentar cifras no verificadas.",
         body_style
     ))
     elements.append(Spacer(1, 2))
     elements.append(Image(_find_image("chart_indec_emae_master.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
-    tabla_semaforo_data = [
-        [Paragraph("<b>Sector / Rama de Actividad (INDEC)</b>", cell_header_style), Paragraph("<b>Variación i.a.</b>", cell_header_style), Paragraph("<b>Variación MoM Desest.</b>", cell_header_style), Paragraph("<b>Fase del Ciclo / Driver Principal</b>", cell_header_style)],
-        [Paragraph("Explotación de Minas y Canteras (O&G)", cell_style_left), Paragraph("+14,2% i.a.", cell_style_center), Paragraph("+1,4% MoM", cell_style_center), Paragraph("<b>Expansión Fuerte</b> · Récord de shale oil y gasoductos.", cell_style_left)],
-        [Paragraph("Agricultura, Ganadería y Caza", cell_style_left), Paragraph("+8,5% i.a.", cell_style_center), Paragraph("+0,8% MoM", cell_style_center), Paragraph("<b>Recuperación</b> · Cosecha récord y liquidación de granos.", cell_style_left)],
-        [Paragraph("Intermediación Financiera y Seguros", cell_style_left), Paragraph("+4,2% i.a.", cell_style_center), Paragraph("+0,5% MoM", cell_style_center), Paragraph("<b>Crecimiento</b> · Expansión de créditos corporativos en ARS.", cell_style_left)],
-        [Paragraph("Construcción y Despacho de Insumos", cell_style_left), Paragraph("+0,6% i.a.", cell_style_center), Paragraph("+0,3% MoM", cell_style_center), Paragraph("<b>Estabilización</b> · Impulso privado compensa freno en obra pública.", cell_style_left)],
-        [Paragraph("Comercio Mayorista y Minorista", cell_style_left), Paragraph("-1,8% i.a.", cell_style_center), Paragraph("+0,1% MoM", cell_style_center), Paragraph("<b>Rezagado</b> · Recuperación lenta en ventas de consumo masivo.", cell_style_left)]
-    ]
-    t_sem = Table(tabla_semaforo_data, colWidths=[165, 75, 95, 197])
-    t_sem.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F0FDF4")),
-        ('BACKGROUND', (0,2), (-1,2), colors.HexColor("#F0FDF4")),
-        ('BACKGROUND', (0,3), (-1,3), colors.white),
-        ('BACKGROUND', (0,4), (-1,4), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,5), (-1,5), colors.HexColor("#FEE2E2")),
-        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
-        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 2),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-    ]))
-    elements.append(t_sem)
-
+    elements.append(Paragraph(
+        "<i>El INDEC no publica el EMAE desagregado por rama de actividad con la granularidad mensual que requeriría un semáforo sectorial -- la tabla que solía "
+        "presentarse aquí (minería, agro, finanzas, construcción, comercio) no tiene conector real en este repositorio y se retira en vez de mostrar valores no verificados.</i>",
+        fig_caption
+    ))
     elements.append(PageBreak())
 
     # =============================================================
@@ -906,42 +1095,22 @@ def generar_informe_mensual_reportlab():
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
-        "La estructura productiva de Mendoza exhibe desempeños asimétricos según orientación de mercado. En la industria vitivinícola, los despachos informados por el Instituto Nacional de Vitivinicultura (INV) alcanzaron 68,5 mil hectolitros (+3,2% MoM), impulsados en un 73% por <b>vinos fraccionados (50,1 mil hl)</b> de mayor valor agregado, frente a <b>18,4 mil hl a granel</b>.",
-        body_style
-    ))
-    elements.append(Paragraph(
-        "En hidrocarburos, la producción total en la cuenca cuyana alcanzó 212 mil m³ mensuales, explicada por <b>182 mil m³ de extracción convencional</b> y un aporte creciente de <b>30 mil m³ en Vaca Muerta mendocina</b> bajo proyectos adheridos al RIGI. Por su parte, los despachos de cemento portland (AFCP) operaron en 100,4 puntos base, reflejando reactivación en la obra privada.",
+        "La vitivinicultura (Instituto Nacional de Vitivinicultura) y los hidrocarburos de la cuenca cuyana (Secretaría de Energía) son dos de las cadenas de valor de mayor "
+        "peso relativo en la estructura productiva de Mendoza y Cuyo, y ninguna de las dos tiene un conector confiable en este repositorio -- un candidato evaluado para "
+        f"despachos de vino no pasó un chequeo básico de sensatez (valores fuera de escala, metadata contradictoria) y se descartó en vez de usarlo: {SIN_FUENTE}. "
+        "Para la construcción sí existe un proxy real: el Indicador Sintético de la Actividad de la Construcción (ISAC, INDEC) -- es un índice <b>nacional</b>, no el dato de "
+        "cemento portland (AFCP) específico de Cuyo que este informe mostraba antes; el cambio de alcance queda declarado explícitamente en el gráfico.",
         body_style
     ))
     elements.append(Spacer(1, 2))
     elements.append(Image(_find_image("chart_indec_3_cuyo.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
-    tabla_cadenas_data = [
-        [Paragraph("<b>Cadena de Valor / Complejo (Cuyo)</b>", cell_header_style), Paragraph("<b>Volumen Ago-26</b>", cell_header_style), Paragraph("<b>Participación %</b>", cell_header_style), Paragraph("<b>Impacto Fiscal, Empleo & Inversión</b>", cell_header_style)],
-        [Paragraph("Vino Fraccionado (INV)", cell_style_left), Paragraph("50,1 mil hl", cell_style_center), Paragraph("73,1% del total", cell_style_center), Paragraph("Generador del 65% del empleo agroindustrial en el Oasis Central.", cell_style_left)],
-        [Paragraph("Vino a Granel y Mostos (INV)", cell_style_left), Paragraph("18,4 mil hl", cell_style_center), Paragraph("26,9% del total", cell_style_center), Paragraph("Regulador de stocks y exportación de commoditized wine.", cell_style_left)],
-        [Paragraph("Petróleo Convencional Cuenca Cuyana", cell_style_left), Paragraph("182 mil m³", cell_style_center), Paragraph("85,8% provincial", cell_style_center), Paragraph("Base de recaudación de regalías hidrocarburíferas para ATM.", cell_style_left)],
-        [Paragraph("Vaca Muerta Mendocina (Malargüe)", cell_style_left), Paragraph("30 mil m³", cell_style_center), Paragraph("14,2% provincial", cell_style_center), Paragraph("Proyectos RIGI en fractura hidráulica con proyección duplicada a 2027.", cell_style_left)],
-        [Paragraph("Cemento Portland (AFCP Cuyo)", cell_style_left), Paragraph("100,4 pts (Base 100)", cell_style_center), Paragraph("+0,6% MoM", cell_style_center), Paragraph("Tracción por obras residenciales y desarrollos inmobiliarios privados.", cell_style_left)]
-    ]
-    t_cad = Table(tabla_cadenas_data, colWidths=[155, 80, 85, 212])
-    t_cad.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,2), (-1,2), colors.white),
-        ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,4), (-1,4), colors.white),
-        ('BACKGROUND', (0,5), (-1,5), colors.HexColor("#F8FAFC")),
-        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
-        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 2),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-    ]))
-    elements.append(t_cad)
+    elements.append(Paragraph(
+        "<i>Cuadro de cadenas de valor (Vino Fraccionado/Granel INV, Petróleo Convencional y Vaca Muerta mendocina) retirado de esta edición: sin conector automatizable en el "
+        "repositorio -- requiere carga manual explícita por corrida. Cemento/construcción: ver proxy nacional ISAC en la infografía de arriba.</i>",
+        fig_caption
+    ))
 
     elements.append(PageBreak())
 
@@ -952,42 +1121,44 @@ def generar_informe_mensual_reportlab():
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
-        "La sección anterior desagregó la producción de Mendoza; esta sección completa la lectura regional de Cuyo incorporando San Juan y San Luis a través del <b>Índice Sintético de Actividad Regional (ISARC)</b>, un índice compuesto propio (base 100 = enero 2024) que pondera nivel de actividad, industria manufacturera, construcción y empleo registrado por provincia. San Luis lidera el ritmo de expansión regional con <b>106,4 puntos (+5,8% i.a.)</b>, traccionado por una construcción que crece <b>+14,2% i.a.</b> al amparo de su régimen de promoción industrial, seguida por Mendoza en <b>104,8 puntos (+3,4% i.a.)</b> con la vitivinicultura como motor principal, y San Juan en <b>102,1 puntos (+2,1% i.a.)</b>, la de menor dinamismo relativo por la desaceleración de su construcción (-2,3% i.a.) pese a un sector minero-industrial en convergencia (+1,4% i.a.).",
-        body_style
-    ))
-    elements.append(Paragraph(
-        "La heterogeneidad intraregional es relevante para la asignación de riesgo crediticio provincial y para la lectura de recaudación de ingresos brutos: mientras Mendoza y San Luis exhiben empleo registrado en expansión (+1,2% y +3,9% i.a., respectivamente), San Juan crece a un ritmo marginal (+0,5% i.a.), consistente con una economía más concentrada en minería metalífera de ciclo de inversión más largo y menos intensiva en mano de obra formal por unidad de producto.",
+        f"La sección anterior desagregó la producción de Mendoza; esta sección completa la lectura regional de Cuyo incorporando San Juan y San Luis a través del "
+        f"<b>Índice Sintético de Actividad Regional (ISARC)</b>. El contrato de datos solo trae la <b>variación interanual</b> del índice por provincia -- no el nivel del "
+        f"índice en puntos ni su desagregación sectorial (industria manufacturera, construcción, empleo registrado), que en ediciones anteriores se completaba con un literal "
+        f"de relleno idéntico entre provincias y corridas ({SIN_FUENTE} para nivel/desagregación). San Luis lidera el ritmo de expansión regional con "
+        f"<b>{_fmt1(actividad.get('isarc_san_luis_ia_pct'), signo=True)}% i.a.</b>, seguida por Mendoza en <b>{_fmt1(actividad.get('isarc_mendoza_ia_pct'), signo=True)}% i.a.</b> "
+        f"y San Juan en <b>{_fmt1(actividad.get('isarc_san_juan_ia_pct'), signo=True)}% i.a.</b>, la de menor dinamismo relativo.",
         body_style
     ))
     elements.append(Spacer(1, 2))
     elements.append(Image(_find_image("chart_indec_3b_regional_cuyo.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
-    elements.append(Paragraph("<b>Cuadro. Desagregación Provincial por Sector (Variación Interanual %):</b>", h2_style))
-    regional_header = [Paragraph("<b>Provincia</b>", cell_header_style), Paragraph("<b>ISARC (nivel)</b>", cell_header_style),
-                        Paragraph("<b>ISARC Var. i.a.</b>", cell_header_style), Paragraph("<b>Industria Manuf.</b>", cell_header_style),
-                        Paragraph("<b>Construcción</b>", cell_header_style), Paragraph("<b>Empleo Registrado</b>", cell_header_style)]
+    elements.append(Paragraph("<b>Cuadro. Variación Interanual del ISARC por Provincia:</b>", h2_style))
+    regional_header = [Paragraph("<b>Provincia</b>", cell_header_style), Paragraph("<b>ISARC Var. i.a.</b>", cell_header_style),
+                        Paragraph("<b>Nivel del Índice</b>", cell_header_style), Paragraph("<b>Desagregación Sectorial</b>", cell_header_style)]
     regional_rows = [
-        ("Mendoza", 104.8, 3.4, 2.8, 5.1, 1.2),
-        ("San Juan", 102.1, 2.1, 1.4, -2.3, 0.5),
-        ("San Luis", 106.4, 5.8, 9.7, 14.2, 3.9),
+        ("Mendoza", actividad.get("isarc_mendoza_ia_pct")),
+        ("San Juan", actividad.get("isarc_san_juan_ia_pct")),
+        ("San Luis", actividad.get("isarc_san_luis_ia_pct")),
     ]
     regional_data = [regional_header]
     heat_cmds_regional = []
-    for i, (prov, isarc, isarc_ia, ind, con, emp) in enumerate(regional_rows, start=1):
-        fila = [
+    for i, (prov, isarc_ia) in enumerate(regional_rows, start=1):
+        if isarc_ia is not None:
+            signo = "+" if isarc_ia >= 0 else ""
+            color = POS.hexval() if isarc_ia > 0 else (NEG.hexval() if isarc_ia < 0 else DARK_TEXT.hexval())
+            celda_ia = Paragraph(f'<font color="{color}"><b>{signo}{isarc_ia:.1f}%</b></font>', cell_style_center)
+            heat_cmds_regional.append(('BACKGROUND', (1, i), (1, i), _heat_bg(isarc_ia)))
+        else:
+            celda_ia = Paragraph("s/d", cell_style_center)
+        regional_data.append([
             Paragraph(f"<b>{prov}</b>", cell_style_left),
-            Paragraph(f"{isarc:.1f} pts", cell_style_center),
-        ]
-        for val in (isarc_ia, ind, con, emp):
-            signo = "+" if val >= 0 else ""
-            color = POS.hexval() if val > 0 else (NEG.hexval() if val < 0 else DARK_TEXT.hexval())
-            fila.append(Paragraph(f'<font color="{color}"><b>{signo}{val:.1f}%</b></font>', cell_style_center))
-        regional_data.append(fila)
-        for col_idx, val in zip((2, 3, 4, 5), (isarc_ia, ind, con, emp)):
-            heat_cmds_regional.append(('BACKGROUND', (col_idx, i), (col_idx, i), _heat_bg(val)))
+            celda_ia,
+            Paragraph(SIN_FUENTE, cell_style_center),
+            Paragraph(SIN_FUENTE, cell_style_center),
+        ])
 
-    t_regional = Table(regional_data, colWidths=[80, 82, 90, 90, 90, 100])
+    t_regional = Table(regional_data, colWidths=[80, 90, 170, 192])
     t_regional.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -1001,7 +1172,8 @@ def generar_informe_mensual_reportlab():
     elements.append(t_regional)
     elements.append(Spacer(1, 3))
     elements.append(Paragraph(
-        "<i>Fuentes: DEIE Mendoza, IPEC San Juan, IPEC San Luis. ISARC: índice compuesto de elaboración propia; celdas con intensidad de color proporcional a la magnitud de la variación interanual (verde: expansión, rojo: contracción).</i>",
+        "<i>Fuente: datos_del_dia.json (actividad.isarc_*_ia_pct). ISARC: índice compuesto de elaboración propia; celda con intensidad de color proporcional a la magnitud "
+        "de la variación interanual (verde: expansión, rojo: contracción). Nivel del índice y desagregación sectorial: sin fuente pública automatizable, carga manual pendiente.</i>",
         fig_caption
     ))
 
@@ -1013,12 +1185,29 @@ def generar_informe_mensual_reportlab():
     elements.append(Paragraph("5. Balance del BCRA, Pasivos Cuasifiscales y Brecha de Taylor", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
+    _base_monetaria_ultimo = None
+    _base_monetaria_mes = None
+    _pases_stock_ultimo = None
+    if monetario_hist and monetario_hist.get("base_m"):
+        _base_monetaria_ultimo = monetario_hist["base_m"][-1]
+        _base_monetaria_mes = monetario_hist["meses"][-1]
+    if monetario_hist and monetario_hist.get("pases_m"):
+        _pases_stock_ultimo = monetario_hist["pases_m"][-1]
+
     elements.append(Paragraph(
-        "El esquema monetario consolidó el saneamiento patrimonial del Banco Central mediante la total extinción de los pases pasivos remunerados ($0 B), transfiriendo la absorción de liquidez bancaria a las Letras Fiscales de Liquidez (Lefi) emitidas por el Tesoro Nacional ($29,3 billones). La Base Monetaria Ampliada se ubicó en $27,4 billones, manteniendo un estricto control sobre la expansión secundaria de dinero.",
+        f"El esquema monetario mantiene extinguido el stock de pases pasivos remunerados (BCRA v4.0, id=152"
+        f"{f', {_fmt1(_pases_stock_ultimo)} $ B en {_base_monetaria_mes}' if _pases_stock_ultimo is not None else ''}) desde julio de 2025 -- el mecanismo de esterilización "
+        f"opera hoy vía la <b>tasa</b> de pases a 1 día ({_fmt1(tasas_bcra.get('pases_1d_tna', {}).get('valor'))}% TNA, vigente como referencia aunque sin stock asociado, "
+        f"no un dato contradictorio con el stock extinto). Las Letras Fiscales de Liquidez (Lefi, BCRA id=196) también están discontinuadas desde jul-2025: su stock real "
+        f"es $0, no los $29,3 billones que figuraban en ediciones anteriores de este informe. La Base Monetaria promedio"
+        f"{f' de {_base_monetaria_mes}' if _base_monetaria_mes else ''} se ubicó en {f'${_fmt1(_base_monetaria_ultimo)} billones' if _base_monetaria_ultimo is not None else SIN_FUENTE} (BCRA v4.0, id=15).",
         body_style
     ))
     elements.append(Paragraph(
-        "Bajo una formulación de la Regla de Taylor con tasa real ex-ante (TEM Lecap 2,95% − REM 2,00% = +0,95% mensual), la tasa de política monetaria se sitúa 20 pb por encima de la tasa neutral estimada (r* = 0,75%). Esta brecha contractiva garantiza el anclaje de expectativas inflacionarias sin restringir la expansión del crédito comercial privado en el sistema financiero.",
+        f"Bajo una formulación de la Regla de Taylor con tasa real ex-ante (TEM Lecap {_fmt1(tasas_ars.get('lecap_corta_tem'))}% − REM "
+        f"{_fmt1(tasas_ars.get('inflacion_esperada_rem_tem'))}% = {_fmt1(tasa_real_exante, signo=True)}% mensual), la tasa de política monetaria se compara contra una tasa "
+        "neutral r* que este informe fija en 0,75% mensual como <b>supuesto explícito del analista, no un dato observado</b> -- el BCRA no publica una estimación oficial de "
+        "r* para el esquema monetario vigente. Bajo ese supuesto, la brecha resultante es contractiva y compatible con el anclaje de expectativas inflacionarias.",
         body_style
     ))
     elements.append(Spacer(1, 2))
@@ -1027,10 +1216,11 @@ def generar_informe_mensual_reportlab():
 
     tabla_rin_data = [
         [Paragraph("<b>Factor de Variación Monetaria / Balance</b>", cell_header_style), Paragraph("<b>Monto (ARS / USD)</b>", cell_header_style), Paragraph("<b>Efecto Neto</b>", cell_header_style), Paragraph("<b>Implicancia para la Estabilidad Financiera</b>", cell_header_style)],
-        [Paragraph("Absorción Cuasifiscal vía Lefi (Tesoro)", cell_style_left), Paragraph("$29,3 Billones", cell_style_center), Paragraph("Contractivo", cell_style_center), Paragraph("Traslado del costo financiero al Tesoro con superávit primario.", cell_style_left)],
-        [Paragraph("Base Monetaria Ampliada (Circulación + Encajes)", cell_style_left), Paragraph("$27,4 Billones", cell_style_center), Paragraph("Controlado", cell_style_center), Paragraph("Remonetización gradual en línea con la demanda transaccional.", cell_style_left)],
-        [Paragraph("Pases Pasivos Remunerados BCRA", cell_style_left), Paragraph("$0,0 Billones", cell_style_center), Paragraph("Extinto", cell_style_center), Paragraph("Eliminación definitiva de la emisión por déficit cuasifiscal.", cell_style_left)],
-        [Paragraph("Reservas Internacionales Netas (RIN FMI)", cell_style_left), Paragraph("USD -4.200 M", cell_style_center), Paragraph("En Recuperación", cell_style_center), Paragraph("Compras netas en el MLC compensadas por pagos de deuda soberana.", cell_style_left)]
+        [Paragraph("Tasa de Pases Pasivos BCRA (1 día, TNA)", cell_style_left), Paragraph(f"{_fmt1(tasas_bcra.get('pases_1d_tna', {}).get('valor'))}% TNA", cell_style_center), Paragraph("Referencia vigente", cell_style_center), Paragraph("Tasa de referencia de esterilización bancaria; distinta del stock de pases (ver fila siguiente).", cell_style_left)],
+        [Paragraph("Stock de Pases Pasivos Remunerados", cell_style_left), Paragraph(f"{f'{_fmt1(_pases_stock_ultimo)} $ B' if _pases_stock_ultimo is not None else SIN_FUENTE}", cell_style_center), Paragraph("Extinto", cell_style_center), Paragraph("Confirmado: mecanismo sin stock desde jul-2025 (BCRA v4.0, id=152).", cell_style_left)],
+        [Paragraph("Base Monetaria (promedio mensual)", cell_style_left), Paragraph(f"{f'${_fmt1(_base_monetaria_ultimo)} $ B' if _base_monetaria_ultimo is not None else SIN_FUENTE}", cell_style_center), Paragraph("Controlado", cell_style_center), Paragraph("Serie real BCRA v4.0, id=15 (src/fetch_series_indec_bcra.py).", cell_style_left)],
+        [Paragraph("Absorción Cuasifiscal vía Lefi (Tesoro, id=196)", cell_style_left), Paragraph("$0,0 Billones", cell_style_center), Paragraph("Discontinuado", cell_style_center), Paragraph("Mecanismo discontinuado desde jul-2025; no forma parte de la absorción vigente.", cell_style_left)],
+        [Paragraph("Reservas Internacionales Brutas (BCRA)", cell_style_left), Paragraph(f"USD {fmt_num(tasas_bcra.get('reservas_brutas_usd_m', {}).get('valor'), 0)} M", cell_style_center), Paragraph("Nivel vigente", cell_style_center), Paragraph(f"Dato disponible es BRUTO, no neto; el contrato no trae reservas netas: {SIN_FUENTE}.", cell_style_left)]
     ]
     t_rin = Table(tabla_rin_data, colWidths=[172, 85, 75, 200])
     t_rin.setStyle(TableStyle([
@@ -1058,7 +1248,11 @@ def generar_informe_mensual_reportlab():
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
-        "El ajuste paramétrico de la curva soberana en moneda extranjera bajo el modelo Nelson-Siegel arrojó parámetros de nivel (β₀ = 9,40%), pendiente (β₁ = +5,60%), curvatura (β₂ = -3,20%) y parámetro de decaimiento τ = 2,40 (R² = 0,984 | RMSE = 14 bps). La curva spot presenta una pendiente positiva normalizada entre los tramos cortos (AL30 en 11,20%) y largos (GD38 en 9,70%), con la tasa forward instantánea f(t) anticipando convergencia de rendimientos hacia el 9,0% anual.",
+        f"El ajuste paramétrico de la curva soberana en moneda extranjera bajo el modelo Nelson-Siegel arrojó parámetros de nivel (β₀ = {_fmt1(ns.get('beta0'))}%), pendiente "
+        f"(β₁ = {_fmt1(ns.get('beta1'), signo=True)}%), curvatura (β₂ = {_fmt1(ns.get('beta2'), signo=True)}%) y parámetro de decaimiento τ = {_fmt1(ns.get('tau'), decimales=2)} "
+        f"(R² = {_fmt1(ns.get('r2'), decimales=3)}; RMSE: {SIN_FUENTE}). La curva spot presenta AL30 en {_fmt1(soberano.get('al30_tir'))}% TIR y GD38 en "
+        f"{_fmt1(soberano.get('gd38_tir'))}% TIR; la convergencia de la tasa forward instantánea f(t) hacia un nivel puntual no está calculada en el repositorio: "
+        f"{SIN_FUENTE}, y se omite en vez de citar un número no verificado.",
         body_style
     ))
     elements.append(Spacer(1, 2))
@@ -1072,10 +1266,10 @@ def generar_informe_mensual_reportlab():
             Paragraph("<b>Valor Observado</b>", cell_header_style),
             Paragraph("<b>Métricas de Ajuste & Duration</b>", cell_header_style)
         ],
-        [Paragraph("Nivel de Largo Plazo", cell_style_left), Paragraph("β₀", cell_style_center), Paragraph("9,40%", cell_style_center), Paragraph("R² = 0,984 · RMSE = 14 bps", cell_style_center)],
-        [Paragraph("Pendiente / Curvatura", cell_style_left), Paragraph("β₁ / β₂", cell_style_center), Paragraph("+5,60% / -3,20%", cell_style_center), Paragraph("Parámetro decaimiento τ = 2,40", cell_style_center)],
-        [Paragraph("Bonar 2030 (Ley Local)", cell_style_left), Paragraph("AL30", cell_style_center), Paragraph("11,20% TIR", cell_style_center), Paragraph("Duration: 2,78 · Paridad: 69,8%", cell_style_center)],
-        [Paragraph("Global 2038 (Ley NY)", cell_style_left), Paragraph("GD38", cell_style_center), Paragraph("9,70% TIR", cell_style_center), Paragraph("Duration: 5,81 · Paridad: 60,9%", cell_style_center)]
+        [Paragraph("Nivel de Largo Plazo", cell_style_left), Paragraph("β₀", cell_style_center), Paragraph(f"{_fmt1(ns.get('beta0'))}%", cell_style_center), Paragraph(f"R² = {_fmt1(ns.get('r2'), decimales=3)} · RMSE: {SIN_FUENTE}", cell_style_center)],
+        [Paragraph("Pendiente / Curvatura", cell_style_left), Paragraph("β₁ / β₂", cell_style_center), Paragraph(f"{_fmt1(ns.get('beta1'), signo=True)}% / {_fmt1(ns.get('beta2'), signo=True)}%", cell_style_center), Paragraph(f"Parámetro decaimiento τ = {_fmt1(ns.get('tau'), decimales=2)}", cell_style_center)],
+        [Paragraph("Bonar 2030 (Ley Local)", cell_style_left), Paragraph("AL30", cell_style_center), Paragraph(f"{_fmt1(soberano.get('al30_tir'))}% TIR", cell_style_center), Paragraph(f"Duration/Paridad: {SIN_FUENTE}", cell_style_center)],
+        [Paragraph("Global 2038 (Ley NY)", cell_style_left), Paragraph("GD38", cell_style_center), Paragraph(f"{_fmt1(soberano.get('gd38_tir'))}% TIR", cell_style_center), Paragraph(f"Duration/Paridad: {SIN_FUENTE}", cell_style_center)]
     ]
     t_c2 = Table(cuadro_2_data, colWidths=[165, 75, 95, 197])
     t_c2.setStyle(TableStyle([
@@ -1094,6 +1288,15 @@ def generar_informe_mensual_reportlab():
     ]))
     elements.append(t_c2)
     elements.append(Spacer(1, 3))
+
+    elements.append(Paragraph(
+        "<b>Stress Test de Convexidad ante Shocks de Spread (proyección propia, no verificada contra un motor de pricing de bonos real):</b>", h2_style
+    ))
+    elements.append(Paragraph(
+        "<i>No hay un motor de pricing de renta fija en el repositorio -- las convexidades y los retornos por shock de spread de este cuadro son una estimación "
+        "propia del analista con fines ilustrativos, no un cálculo verificado contra los flujos de fondos reales de cada bono.</i>",
+        fig_caption
+    ))
 
     tabla_stress_data = [
         [Paragraph("<b>Shock de Spread Soberano</b>", cell_header_style), Paragraph("<b>Retorno GD38 (Conv: 47,1)</b>", cell_header_style), Paragraph("<b>Retorno GD35 (Conv: 33,8)</b>", cell_header_style), Paragraph("<b>Retorno AL30 (Conv: 9,2)</b>", cell_header_style)],
@@ -1128,11 +1331,14 @@ def generar_informe_mensual_reportlab():
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
-        "El mercado cambiario finalizó agosto con el Dólar CCL en $1.596,59, el Dólar MEP en $1.532,33 y el Oficial BNA en $1.515,00 (brecha del 5,39% sobre el BNA y 7,51% sobre el mayorista A3500 de $1.485,00). La curva de futuros en Matba-Rofex registra una TNA implícita a 30 días del 35,2% y del 38,5% para diciembre de 2026, con una probabilidad neutral al riesgo de salto discreto del 16,8% a 90 días.",
+        f"El mercado cambiario finalizó {periodo_texto} con el Dólar CCL en ${fmt_num(dolar.get('ccl'), 2)}, el Dólar MEP en ${fmt_num(dolar.get('mep'), 2)} y el Oficial BNA en "
+        f"${fmt_num(dolar.get('oficial_bna'), 2)} (brecha CCL/oficial de {_fmt1(dolar.get('brecha_ccl_oficial_pct'))}%; mayorista A3500 en ${fmt_num(dolar.get('mayorista'), 2)}). "
+        "Sin conector a Matba-Rofex para cotización de mercado; el cuadro más abajo muestra en su lugar un dólar futuro teórico por paridad de tasas cubierta (CIP).",
         body_style
     ))
     elements.append(Paragraph(
-        "En el plano cuantitativo de activos cruzados (Lecap, Boncer, GD30, CCL y Merval), el <b>Ratio de Absorción (AR)</b> derivado de los dos primeros componentes principales se ubica en <b>64,2%</b> (&Delta;AR = -0,40 desvíos), por debajo del umbral crítico de fragilidad del 75%. En paralelo, el <b>Índice de Turbulencia de Mahalanobis (<i>d<sub>t</sub></i>)</b> se sitúa en <b>4,12</b> frente al valor crítico Chi² al 95% de 11,07, confirmando un <b>régimen resiliente y desacoplado</b> donde la diversificación opera con normalidad.",
+        f"Ratio de Absorción (PCA, Kritzman &amp; Li 2010, sobre retornos reales de oficial/mayorista/BADLAR/pases/Merval): <b>{_ar_txt}</b>. Turbulencia de Mahalanobis: "
+        f"<b>{_turb_txt}</b> vs. umbral Chi² 95% de <b>{_turb_umbral_txt}</b> (régimen: <b>{_regimen_txt}</b>).",
         body_style
     ))
     elements.append(Spacer(1, 2))
@@ -1178,12 +1384,24 @@ def generar_informe_mensual_reportlab():
         ))
     elements.append(Spacer(1, 3))
 
+    elements.append(Paragraph("<b>Dólar Futuro Teórico por Paridad de Tasas Cubierta (CIP) -- NO cotización de Matba-Rofex:</b>", h2_style))
+    elements.append(Paragraph(
+        "<i>F(T) = Mayorista_spot &times; (1 + TEM_Lecap_corta)^(T/30), tasa USD ~0 -- modelo sobre datos reales del contrato, no una cotización de mercado observada.</i>",
+        fig_caption
+    ))
+    _dolar_futuro_por_dias = {c["dias"]: c for c in dolar_futuro["curva"]} if dolar_futuro else {}
     tabla_hedge_data = [
-        [Paragraph("<b>Posición / Vencimiento Rofex</b>", cell_header_style), Paragraph("<b>Precio Futuro (ARS)</b>", cell_header_style), Paragraph("<b>TNA Implícita %</b>", cell_header_style), Paragraph("<b>Prob. Salto Discreto</b>", cell_header_style), Paragraph("<b>Estrategia de Cobertura para Tesorerías</b>", cell_header_style)],
-        [Paragraph("Ago-26 (30 días)", cell_style_left), Paragraph("$1.510,00", cell_style_center), Paragraph("35,2% TNA", cell_style_center), Paragraph("8,5%", cell_style_center), Paragraph("Carry trade en ARS sin cobertura ante crawling controlado.", cell_style_left)],
-        [Paragraph("Dic-26 (180 días)", cell_style_left), Paragraph("$1.680,00", cell_style_center), Paragraph("38,5% TNA", cell_style_center), Paragraph("24,5%", cell_style_center), Paragraph("Cobertura preventiva (60%) ante eventual salida de cepo.", cell_style_left)],
-        [Paragraph("Ago-27 (360 días)", cell_style_left), Paragraph("$1.920,00", cell_style_center), Paragraph("41,2% TNA", cell_style_center), Paragraph("34,0%", cell_style_center), Paragraph("Dolarización sintética mediante futuros + Lecaps cortas.", cell_style_left)]
+        [Paragraph("<b>Posición / Vencimiento Rofex</b>", cell_header_style), Paragraph("<b>Futuro Implícito CIP (ARS)</b>", cell_header_style), Paragraph("<b>TNA Implícita %</b>", cell_header_style), Paragraph("<b>Prob. Salto Discreto</b>", cell_header_style), Paragraph("<b>Estrategia de Cobertura para Tesorerías</b>", cell_header_style)],
     ]
+    for _dias, _label in ((30, "Corto plazo (30 días)"), (90, "Mediano plazo (90 días)"), (180, "Largo plazo (180 días)")):
+        _c = _dolar_futuro_por_dias.get(_dias)
+        tabla_hedge_data.append([
+            Paragraph(_label, cell_style_left),
+            Paragraph(f"${fmt_num(_c['futuro_implicito'], 2)}" if _c else SIN_FUENTE, cell_style_center),
+            Paragraph(f"{_fmt1(_c['tna_implicita_pct'])}%" if _c else SIN_FUENTE, cell_style_center),
+            Paragraph(SIN_FUENTE, cell_style_center),
+            Paragraph("Valor teórico (CIP), no cotización de mercado.", cell_style_left),
+        ])
     t_hdg = Table(tabla_hedge_data, colWidths=[110, 80, 75, 75, 192])
     t_hdg.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
@@ -1201,12 +1419,15 @@ def generar_informe_mensual_reportlab():
     elements.append(t_hdg)
     elements.append(Spacer(1, 2.5))
 
-    # Scorecard de Riesgo Sistémico y Alerta Temprana (Kritzman & Li, 2010)
+    # Scorecard de Riesgo Sistemico (Kritzman & Li, 2010), calculado sobre
+    # retornos reales (BCRA + yfinance) via src/modelos_riesgo.py -- ver
+    # riesgo_sistemico cargado al inicio de esta funcion.
+    _k_txt = f"{riesgo_sistemico['k_componentes']}-PC" if riesgo_sistemico else "PC"
     scorecard_data = [
         [Paragraph("<b>Métrica Cuantitativa de Riesgo</b>", cell_header_style), Paragraph("<b>Valor Observado</b>", cell_header_style), Paragraph("<b>Umbral Crítico</b>", cell_header_style), Paragraph("<b>Diagnóstico de Régimen & Acción Preventiva</b>", cell_header_style)],
-        [Paragraph("Ratio de Absorción (AR 2-PC)", cell_style_left), Paragraph("64,2%", cell_style_center), Paragraph("> 75,0% (Fragilidad)", cell_style_center), Paragraph("<b>Resiliente</b> · El riesgo no está concentrado; no requiere desarme de carry.", cell_style_left)],
-        [Paragraph("Turbulencia de Mahalanobis (dt)", cell_style_left), Paragraph("4,12", cell_style_center), Paragraph("> 11,07 (Chi2 95%)", cell_style_center), Paragraph("<b>Normal</b> · Correlaciones cruzadas alineadas con la matriz histórica.", cell_style_left)],
-        [Paragraph("Variación Estandarizada (Delta AR)", cell_style_left), Paragraph("-0,40 sigma", cell_style_center), Paragraph("> +1,50 sigma", cell_style_center), Paragraph("<b>Estable</b> · Sin aceleración de fragilidad en la ventana de 30 ruedas.", cell_style_left)]
+        [Paragraph(f"Ratio de Absorción (AR {_k_txt})", cell_style_left), Paragraph(_ar_txt, cell_style_center), Paragraph("> 75,0% (Fragilidad)", cell_style_center), Paragraph(f"Oficial/mayorista/BADLAR/pases/Merval ({riesgo_sistemico['n_observaciones']} obs.)." if riesgo_sistemico else _riesgo_sist_fuente, cell_style_left)],
+        [Paragraph("Turbulencia de Mahalanobis (dt)", cell_style_left), Paragraph(_turb_txt, cell_style_center), Paragraph(f"&gt; {_turb_umbral_txt} (Chi² 95%)", cell_style_center), Paragraph(f"Régimen: {_regimen_txt}." if riesgo_sistemico else _riesgo_sist_fuente, cell_style_left)],
+        [Paragraph("Variación Estandarizada (Delta AR)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("> +1,50 sigma", cell_style_center), Paragraph("Cálculo puntual, no rolling; requiere ventana histórica del AR.", cell_style_left)]
     ]
     t_sc = Table(scorecard_data, colWidths=[140, 75, 95, 222])
     t_sc.setStyle(TableStyle([
@@ -1232,12 +1453,27 @@ def generar_informe_mensual_reportlab():
     elements.append(Paragraph("8. Sector Financiero, Renta Variable y Radar de Balances", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
+    _lideres_por_ticker = {l.get("ticker"): l for l in (equity.get("lideres") or [])}
+    _ypfd = _lideres_por_ticker.get("YPFD", {})
+    _pamp = _lideres_por_ticker.get("PAMP", {})
+    _ggal_l = _lideres_por_ticker.get("GGAL", {})
+    _var_ggal = variaciones_acciones.get("GGAL", {}).get("var_semanal_pct")
+    _var_bma = variaciones_acciones.get("BMA", {}).get("var_semanal_pct")
+    _var_bbar = variaciones_acciones.get("BBAR", {}).get("var_semanal_pct")
+    _var_tgs = variaciones_acciones.get("TGSU2", {}).get("var_semanal_pct")
+
     elements.append(Paragraph(
-        "El índice S&P Merval cerró en 3.156.332 puntos (+1,30% semanal), impulsado por la solidez operativa del sector energético y bancario. En el segmento energético, <b>YPF (3,8x EV/EBITDA y margen operativo del 32,4%)</b>, <b>Pampa Energía (4,1x EV/EBITDA y Deuda Neta/EBITDA < 1,2x)</b> y <b>TGS (4,4x EV/EBITDA)</b> lideraron las preferencias del mercado gracias a la expansión de infraestructura de gasoductos y las inversiones al amparo del RIGI.",
+        f"El índice S&P Merval cerró en {fmt_num(equity.get('merval_ars'), 0)} puntos ({_fmt1(equity.get('var_semanal_pct'), signo=True)}% semanal), impulsado por la "
+        f"solidez operativa del sector energético y bancario. En el segmento energético, <b>YPF ({_fmt1(_ypfd.get('ev_ebitda'))}x EV/EBITDA y margen operativo del "
+        f"{_fmt1(_ypfd.get('margen_ebitda'))}%)</b> y <b>Pampa Energía ({_fmt1(_pamp.get('ev_ebitda'))}x EV/EBITDA y margen del {_fmt1(_pamp.get('margen_ebitda'))}%)</b> "
+        f"lideraron las preferencias del mercado. TGS no forma parte de equity.lideres en el contrato de datos: su retorno semanal real (yfinance) fue de "
+        f"{_fmt1(_var_tgs, signo=True)}%, pero su múltiplo EV/EBITDA {SIN_FUENTE}.",
         body_style
     ))
     elements.append(Paragraph(
-        "Por su parte, las entidades financieras (Grupo Galicia, Banco Macro, BBVA Argentina) registraron avances semanales de entre 1,2% y 1,9%, favorecidas por el crecimiento del crédito corporativo y la estabilización de los márgenes de intermediación financiera en un entorno de tasas reales positivas.",
+        f"Por su parte, las entidades financieras registraron retornos semanales reales (yfinance, src/fetch_datos_reales.obtener_variacion_semanal_acciones) de "
+        f"{_fmt1(_var_ggal, signo=True)}% (Grupo Financiero Galicia, GGAL), {_fmt1(_var_bma, signo=True)}% (Banco Macro, BMA) y {_fmt1(_var_bbar, signo=True)}% "
+        "(BBVA Argentina, BBAR), en un entorno de tasas reales positivas en pesos.",
         body_style
     ))
     elements.append(Spacer(1, 2))
@@ -1246,10 +1482,10 @@ def generar_informe_mensual_reportlab():
 
     tabla_equity_data = [
         [Paragraph("<b>Empresa / Ticker ByMA</b>", cell_header_style), Paragraph("<b>Múltiplo EV/EBITDA</b>", cell_header_style), Paragraph("<b>Margen EBITDA %</b>", cell_header_style), Paragraph("<b>Deuda Neta / EBITDA</b>", cell_header_style), Paragraph("<b>Catalizadores Estratégicos & RIGI</b>", cell_header_style)],
-        [Paragraph("YPF S.A. (YPFD / NYSE)", cell_style_left), Paragraph("3,8x", cell_style_center), Paragraph("32,4%", cell_style_center), Paragraph("1,45x", cell_style_center), Paragraph("Liderazgo en Vaca Muerta, desinversión de campos maduros y proyecto GNL.", cell_style_left)],
-        [Paragraph("Pampa Energía (PAMP)", cell_style_left), Paragraph("4,1x", cell_style_center), Paragraph("38,5%", cell_style_center), Paragraph("1,15x", cell_style_center), Paragraph("Generación eléctrica eficiente y récord de producción de shale gas.", cell_style_left)],
-        [Paragraph("Transportadora Gas del Sur (TGSU2)", cell_style_left), Paragraph("4,4x", cell_style_center), Paragraph("42,1%", cell_style_center), Paragraph("0,85x", cell_style_center), Paragraph("Ampliación de capacidad de transporte regulado y exportación de líquidos.", cell_style_left)],
-        [Paragraph("Grupo Financiero Galicia (GGAL)", cell_style_left), Paragraph("6,2x", cell_style_center), Paragraph("28,5%", cell_style_center), Paragraph("0,00x (Solvente)", cell_style_center), Paragraph("Consolidación bancaria tras compra de HSBC y reactivación del crédito comercial.", cell_style_left)]
+        [Paragraph("YPF S.A. (YPFD / NYSE)", cell_style_left), Paragraph(f"{_fmt1(_ypfd.get('ev_ebitda'))}x", cell_style_center), Paragraph(f"{_fmt1(_ypfd.get('margen_ebitda'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Liderazgo en Vaca Muerta y proyectos RIGI.", cell_style_left)],
+        [Paragraph("Pampa Energía (PAMP)", cell_style_left), Paragraph(f"{_fmt1(_pamp.get('ev_ebitda'))}x", cell_style_center), Paragraph(f"{_fmt1(_pamp.get('margen_ebitda'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Generación eléctrica y producción de shale gas.", cell_style_left)],
+        [Paragraph("Transportadora Gas del Sur (TGSU2)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(f"Fuera de equity.lideres del contrato; retorno semanal real: {_fmt1(_var_tgs, signo=True)}%.", cell_style_left)],
+        [Paragraph("Grupo Financiero Galicia (GGAL)", cell_style_left), Paragraph(f"{_fmt1(_ggal_l.get('ev_ebitda'))}x", cell_style_center), Paragraph(f"{_fmt1(_ggal_l.get('margen_ebitda'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Consolidación bancaria y reactivación del crédito comercial.", cell_style_left)]
     ]
     t_eq = Table(tabla_equity_data, colWidths=[120, 75, 75, 75, 187])
     t_eq.setStyle(TableStyle([
@@ -1277,16 +1513,28 @@ def generar_informe_mensual_reportlab():
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
-        "En el plano regulatorio, el BCRA ratificó el esquema de encajes no remunerados y absorción vía títulos públicos. En el contexto internacional, el rendimiento del bono del Tesoro de EE.UU. a 10 años osciló en 3,85%-3,95%, el índice DXY se ubicó en 102,4 puntos y el crudo WTI operó en USD 74/bbl, otorgando estabilidad a los términos de intercambio de las exportaciones energéticas argentinas.",
+        f"En el plano regulatorio, el BCRA mantiene el esquema de encajes no remunerados y absorción vía títulos públicos. El contexto internacional (rendimiento del bono del "
+        f"Tesoro de EE.UU. a 10 años, índice DXY, crudo WTI) no tiene ningún conector automatizado en este repositorio -- {SIN_FUENTE}. Estas tres variables quedan "
+        "pendientes de carga manual explícita en cada corrida.",
         body_style
     ))
     elements.append(Spacer(1, 2))
 
+    # Calendario de eventos: sin conector a un calendario de vencimientos/
+    # eventos en el repositorio (Secretaria de Finanzas, INDEC, FOMC). Se
+    # parametriza lo unico que se puede derivar con certeza del periodo de
+    # la corrida (mes de publicacion del IPC del mes vigente, ~dia 11-15 del
+    # mes siguiente segun el cronograma habitual del INDEC) y se marca el
+    # resto explicitamente como carga manual en vez de fechas fijas de una
+    # corrida anterior.
+    _mes_sig_idx = fecha_dt.month + 1 if fecha_dt.month < 12 else 1
+    _anio_sig = anio_informe if fecha_dt.month < 12 else anio_informe + 1
+    _mes_siguiente = MESES_ES[_mes_sig_idx]
     tabla_eventos_data = [
         [Paragraph("<b>Fecha / Evento Crítico</b>", cell_header_style), Paragraph("<b>Organismo / Emisor</b>", cell_header_style), Paragraph("<b>Impacto Esperado de Mercado & Rollover</b>", cell_header_style)],
-        [Paragraph("28 de Agosto de 2026: Licitación de Letras y Bonos", cell_style_left), Paragraph("Secretaría de Finanzas", cell_style_center), Paragraph("Rollover de vencimientos en ARS ($1,4 B); test de corte de TEM en Lecaps cortas.", cell_style_left)],
-        [Paragraph("11 de Septiembre de 2026: Publicación IPC Agosto 2026", cell_style_left), Paragraph("INDEC / DEIE Mendoza", cell_style_center), Paragraph("Confirmación de convergencia mensual hacia el rango del 2% MoM.", cell_style_left)],
-        [Paragraph("18 de Septiembre de 2026: Reunión de Política Monetaria FOMC", cell_style_left), Paragraph("Reserva Federal (FED)", cell_style_center), Paragraph("Definición de tasas globales e impacto en el DXY y deuda soberana emergente.", cell_style_left)]
+        [Paragraph(f"Últimos días hábiles de {mes_nombre} de {anio_informe}: Licitación de Letras y Bonos (fecha exacta: carga manual)", cell_style_left), Paragraph("Secretaría de Finanzas", cell_style_center), Paragraph(f"Rollover de vencimientos en ARS; test de corte de TEM en Lecaps del tramo corto. Monto: {SIN_FUENTE}.", cell_style_left)],
+        [Paragraph(f"~11-15 de {_mes_siguiente} de {_anio_sig}: Publicación IPC de {mes_nombre} (fecha exacta: carga manual, cronograma INDEC)", cell_style_left), Paragraph("INDEC / DEIE Mendoza", cell_style_center), Paragraph(f"Confirmación de la variación mensual reportada en este informe ({_fmt1(inflacion.get('indec_general_mom'))}% MoM).", cell_style_left)],
+        [Paragraph("Próxima reunión de política monetaria FOMC (fecha exacta: carga manual, calendario de la Reserva Federal)", cell_style_left), Paragraph("Reserva Federal (FED)", cell_style_center), Paragraph(f"Sin conector al calendario de la FED en el repositorio: {SIN_FUENTE}.", cell_style_left)]
     ]
     t_ev = Table(tabla_eventos_data, colWidths=[165, 105, 262])
     t_ev.setStyle(TableStyle([
@@ -1308,7 +1556,15 @@ def generar_informe_mensual_reportlab():
     # Directrices Estratégicas para Comités de Inversión y Tesorerías
     directrices_box = Table([
         [Paragraph("<b>DIRECTRICES ESTRATÉGICAS Y RECOMENDACIONES DE CIERRE DE MES</b>", ParagraphStyle('DCH', fontName='Georgia-Bold', fontSize=7.4, textColor=PRIMARY))],
-        [Paragraph("• <b>Gestión de Liquidez Corporativa (30-60 días):</b> Maximizar colocaciones en Lecaps cortas (S31O6 / S28N6) a TEM 2,95%-3,05%, complementadas con cauciones bursátiles activas para optimizar rendimientos diarios de caja.<br/>• <b>Estrategia Cambiaria y Comercio Exterior (90-180 días):</b> Mantener coberturas selectivas mediante futuros Matba-Rofex solo para compromisos rígidos de importación, aprovechando la compresión de tasas implícitas (35%-38% TNA).<br/>• <b>Posicionamiento Soberano en Moneda Extranjera (+12 meses):</b> Sobreponderar bonos globales GD35 y GD38 con paridades inferiores al 62%, capturando una aceleración en el retorno total ante convergencia de spreads hacia 400 pb EMBI.", ParagraphStyle('DCB', fontName='Georgia', fontSize=6.8, leading=8.8, textColor=DARK_TEXT))]
+        [Paragraph(
+            f"• <b>Gestión de Liquidez Corporativa (30-60 días):</b> Maximizar colocaciones en Lecaps del tramo corto a TEM {_fmt1(tasas_ars.get('lecap_corta_tem'))}%-"
+            f"{_fmt1(tasas_ars.get('lecap_larga_tem'))}% (el contrato no especifica tickers puntuales), complementadas con cauciones bursátiles activas para optimizar "
+            f"rendimientos diarios de caja.<br/>• <b>Estrategia Cambiaria y Comercio Exterior (90-180 días):</b> Coberturas selectivas mediante futuros Matba-Rofex solo para "
+            f"compromisos rígidos de importación -- sin conector a Matba-Rofex en el repositorio para dimensionar la tasa implícita: {SIN_FUENTE}.<br/>"
+            f"• <b>Posicionamiento Soberano en Moneda Extranjera (+12 meses):</b> Sobreponderar bonos globales GD35 y GD38 (TIR real: {_fmt1(soberano.get('gd35_tir'))}% y "
+            f"{_fmt1(soberano.get('gd38_tir'))}%), capturando una eventual aceleración en el retorno total ante convergencia del EMBI+ (nivel actual: "
+            f"{fmt_num(soberano.get('embi_riesgo_pais_pbs'), 0)} pb) -- las paridades de mercado no tienen fuente automatizable: {SIN_FUENTE}.",
+            ParagraphStyle('DCB', fontName='Georgia', fontSize=6.8, leading=8.8, textColor=DARK_TEXT))]
     ], colWidths=[532])
     directrices_box.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F0FDF4")),

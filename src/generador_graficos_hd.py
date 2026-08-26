@@ -365,18 +365,44 @@ def plot_ipc_master(ax, fig, inflacion=None, ipc_trayectoria=None):
 # ==============================================================================
 # 4. FIGURA 3: ESTRUCTURA PRODUCTIVA DE CUYO (VINO, PETRÓLEO, CEMENTO)
 # ==============================================================================
-def plot_cuyo_redesigned(ax, fig):
-    """Sin conector real en el repo a INV (vitivinicultura), Secretaría de
-    Energía (hidrocarburos Mendoza) ni AFCP (cemento) -- ninguno publica
-    una API publica sencilla de consumir en vivo (INV publica informes
-    PDF/Excel periodicos, no una serie API). Se declara explicitamente en
-    vez de mostrar produccion vitivinicola/petrolera inventada como si
-    fuera la corrida del mes vigente."""
+def plot_cuyo_redesigned(ax, fig, isac=None):
+    """Vitivinicultura (INV) e hidrocarburos (Secretaria de Energia,
+    especificos de Mendoza) siguen sin conector confiable: se probo un
+    candidato para despachos de vino via apis.datos.gob.ar y no paso un
+    chequeo basico de sensatez (valores ~1000x por debajo de lo esperado,
+    metadata contradictoria entre "Miles de Hectolitros" y "Miles de
+    Litros") -- se descarto en vez de usar un numero que parece real pero
+    probablemente no lo es (ver src/fetch_series_secundarias.py). Cemento
+    SI tiene un proxy real: el ISAC (Indicador Sintetico de la Actividad
+    de la Construccion, INDEC) -- es NACIONAL, no el "cemento AFCP Cuyo"
+    especifico que prometia la version anterior, se declara el cambio de
+    alcance explicitamente."""
     ax.axis('off')
-    ax.text(0.5, 0.6, "Vitivinicultura (INV), hidrocarburos (Secretaría de Energía) y\ncemento (AFCP) de Cuyo: sin conector automatizable en el repo.",
-            ha='center', va='center', fontsize=10, fontweight='bold', color=C_SLATE, transform=ax.transAxes)
-    ax.text(0.5, 0.42, "Estas fuentes publican informes periódicos (PDF/Excel), no una API en vivo.\nRequiere carga manual explícita por corrida, o un conector dedicado a futuro.",
-            ha='center', va='center', fontsize=8.2, color=C_GRAY, transform=ax.transAxes)
+    ax1 = fig.add_axes([0.09, 0.11, 0.85, 0.50])
+    ax1.set_facecolor("#FFFFFF")
+
+    if isac and isac.get("meses"):
+        meses = isac["meses"]
+        valores = isac["valores"]
+        x_idx = np.arange(len(meses))
+        meses_lbl = [f"{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][int(m[5:7])-1]}-{m[2:4]}" for m in meses]
+
+        ax1.plot(x_idx, valores, color=C_SLATE, lw=1.8, marker='o', markersize=4, markeredgecolor='white')
+        ax1.annotate(f"{meses_lbl[-1]}: {valores[-1]:.1f} ({isac['var_mensual_ultimo']:+.1f}% MoM)".replace(".", ","),
+                     xy=(x_idx[-1], valores[-1]), xytext=(-8, 12), textcoords="offset points", ha='right',
+                     fontsize=7.5, fontweight='bold', color=C_SLATE,
+                     bbox=dict(boxstyle="round,pad=0.25", fc="#F1F5F9", ec="#CBD5E1", lw=0.7))
+        ax1.set_xticks(x_idx)
+        ax1.set_xticklabels(meses_lbl, fontsize=6.8, rotation=35, ha='right')
+        ax1.set_ylabel("ISAC nacional desestacionalizado (Base 2004=100)", fontsize=7.5, color=C_SLATE)
+        ax1.grid(True, linestyle='--', color=C_GRID, lw=0.6)
+        ax1.set_title("Construcción: ISAC Nacional (proxy -- no AFCP Cuyo específico)", fontsize=8.3, fontweight='bold', color=C_NAVY, loc='left')
+    else:
+        ax1.text(0.5, 0.6, "Sin dato real de ISAC disponible en esta corrida.",
+                ha='center', va='center', fontsize=9, fontweight='bold', color=C_SLATE, transform=ax1.transAxes)
+
+    ax1.text(0.5, -0.30, "Vitivinicultura (INV) e hidrocarburos Mendoza (Secretaría de Energía): sin fuente confiable encontrada -- requiere carga manual.",
+            ha='center', va='center', fontsize=7.6, color=C_GRAY, transform=ax1.transAxes)
 
 # ==============================================================================
 # 4.1 FIGURA 3B: COMPARATIVO REGIONAL CUYO (MENDOZA / SAN JUAN / SAN LUIS)
@@ -610,8 +636,10 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
     contrato (vive como dolar.oficial_bna/mayorista/mep/ccl/blue a nivel
     raiz), asi que caia siempre al array de relleno. Panel B (Rofex): no
     hay ningun conector a Matba-Rofex en el repo (requiere feed pago/con
-    cuenta) -- se dice explicitamente en el grafico en vez de simular una
-    curva de futuros con probabilidades de salto inventadas."""
+    cuenta) -- en vez de dejarlo vacio, se calcula el dolar futuro
+    IMPLICITO por paridad de tasas (CIP) con datos reales del contrato,
+    etiquetado explicitamente como valor teorico y no una cotizacion de
+    mercado (ver src/modelos_riesgo.calcular_dolar_futuro_implicito)."""
     if fx is None:
         dolar = (DATOS_DEL_DIA or {}).get("dolar", {})
         mayorista = dolar.get("mayorista")
@@ -675,13 +703,45 @@ def plot_fx_master(ax, fig, fx=None, rofex=None):
 
     if rofex is None:
         # Sin conector a Matba-Rofex en el repo (feed de futuros requiere
-        # suscripcion paga o cuenta de bolsa) -- se declara explicitamente
-        # en vez de simular precios, TNA y probabilidad de salto discreto
-        # que no vienen de ningun mercado real.
-        ax2.axis('off')
-        ax2.text(0.5, 0.5, "Sin conector a Matba-Rofex disponible\n(futuros de dólar requieren feed con cuenta de bolsa).\nCarga manual pendiente.",
-                 ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax2.transAxes)
-        ax2.set_title("B. Futuros Matba-Rofex (sin fuente automatizable)", fontsize=8.0, fontweight='bold', color=C_NAVY, pad=6, loc='left')
+        # suscripcion paga o cuenta de bolsa) -- en vez de dejar el panel
+        # vacio, se calcula el dolar futuro IMPLICITO por paridad de tasas
+        # (CIP) con datos reales del contrato (mayorista + Lecap corta).
+        # Se etiqueta explicitamente como valor teorico, no una cotizacion
+        # de mercado -- ver src/modelos_riesgo.calcular_dolar_futuro_implicito.
+        try:
+            from src.modelos_riesgo import calcular_dolar_futuro_implicito
+            dolar_mayorista = next((r["cotizacion_ars"] for r in fx if r.get("short") == "Mayorista (A3500)"), None)
+            tasas_ars = (DATOS_DEL_DIA or {}).get("tasas_ars", {})
+            futuro = calcular_dolar_futuro_implicito(dolar_mayorista, tasas_ars.get("lecap_corta_tem"))
+        except Exception:
+            futuro = None
+
+        if not futuro:
+            ax2.axis('off')
+            ax2.text(0.5, 0.5, "Sin conector a Matba-Rofex disponible\n(futuros de dólar requieren feed con cuenta de bolsa).\nCarga manual pendiente.",
+                     ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax2.transAxes)
+            ax2.set_title("B. Futuros Matba-Rofex (sin fuente automatizable)", fontsize=8.0, fontweight='bold', color=C_NAVY, pad=6, loc='left')
+            return
+
+        dias_curva = [p["dias"] for p in futuro["curva"]]
+        futuros_curva = [p["futuro_implicito"] for p in futuro["curva"]]
+        tna_curva = [p["tna_implicita_pct"] for p in futuro["curva"]]
+        x_pos = np.arange(len(dias_curva))
+
+        ax2.plot(x_pos, futuros_curva, color=C_NAVY, lw=2.0, marker='o', markersize=5, markeredgecolor='white')
+        for xi, f, tna in zip(x_pos, futuros_curva, tna_curva):
+            _f_fmt = f"${f:,.0f}".replace(",", ".")
+            _tna_fmt = f"{tna:.1f}".replace(".", ",")
+            ax2.annotate(f"{_f_fmt}\n({_tna_fmt}% TNA)",
+                         (xi, f), xytext=(0, 10), textcoords="offset points", ha='center',
+                         fontsize=7.0, fontweight='bold', color=C_NAVY)
+        ax2.set_xticks(x_pos)
+        ax2.set_xticklabels([f"{d}d" for d in dias_curva], fontsize=7.5)
+        ax2.set_ylabel("Dólar futuro implícito (ARS)", fontsize=7.0, color=C_SLATE)
+        _pad_f = (max(futuros_curva) - min(futuros_curva)) * 0.3 or 20
+        ax2.set_ylim(min(futuros_curva) - _pad_f * 0.4, max(futuros_curva) + _pad_f)
+        ax2.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
+        ax2.set_title("B. Dólar Futuro Implícito por CIP (no es cotización Rofex)", fontsize=7.6, fontweight='bold', color=C_NAVY, pad=6, loc='left')
         return
 
     posiciones = rofex["posiciones"]
@@ -824,6 +884,11 @@ def generar_todas_las_infografias(*args, **kwargs):
         variacion_semanal = obtener_variacion_semanal_acciones()
     except Exception as e:
         print(f"      [Infografias] ERROR variacion semanal acciones: {e}"); variacion_semanal = {}
+    try:
+        from src.fetch_series_secundarias import obtener_isac_reciente
+        isac = obtener_isac_reciente()
+    except Exception as e:
+        print(f"      [Infografias] ERROR ISAC: {e}"); isac = None
 
     f0 = create_master_infographic(
         "chart_indec_emae_master.png",
@@ -869,16 +934,16 @@ def generar_todas_las_infografias(*args, **kwargs):
 
     f3 = create_master_infographic(
         "chart_indec_3_cuyo.png",
-        "INV / SECRETARÍA DE ENERGÍA / AFCP",
-        "Estructura Productiva de Cuyo (sin conector automatizable)",
-        "Vitivinicultura, hidrocarburos y cemento -- fuentes sin API pública en el repo actual",
+        "INDEC (ISAC NACIONAL) / INV / SECRETARÍA DE ENERGÍA",
+        "Construcción: Proxy Nacional Real (ISAC) -- Vino e Hidrocarburos sin Fuente Confiable",
+        "ISAC nacional desestacionalizado (INDEC) como proxy de construcción; vitivinicultura e hidrocarburos de Mendoza sin conector",
         [
-            ("VITIVINICULTURA (INV)", "s/d", "Sin conector automatizable", C_GRAY),
+            ("VITIVINICULTURA (INV)", "s/d", "Fuente candidata descartada -- ver docstring", C_GRAY),
             ("HIDROCARBUROS (MENDOZA)", "s/d", "Sin conector automatizable", C_GRAY),
-            ("CEMENTO (AFCP)", "s/d", "Sin conector automatizable", C_GRAY),
+            ("ISAC NACIONAL", fmt_num(isac["nivel_ultimo"], 1) if isac else "s/d", (fmt_pct(isac["var_mensual_ultimo"], 1, True) + " MoM") if isac else "Sin dato", C_SLATE),
         ],
-        plot_cuyo_redesigned,
-        "Sin fuente automatizable: INV, Secretaría de Energía y AFCP no publican una API en vivo."
+        lambda ax, fig: plot_cuyo_redesigned(ax, fig, isac),
+        "Fuentes: INDEC (ISAC nacional, apis.datos.gob.ar). Vitivinicultura/hidrocarburos Mendoza sin fuente confiable encontrada."
     )
 
     f3b = create_master_infographic(
@@ -927,14 +992,14 @@ def generar_todas_las_infografias(*args, **kwargs):
         "chart_indec_6_fx.png",
         "BCRA · CIERRE CAMBIARIO",
         "Microestructura Cambiaria",
-        "Cotizaciones spot reales del contrato. Futuros Matba-Rofex sin conector automatizable.",
+        "Cotizaciones spot reales del contrato. Dólar futuro implícito por CIP (no cotización Rofex).",
         [
             ("DÓLAR CCL", fmt_num(dolar.get("ccl"), 2, "$"), f"Brecha oficial: " + fmt_pct(dolar.get("brecha_ccl_oficial_pct"), 2, True), C_RED),
             ("DÓLAR MAYORISTA (A3500)", fmt_num(dolar.get("mayorista"), 2, "$"), "BCRA v4.0, en vivo", C_NAVY),
             ("DÓLAR OFICIAL (MINORISTA)", fmt_num(dolar.get("oficial_bna"), 2, "$"), "BCRA v4.0, en vivo", C_TEAL),
         ],
         lambda ax, fig: plot_fx_master(ax, fig),
-        "Fuente: BCRA v4.0 + contrato manual (dolar.*). Sin conector a Matba-Rofex (feed pago)."
+        "Fuente: BCRA v4.0 + contrato manual (dolar.*). Futuro implícito por paridad de tasas (CIP), no cotización de Matba-Rofex."
     )
 
     _var_merval = equity.get("var_semanal_pct")
