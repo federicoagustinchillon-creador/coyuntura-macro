@@ -488,76 +488,16 @@ def generar_informe_mensual_reportlab():
     elements.append(t_meta)
     elements.append(Spacer(1, 10))
 
-    # 4. Matriz Ejecutiva de los 4 Pilares Macroeconómicos
-    pilar_tasas = (
-        "<font color='#0B3C5D'><b>1. TASAS & ARBITRAJE EN ARS</b></font><br/>"
-        f"Lecap tramo corto (sin ticker puntual en el contrato) en {_fmt1(tasas_ars.get('lecap_corta_tem'))}% TEM otorga un premio de "
-        f"+{fmt_num(tasas_ars.get('premio_tasa_fija_pbs'), 0)} pb ex-ante sobre el REM ({_fmt1(tasas_ars.get('inflacion_esperada_rem_tem'))}%). "
-        f"Breakeven implícito: {_fmt1(tasas_ars.get('breakeven_inflacion_tem'))}% mensual; la estrategia óptima maximiza exposición en el tramo corto."
-    )
-    pilar_precios = (
-        "<font color='#0B3C5D'><b>2. PRECIOS & CONVERGENCIA</b></font><br/>"
-        f"IPC Nacional {_fmt1(inflacion.get('indec_general_mom'))}% MoM (Mendoza DEIE: {_fmt1(inflacion.get('deie_mendoza_mom'))}%), traccionado por regulados "
-        f"({_fmt1(inflacion.get('indec_regulados_mom'))}%) y servicios ({_fmt1(inflacion.get('indec_servicios_mom'))}%); núcleo en "
-        f"{_fmt1(inflacion.get('indec_nucleo_mom'))}% (sin rubro \"bienes\" propio en el contrato). CBT Mendoza: "
-        f"${fmt_num(inflacion.get('canasta_basica_total_mza'), 0)}. RIPTE: {_ripte_txt}."
-    )
-    pilar_soberano = (
-        "<font color='#0B3C5D'><b>3. CURVA SOBERANA EN USD</b></font><br/>"
-        f"Nelson-Siegel (R²={_fmt1(ns.get('r2'), decimales=3)}) ubica el nivel asintótico β₀ en {_fmt1(ns.get('beta0'))}%. La compresión del riesgo país hacia "
-        f"{fmt_num(soberano.get('embi_riesgo_pais_pbs'), 0)} pb favorece extender duration en Globales largos (GD35/GD38); convexidad ante compresión de "
-        "spreads: estimación propia, sin motor de pricing en el repositorio (ver Pág. 11)."
-    )
-    pilar_regional = (
-        "<font color='#0B3C5D'><b>4. ACTIVIDAD Y CUYO (ISARC)</b></font><br/>"
-        f"EMAE i.a.: {_fmt1(actividad.get('emae_interanual_pct'), signo=True)}% (sin desagregación sectorial en el contrato). ISARC i.a.: San Luis "
-        f"{_fmt1(actividad.get('isarc_san_luis_ia_pct'), signo=True)}%, Mendoza {_fmt1(actividad.get('isarc_mendoza_ia_pct'), signo=True)}%, San Juan "
-        f"{_fmt1(actividad.get('isarc_san_juan_ia_pct'), signo=True)}% (nivel del índice y desagregación provincial: sin fuente)."
-    )
-
-    pilar_p_style = ParagraphStyle('PilP', fontName='Georgia', fontSize=7.2, leading=9.8, textColor=DARK_TEXT, alignment=TA_JUSTIFY)
-    pilares_table_data = [
-        [Paragraph(pilar_tasas, pilar_p_style), Paragraph(pilar_precios, pilar_p_style)],
-        [Paragraph(pilar_soberano, pilar_p_style), Paragraph(pilar_regional, pilar_p_style)]
-    ]
-    t_pilares = Table(pilares_table_data, colWidths=[261, 261])
-    t_pilares.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.white),
-        ('BOX', (0,0), (-1,-1), 0.6, BORDER),
-        ('INNERGRID', (0,0), (-1,-1), 0.6, BORDER),
-        ('TOPPADDING', (0,0), (-1,-1), 6.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 7.5),
-        ('RIGHTPADDING', (0,0), (-1,-1), 7.5),
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('LINELEFT', (0,0), (0,0), 2.5, PRIMARY),
-        ('LINELEFT', (1,0), (1,0), 2.5, SECONDARY),
-        ('LINELEFT', (0,1), (0,1), 2.5, colors.HexColor("#0D5C46")),
-        ('LINELEFT', (1,1), (1,1), 2.5, colors.HexColor("#722F37")),
-    ]))
-    elements.append(t_pilares)
-    elements.append(Spacer(1, 10))
-
-    # 5. Tesis Estratégica Central (Card Elegante)
-    tesis_content = (
-        "<font color='#0B3C5D'><b>TESIS ESTRATÉGICA PARA COMITÉS DE INVERSIÓN:</b></font> "
-        f"Las Letras Fiscales de Liquidez (Lefi) están discontinuadas desde julio de 2025 (stock real $0, BCRA id=196) -- la absorción bancaria opera hoy vía "
-        f"la tasa de pases pasivos a 1 día ({_fmt1(tasas_bcra.get('pases_1d_tna', {}).get('valor'))}% TNA), que junto con el superávit fiscal primario mantiene "
-        f"ancladas las expectativas cambiarias (volatilidad implícita en Matba-Rofex: {SIN_FUENTE}). La asignación táctica óptima consiste en capturar "
-        "rendimientos reales en Lecaps del tramo corto y sobreponderar bonos globales GD35/GD38."
-    )
-    t_tesis_card = Table([[Paragraph(tesis_content, ParagraphStyle('TC_P', fontName='Georgia', fontSize=7.4, leading=10.2, textColor=SLATE, alignment=TA_JUSTIFY))]], colWidths=[532])
-    t_tesis_card.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), BG_CARD),
-        ('BOX', (0,0), (-1,-1), 0.6, colors.HexColor("#CBD5E1")),
-        ('LINELEFT', (0,0), (-1,-1), 3.0, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 6.0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 6.0),
-        ('LEFTPADDING', (0,0), (-1,-1), 8.0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 8.0),
-    ]))
-    elements.append(t_tesis_card)
-    elements.append(Spacer(1, 10))
+    # Se retiro de aca un segundo grid de 4 pilares (parrafos largos) y una
+    # segunda caja de tesis ("Tesis Estrategica para Comites de Inversion")
+    # que duplicaban casi el mismo contenido del grid compacto y la caja
+    # de Diagnostico Ejecutivo de arriba -- la portada llego a tener DOS
+    # grillas 2x2 y DOS cajas de tesis cubriendo los mismos 4 temas
+    # (tasas, precios, soberano, actividad), lo que la usuaria senalo como
+    # "hipercargada". El detalle que tenian esos bloques (Lefi discontinuado,
+    # tasa de pases, breakeven, Nelson-Siegel, ISARC) ya esta desarrollado
+    # en profundidad en las Secciones 1, 2, 5, 6 y 4.1 del cuerpo del
+    # informe -- no se pierde informacion, se deja de repetirla 2-3 veces.
 
     # 6. Bloque de Firma de Autor y Filiación Formal
     autor_signature_table = Table([

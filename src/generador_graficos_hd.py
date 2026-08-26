@@ -528,43 +528,56 @@ def plot_monetary_master(ax, fig, historia_monetaria=None, tasa_real_exante_actu
     def _fmt_b(v):
         return f"${v:.1f} B".replace(".", ",")
 
-    ax1.stackplot(x_8, base_m, pases_m,
-                  labels=[f'Base Monetaria ({_fmt_b(base_ult)})', f'Pases Pasivos ({_fmt_b(pases_ult)})'],
-                  colors=[C_NAVY, "#CBD5E1"], alpha=0.9)
-    ax1.set_title("A. Base Monetaria y Pases Pasivos ($ B, BCRA real)", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
+    # Antes: stackplot de 2 capas (Base Monetaria + Pases Pasivos). Los
+    # Pases estan en $0 en TODA la ventana real (mecanismo discontinuado
+    # desde jul-2025, antes de que arranque esta serie) -- apilar una
+    # segunda capa que es cero de punta a punta no agrega informacion,
+    # solo vuelve el panel un bloque solido pesado sin el nivel de
+    # detalle del resto de las infografias del modulo (linea + area
+    # liviana + callout, como EMAE/TCR/ISAC). Se linealiza y se declara
+    # la extincion de Pases en el propio subtitulo en vez de graficarla.
+    ax1.fill_between(x_8, base_m, base_m.min() * 0.97, color=C_NAVY, alpha=0.08, zorder=1)
+    ax1.plot(x_8, base_m, color=C_NAVY, lw=2.0, marker='o', markersize=4.5,
+              markerfacecolor='white', markeredgecolor=C_NAVY, markeredgewidth=1.3, zorder=3)
+    ax1.plot(x_8[-1], base_ult, marker='o', markersize=7, color=C_NAVY, zorder=4)
+    _var_bm = round(100 * (base_ult / base_m[-2] - 1), 1) if len(base_m) >= 2 else None
+    _var_txt = f" ({_var_bm:+.1f}% m/m)".replace(".", ",") if _var_bm is not None else ""
+    ax1.annotate(f"{meses_8[-1]}: {_fmt_b(base_ult)}{_var_txt}",
+                 xy=(x_8[-1], base_ult), xytext=(-10, 12), textcoords="offset points", ha='right',
+                 fontsize=7.5, fontweight='bold', color=C_NAVY,
+                 arrowprops=dict(arrowstyle="-", color=C_NAVY, lw=0.8),
+                 bbox=dict(boxstyle="round,pad=0.3", fc="#E0F2FE", ec="#BAE6FD", lw=0.8), zorder=5)
+    ax1.set_title("A. Base Monetaria (BCRA real) -- Pases Pasivos extinto", fontsize=7.9, fontweight='bold', color=C_NAVY, loc='left')
     ax1.set_xticks(x_8)
     ax1.set_xticklabels(meses_8, fontsize=7.2)
     ax1.set_ylabel("Billones de ARS ($ B)", fontsize=7.5, color=C_SLATE)
-    _tope_stack = (base_m + pases_m).max()
-    ax1.set_ylim(0, _tope_stack * 1.20)
+    ax1.set_ylim(base_m.min() * 0.97, base_m.max() * 1.05)
     ax1.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
-    ax1.legend(frameon=False, fontsize=6.8, loc='upper right')
     ax1.set_xlim(-0.5, len(meses_8) - 0.3)
 
-    # Sin serie historica real de tasa real ex-ante (tasas_ars.* es una
-    # instantanea manual del contrato, no una serie de tiempo) -- se
-    # muestra un unico punto real (Fisher: lecap_corta_tem menos
-    # inflacion_esperada_rem_tem, ver src/contexto_informe.py) contra r*,
-    # que es un supuesto del analista y se etiqueta como tal.
-    if tasa_real_exante_actual is None:
-        ax2.axis('off')
-        ax2.text(0.5, 0.5, "Sin tasas cargadas en tasas_ars.*\npara calcular la tasa real ex-ante.",
-                 ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax2.transAxes)
-    else:
-        ax2.bar([0], [tasa_real_exante_actual], width=0.5, color=C_NAVY if tasa_real_exante_actual >= r_star else C_RED)
-        ax2.axhline(y=r_star, color=C_AMBER, linestyle='--', lw=1.5, label=f'r* supuesto por el analista = {r_star:.2f}%'.replace(".", ","))
-        brecha_pb = (tasa_real_exante_actual - r_star) * 100
-        _tasa_fmt = f"{tasa_real_exante_actual:+.2f}".replace(".", ",")
-        ax2.annotate(f"{_tasa_fmt}% TEM\n(Brecha {brecha_pb:+.0f} pb vs. r*)",
-                     xy=(0, tasa_real_exante_actual), xytext=(0.55, tasa_real_exante_actual),
-                     ha='left', va='center', fontsize=7.2, fontweight='bold', color=C_NAVY)
-        ax2.set_xlim(-0.6, 2.2)
-        ax2.set_xticks([])
-        _pad_taylor = max(0.15, abs(tasa_real_exante_actual - r_star) * 0.6)
-        ax2.set_ylim(min(tasa_real_exante_actual, r_star) - _pad_taylor, max(tasa_real_exante_actual, r_star) + _pad_taylor)
-        ax2.legend(frameon=False, fontsize=6.8, loc='lower right')
-    ax2.set_title("B. Postura Monetaria: Regla de Taylor (r* = supuesto)", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
-    ax2.set_ylabel("Tasa Efectiva Mensual (%)", fontsize=7.5, color=C_SLATE)
+    # Panel B: antes mostraba la Regla de Taylor (barra de tasa real
+    # ex-ante vs. r*) -- un concepto de tasas que no tiene relacion
+    # numerica con la serie de Base Monetaria del Panel A (son dos
+    # variables distintas del contrato), y que ademas duplicaba la
+    # tarjeta KPI "TASA REAL EX-ANTE" de arriba. El usuario senalo que el
+    # emparejamiento A/B se sentia arbitrario ("el orden es raro"). Se
+    # reemplaza por la variacion mensual de la MISMA serie de Base
+    # Monetaria del Panel A (misma convencion que ISAC/EMAE: nivel +
+    # variacion de la misma variable, no dos variables distintas). La
+    # Regla de Taylor sigue citada en el cuerpo del texto del informe.
+    var_mom_bm = [round(100 * (base_m[i] / base_m[i - 1] - 1), 1) for i in range(1, len(base_m))]
+    x_var_bm = np.arange(1, len(base_m))
+    colores_bm = [C_TEAL if v >= 0 else C_RED for v in var_mom_bm]
+    ax2.bar(x_var_bm, var_mom_bm, color=colores_bm, width=0.6, alpha=0.9, zorder=3)
+    ax2.axhline(0, color="#94A3B8", lw=0.8, zorder=2)
+    ax2.annotate(f"{var_mom_bm[-1]:+.1f}%".replace(".", ","), xy=(x_var_bm[-1], var_mom_bm[-1]),
+                 xytext=(0, 6 if var_mom_bm[-1] >= 0 else -12), textcoords="offset points",
+                 ha='center', fontsize=7.2, fontweight='bold',
+                 color=(C_TEAL if var_mom_bm[-1] >= 0 else C_RED))
+    ax2.set_xticks([x_var_bm[0], x_var_bm[-1]])
+    ax2.set_xticklabels([meses_8[1], meses_8[-1]], fontsize=6.8)
+    ax2.set_title("B. Base Monetaria: Variación Mensual", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
+    ax2.set_ylabel("Var. m/m (%)", fontsize=7.5, color=C_SLATE)
     ax2.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
 
 # ==============================================================================
@@ -1005,8 +1018,8 @@ def generar_todas_las_infografias(*args, **kwargs):
     f4 = create_master_infographic(
         "chart_indec_4_monetary.png",
         "BANCO CENTRAL DE LA REPÚBLICA ARGENTINA",
-        "Base Monetaria, Pases Pasivos y Regla de Taylor",
-        "Serie real BCRA (base monetaria + pases) y tasa real ex-ante vs. r* (supuesto del analista)",
+        "Base Monetaria: Nivel y Variación Mensual",
+        "Serie real BCRA -- Pases Pasivos discontinuados desde jul-2025; tasa real ex-ante (Fisher) como contexto de política monetaria",
         [
             ("BASE MONETARIA", (fmt_num(monetario["base_m"][-1], 1, "$") + " B") if monetario else "s/d", "BCRA v4.0, id=15", C_NAVY),
             ("PASES PASIVOS", (fmt_num(monetario["pases_m"][-1], 1, "$") + " B") if monetario else "s/d", "BCRA v4.0, id=152", C_TEAL),
