@@ -212,15 +212,15 @@ def generar_informe_mensual_reportlab():
     elements = []
 
     # =============================================================
-    # PÁGINA 1: PORTADA INSTITUCIONAL DE ALTA GAMA (TIER-1 MASTERPIECE)
+    # PÁGINA 1: PORTADA EJECUTIVA DE ALTA GAMA (GOLDMAN SACHS GIR / WALL ST STANDARD)
     # =============================================================
-    # 1. Masthead Superior Institucional
-    elements.append(HRFlowable(width="100%", thickness=1.5, color=PRIMARY, spaceBefore=0, spaceAfter=6))
+    # 1. Masthead Superior Institucional Simétrico
+    elements.append(HRFlowable(width="100%", thickness=2.0, color=PRIMARY, spaceBefore=0, spaceAfter=5))
     
     masthead_table = Table([
         [
-            Paragraph("<font color='#0B3C5D' size=7.8><b>UNIVERSIDAD NACIONAL DE CUYO</b></font><br/><font color='#64748B' size=6.8>FACULTAD DE CIENCIAS ECONÓMICAS</font>", ParagraphStyle('MH_L', fontName='Georgia', alignment=TA_LEFT, leading=9.5)),
-            Paragraph("<font color='#0B3C5D' size=7.8><b>MACROECONOMIC RESEARCH & STRATEGY</b></font><br/><font color='#64748B' size=6.8>DIVISIÓN DE ECONOMÍA APLICADA Y MERCADOS</font>", ParagraphStyle('MH_R', fontName='Georgia', alignment=TA_RIGHT, leading=9.5))
+            Paragraph("<font color='#0B3C5D' size=8.0><b>UNIVERSIDAD NACIONAL DE CUYO</b></font><br/><font color='#64748B' size=7.0>FACULTAD DE CIENCIAS ECONÓMICAS · OERU</font>", ParagraphStyle('MH_L', fontName='Georgia', alignment=TA_LEFT, leading=9.5)),
+            Paragraph("<font color='#0B3C5D' size=8.0><b>MACROECONOMIC RESEARCH & STRATEGY</b></font><br/><font color='#64748B' size=7.0>DIVISIÓN DE ECONOMÍA APLICADA Y MERCADOS</font>", ParagraphStyle('MH_R', fontName='Georgia', alignment=TA_RIGHT, leading=9.5))
         ]
     ], colWidths=[266, 266])
     masthead_table.setStyle(TableStyle([
@@ -231,29 +231,121 @@ def generar_informe_mensual_reportlab():
         ('RIGHTPADDING', (0,0), (-1,-1), 0),
     ]))
     elements.append(masthead_table)
-    elements.append(HRFlowable(width="100%", thickness=0.6, color=BORDER, spaceBefore=3, spaceAfter=14))
+    elements.append(HRFlowable(width="100%", thickness=0.8, color=colors.HexColor("#CBD5E1"), spaceBefore=3, spaceAfter=8))
 
-    # 2. Bloque Central: Título y Subtítulo de Alto Impacto
-    elements.append(Paragraph("<font color='#64748B' size=8.5><b>INFORME MENSUAL DE COYUNTURA ECONÓMICA · EDICIÓN Nº 32</b></font>", ParagraphStyle('PreTitle', fontName='Georgia', alignment=TA_LEFT, spaceAfter=4)))
-    elements.append(Paragraph("ESTABILIZACIÓN MACRO, ANCLAS NOMINALES Y ASIGNACIÓN ESTRATÉGICA DE ACTIVOS", ParagraphStyle('MainTitle', fontName='Georgia-Bold', fontSize=18.5, leading=22.5, textColor=PRIMARY, alignment=TA_LEFT, spaceAfter=6)))
-    elements.append(Paragraph("Evaluación cuantitativa del sendero de desinflación, saneamiento del balance del BCRA, curvas de rendimientos soberanos y dinámica productiva de la región de Cuyo al cierre de agosto de 2026.", ParagraphStyle('MainSub', fontName='Georgia-Italic', fontSize=9.5, leading=13.5, textColor=SLATE, alignment=TA_JUSTIFY, spaceAfter=12)))
-
-    # 3. Metadatos Clave en Barra Horizontal Limpia (Sin ruido de badges)
-    meta_data = [
+    # 2. Pill Badge de Fecha y Tipo de Publicación
+    pill_data = [
         [
-            Paragraph("<b>FECHA:</b> Agosto 2026", ParagraphStyle('MetaC', fontName='Georgia', fontSize=7.2, textColor=DARK_TEXT, alignment=TA_CENTER)),
-            Paragraph("<b>FRECUENCIA:</b> Mensual", ParagraphStyle('MetaC', fontName='Georgia', fontSize=7.2, textColor=DARK_TEXT, alignment=TA_CENTER)),
-            Paragraph("<b>COBERTURA:</b> Nacional & Regional Cuyo", ParagraphStyle('MetaC', fontName='Georgia', fontSize=7.2, textColor=DARK_TEXT, alignment=TA_CENTER)),
-            Paragraph("<b>TARGET:</b> Comités & Tesorerías", ParagraphStyle('MetaC', fontName='Georgia', fontSize=7.2, textColor=DARK_TEXT, alignment=TA_CENTER))
+            Paragraph("<font color='#0284C7'>●</font>&nbsp;&nbsp;<font color='#0369A1'><b>INFORME MENSUAL DE COYUNTURA · EDICIÓN INTEGRAL (VOL. IV)</b></font>", ParagraphStyle('PB_L', fontName='Georgia', fontSize=7.5, leading=9.5)),
+            Paragraph("<font color='#64748B'><b>CIERRE DE MES · AGOSTO 2026</b></font>", ParagraphStyle('PB_R', fontName='Georgia', fontSize=7.5, leading=9.5, alignment=TA_RIGHT))
         ]
     ]
-    t_meta = Table(meta_data, colWidths=[133, 133, 133, 133])
-    t_meta.setStyle(TableStyle([
+    t_pill = Table(pill_data, colWidths=[360, 172])
+    t_pill.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F0F9FF")),
+        ('BOX', (0,0), (-1,-1), 0.8, colors.HexColor("#BAE6FD")),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    elements.append(t_pill)
+    elements.append(Spacer(1, 8))
+
+    # 3. Bloque de Título Monumental
+    elements.append(Paragraph("INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES", ParagraphStyle('Cover_T', fontName='Georgia-Bold', fontSize=15.0, leading=18.0, textColor=PRIMARY, spaceAfter=3)))
+    elements.append(Paragraph("Dinámica Inflacionaria, Transmisión de Política Monetaria, Curvas Soberanas y Microestructura Cambiaria en Argentina", ParagraphStyle('Cover_ST', fontName='Georgia', fontSize=9.0, leading=12.2, textColor=colors.HexColor("#475569"), spaceAfter=10)))
+
+    # 4. Matriz Ejecutiva de los 4 Pilares Macroeconómicos (2x2 Grid con diseño Card Flotante)
+    col_w = 262
+    p1 = ("<b>1. RÉGIMEN MONETARIO & PRECIOS</b><br/>"
+          "<font size=7.2 color='#64748B'>• IPC Nacional: <b>1,8% m/m</b> (35,4% i.a.) | Cuyo: <b>1,7% m/m</b><br/>"
+          "• Inflación núcleo en 1,5% m/m con ancla fiscal consolidada.<br/>"
+          "• Tasa real neutral de Taylor ex-ante: <b>+8,5% anual</b>.</font>")
+
+    p2 = ("<b>2. RENTA FIJA & DEUDA SOBERANA</b><br/>"
+          "<font size=7.2 color='#64748B'>• Curva Nelson-Siegel hard dollar: nivel &beta;<sub>0</sub> = <b>9,40%</b><br/>"
+          "• Riesgo País (EMBI) en <b>680 pb</b>; GD35 rinde <b>11,2% TIR</b>.<br/>"
+          "• Lecap corta S31O6 con TEM de <b>3,24% m/m</b> (carry atractivo).</font>")
+
+    p3 = ("<b>3. MICROESTRUCTURA CAMBIARIA</b><br/>"
+          "<font size=7.2 color='#64748B'>• Dólar CCL: <b>$1.596,59</b> | Brecha mayorista: <b>7,51%</b> (5,39% BNA)<br/>"
+          "• Rofex Dic-26: TNA implícita <b>38,5%</b> (prob. salto: 24,5%)<br/>"
+          "• Compresión de volatilidad implícita en tramos cortos.</font>")
+
+    p4 = ("<b>4. ACTIVIDAD & RIESGO SISTÉMICO</b><br/>"
+          "<font size=7.2 color='#64748B'>• EMAE: <b>+0,6% s.e.</b> m/m; ISARC Cuyo: <b>+0,9% s.e.</b><br/>"
+          "• Ratio de Absorción PCA: <b>64,2%</b> (régimen resiliente &lt;75%)<br/>"
+          "• Turbulencia de Mahalanobis: <b>4,12</b> (&chi;² crítico: 11,07).</font>")
+
+    cell_p1 = Paragraph(p1, ParagraphStyle('P1', fontName='Georgia', fontSize=7.8, leading=10.5, textColor=DARK_TEXT))
+    cell_p2 = Paragraph(p2, ParagraphStyle('P2', fontName='Georgia', fontSize=7.8, leading=10.5, textColor=DARK_TEXT))
+    cell_p3 = Paragraph(p3, ParagraphStyle('P3', fontName='Georgia', fontSize=7.8, leading=10.5, textColor=DARK_TEXT))
+    cell_p4 = Paragraph(p4, ParagraphStyle('P4', fontName='Georgia', fontSize=7.8, leading=10.5, textColor=DARK_TEXT))
+
+    grid_matrix = Table([
+        [cell_p1, cell_p2],
+        [cell_p3, cell_p4]
+    ], colWidths=[col_w, col_w])
+    grid_matrix.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), BG_CARD),
-        ('BOX', (0,0), (-1,-1), 0.6, BORDER),
-        ('INNERGRID', (0,0), (-1,-1), 0.4, BORDER),
-        ('TOPPADDING', (0,0), (-1,-1), 3.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
+        ('BOX', (0,0), (-1,-1), 0.8, BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+    ]))
+    elements.append(grid_matrix)
+    elements.append(Spacer(1, 9))
+
+    # 5. Tarjeta de Tesis Central y Dictamen Estratégico (Con barra lateral Oxford Navy)
+    tesis_text = (
+        "<b>DIAGNÓSTICO EJECUTIVO & TESIS CENTRAL DE MERCADO</b><br/>"
+        "La economía argentina transita una fase de consolidación de su ancla nominal y desaceleración inflacionaria "
+        "(IPC en 1,8% m/m), respaldada por el equilibrio fiscal primario y financiero del Sector Público Nacional. "
+        "En el frente financiero, la curva soberana en USD normaliza su pendiente forward instantánea con un EMBI en torno a 680 pb, "
+        "mientras que la brecha cambiaria CCL se estabiliza en 7,51% y las métricas de acoplamiento multivariado "
+        "(Ratio de Absorción en 64,2% y Turbulencia en 4,12) confirman un <b>régimen de mercado resiliente</b>. "
+        "En este contexto, la estrategia de asignación de activos pondera un <b>40% en Lecaps cortas (carry trade)</b>, "
+        "un <b>30% en Globales hard dollar (GD35/GD38 por convexidad)</b>, un <b>15% en Boncer</b>, un <b>10% en Bopreal Serie 3</b> "
+        "y un <b>5% táctico en Renta Variable energética</b>."
+    )
+    t_tesis = Table([
+        [Paragraph(tesis_text, ParagraphStyle('TesisP', fontName='Georgia', fontSize=8.5, leading=11.6, textColor=DARK_TEXT))]
+    ], colWidths=[532])
+    t_tesis.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+        ('BOX', (0,0), (-1,-1), 0.8, colors.HexColor("#CBD5E1")),
+        ('LINELEFT', (0,0), (0,-1), 3.5, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 7),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 7),
+        ('LEFTPADDING', (0,0), (-1,-1), 10),
+        ('RIGHTPADDING', (0,0), (-1,-1), 10),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    elements.append(t_tesis)
+    elements.append(Spacer(1, 10))
+
+    # 6. Tarjeta de Autoría y Metadatos Institucionales de Cierre de Portada
+    meta_box = [
+        [
+            Paragraph("<b>LEAD MACRO STRATEGIST</b><br/><font color='#0B3C5D' size=8.2><b>Federico Agustín Chillón</b></font><br/><font color='#64748B' size=6.8>Investigador & Estratega Financiero</font>", ParagraphStyle('M1', fontName='Georgia', fontSize=7.4, leading=9.8)),
+            Paragraph("<b>FILIACIÓN INSTITUCIONAL</b><br/><font color='#0B3C5D' size=8.2><b>Facultad de Ciencias Económicas</b></font><br/><font color='#64748B' size=6.8>Universidad Nacional de Cuyo (UNCUYO)</font>", ParagraphStyle('M2', fontName='Georgia', fontSize=7.4, leading=9.8)),
+            Paragraph("<b>ESPECIFICACIÓN TÉCNICA</b><br/><font color='#0B3C5D' size=8.2><b>Cierre Mensual · Agosto 2026</b></font><br/><font color='#64748B' size=6.8>Modelos Econométricos & 300 DPI HD</font>", ParagraphStyle('M3', fontName='Georgia', fontSize=7.4, leading=9.8))
+        ]
+    ]
+    t_meta = Table(meta_box, colWidths=[177, 178, 177])
+    t_meta.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#FFFFFF")),
+        ('BOX', (0,0), (-1,-1), 0.8, BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
     ]))
     elements.append(t_meta)
