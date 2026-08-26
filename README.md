@@ -99,6 +99,11 @@ $$\text{TNA}_{impl\acute{\imath}cita} = \left( \frac{F_T - S_0}{S_0} \right) \cd
 Índice compuesto ponderado por sector (vitivinicultura, minería/hidrocarburos, cemento y empleo registrado) para evaluar la heterogeneidad productiva entre Mendoza, San Juan y San Luis:
 $$\text{ISARC}_{i,t} = \sum_{k=1}^K w_k \cdot I_{i,k,t}$$
 
+### F. Tipo de Cambio Real Bilateral (Atraso/Competitividad Cambiaria)
+Distinto de la brecha cambiaria (prima de mercado paralelo por cepo): mide la desalineación del tipo de cambio frente al poder de compra relativo entre Argentina y Estados Unidos, indexado a 100 en diciembre de 2016 (misma base que el IPC nacional vigente del INDEC):
+$$\text{TCR}_{indice}(t) = 100 \cdot \frac{TCN(t)}{TCN(t_0)} \cdot \frac{P_{EEUU}(t)/P_{EEUU}(t_0)}{P_{ARG}(t)/P_{ARG}(t_0)}$$
+Un valor por debajo de 100 indica apreciación real (atraso) relativa al punto de partida; por encima de 100, depreciación real (mayor competitividad). Fuentes: BCRA v4.0 (tipo de cambio mayorista A3500), INDEC vía el portal de series de tiempo del Estado (IPC nacional) y BLS (CPI-U) -- ver `src/fetch_tcr_bilateral.py`.
+
 ---
 
 ## 3. Instrucciones de Ejecución y Automatización Desatendida

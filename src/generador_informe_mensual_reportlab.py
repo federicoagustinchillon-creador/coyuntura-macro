@@ -19,7 +19,13 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
+import sys
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+from src.fetch_tcr_bilateral import cargar_cache as cargar_cache_tcr  # noqa: E402
+
 DIR_FIG = os.path.join(BASE_DIR, "03_Figuras_HD")
 OUT_DIR_MENSUAL = os.path.join(BASE_DIR, "06_Informes_Mensuales_OERU")
 OUT_DIR_CONSOL = os.path.join(BASE_DIR, "07_Reportes_Ejecutivos_PDF")
@@ -1131,6 +1137,45 @@ def generar_informe_mensual_reportlab():
     ))
     elements.append(Spacer(1, 2))
     elements.append(Image(_find_image("chart_indec_6_fx.png"), width=532, height=285))
+    elements.append(Spacer(1, 3))
+
+    # --- Tipo de Cambio Real Bilateral (atraso/competitividad cambiaria) ---
+    # A diferencia de casi todo el resto de este generador, este parrafo NO
+    # es texto de plantilla con numeros fijos: se arma en el momento de
+    # generar el informe, leyendo el cache real de
+    # src/fetch_tcr_bilateral.py (BCRA + INDEC + BLS). Si el cache no existe
+    # todavia, el informe lo dice explicitamente en vez de inventar un
+    # numero o mostrar una version vieja sin avisar.
+    elements.append(Paragraph("<b>Tipo de Cambio Real Bilateral: ¿Brecha o Atraso Cambiario?</b>", h2_style))
+    _tcr_cache = cargar_cache_tcr()
+    if _tcr_cache and _tcr_cache.get("ultimo"):
+        _tcr_ultimo = _tcr_cache["ultimo"]
+        _tcr_serie = _tcr_cache["serie"]
+        _tcr_pico = max(_tcr_serie[-13:], key=lambda p: p["tcr_indice"]) if len(_tcr_serie) >= 2 else _tcr_ultimo
+        _tcr_var_pico = 100 * (_tcr_ultimo["tcr_indice"] / _tcr_pico["tcr_indice"] - 1)
+        _tcr_lectura = (
+            f"un {abs(_tcr_ultimo['tcr_indice'] - 100):.1f}% por debajo de la base {_tcr_cache['base_mes']} (apreciación real, atraso relativo a ese punto de partida)"
+            if _tcr_ultimo["tcr_indice"] < 100 else
+            f"un {_tcr_ultimo['tcr_indice'] - 100:.1f}% por encima de la base {_tcr_cache['base_mes']} (depreciación real, más competitivo que ese punto de partida)"
+        )
+        elements.append(Paragraph(
+            f"La brecha cambiaria (CCL vs. oficial, cubierta arriba) y el atraso cambiario son conceptos distintos: la brecha "
+            f"es una prima de mercado paralelo asociada al cepo; el atraso es una desalineación del tipo de cambio real frente "
+            f"al poder de compra relativo, y puede existir incluso sin brecha. El <b>Tipo de Cambio Real (TCR) bilateral ARS/USD</b> "
+            f"-- tipo de cambio mayorista deflactado por el índice de precios relativo entre Estados Unidos y Argentina -- se ubicó "
+            f"en <b>{_tcr_ultimo['tcr_indice']:.1f}</b> en {_tcr_ultimo['mes']} (índice base {_tcr_cache['base_mes']} = 100), es decir, "
+            f"{_tcr_lectura}. Tras el pico de los últimos doce meses ({_tcr_pico['tcr_indice']:.1f} en {_tcr_pico['mes']}), acumula una "
+            f"variación de {_tcr_var_pico:+.1f}%.",
+            body_style
+        ))
+        elements.append(Spacer(1, 2))
+        elements.append(Image(_find_image("chart_indec_8_tcr.png"), width=532, height=285))
+    else:
+        elements.append(Paragraph(
+            "Cache del Tipo de Cambio Real bilateral no disponible en esta corrida del pipeline "
+            "(src/fetch_tcr_bilateral.py) -- sección omitida en vez de mostrar un valor no verificado.",
+            body_style
+        ))
     elements.append(Spacer(1, 3))
 
     tabla_hedge_data = [

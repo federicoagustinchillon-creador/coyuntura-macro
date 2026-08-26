@@ -1,0 +1,472 @@
+{
+  "base_mes": "2016-12",
+  "fuente": "BCRA v4.0 (mayorista) + INDEC (IPC nacional, apis.datos.gob.ar) + BLS (CPI-U, api.bls.gov)",
+  "metodologia": "TCR = TC_mayorista * CPI_EEUU / IPC_Argentina, indice base 100 = dic-2016",
+  "serie": [
+    {
+      "mes": "2016-12",
+      "tcr_indice": 100.0
+    },
+    {
+      "mes": "2017-01",
+      "tcr_indice": 99.49
+    },
+    {
+      "mes": "2017-02",
+      "tcr_indice": 95.89
+    },
+    {
+      "mes": "2017-03",
+      "tcr_indice": 93.29
+    },
+    {
+      "mes": "2017-04",
+      "tcr_indice": 90.19
+    },
+    {
+      "mes": "2017-05",
+      "tcr_indice": 90.95
+    },
+    {
+      "mes": "2017-06",
+      "tcr_indice": 92.36
+    },
+    {
+      "mes": "2017-07",
+      "tcr_indice": 96.65
+    },
+    {
+      "mes": "2017-08",
+      "tcr_indice": 96.97
+    },
+    {
+      "mes": "2017-09",
+      "tcr_indice": 94.74
+    },
+    {
+      "mes": "2017-10",
+      "tcr_indice": 94.38
+    },
+    {
+      "mes": "2017-11",
+      "tcr_indice": 93.31
+    },
+    {
+      "mes": "2017-12",
+      "tcr_indice": 91.49
+    },
+    {
+      "mes": "2018-01",
+      "tcr_indice": 97.19
+    },
+    {
+      "mes": "2018-02",
+      "tcr_indice": 99.39
+    },
+    {
+      "mes": "2018-03",
+      "tcr_indice": 99.28
+    },
+    {
+      "mes": "2018-04",
+      "tcr_indice": 97.0
+    },
+    {
+      "mes": "2018-05",
+      "tcr_indice": 111.62
+    },
+    {
+      "mes": "2018-06",
+      "tcr_indice": 120.82
+    },
+    {
+      "mes": "2018-07",
+      "tcr_indice": 122.01
+    },
+    {
+      "mes": "2018-08",
+      "tcr_indice": 128.14
+    },
+    {
+      "mes": "2018-09",
+      "tcr_indice": 154.26
+    },
+    {
+      "mes": "2018-10",
+      "tcr_indice": 141.04
+    },
+    {
+      "mes": "2018-11",
+      "tcr_indice": 133.85
+    },
+    {
+      "mes": "2018-12",
+      "tcr_indice": 135.16
+    },
+    {
+      "mes": "2019-01",
+      "tcr_indice": 129.94
+    },
+    {
+      "mes": "2019-02",
+      "tcr_indice": 129.12
+    },
+    {
+      "mes": "2019-03",
+      "tcr_indice": 133.58
+    },
+    {
+      "mes": "2019-04",
+      "tcr_indice": 135.75
+    },
+    {
+      "mes": "2019-05",
+      "tcr_indice": 137.13
+    },
+    {
+      "mes": "2019-06",
+      "tcr_indice": 130.13
+    },
+    {
+      "mes": "2019-07",
+      "tcr_indice": 123.91
+    },
+    {
+      "mes": "2019-08",
+      "tcr_indice": 147.72
+    },
+    {
+      "mes": "2019-09",
+      "tcr_indice": 149.62
+    },
+    {
+      "mes": "2019-10",
+      "tcr_indice": 150.39
+    },
+    {
+      "mes": "2019-11",
+      "tcr_indice": 147.15
+    },
+    {
+      "mes": "2019-12",
+      "tcr_indice": 142.06
+    },
+    {
+      "mes": "2020-01",
+      "tcr_indice": 139.76
+    },
+    {
+      "mes": "2020-02",
+      "tcr_indice": 140.44
+    },
+    {
+      "mes": "2020-03",
+      "tcr_indice": 139.52
+    },
+    {
+      "mes": "2020-04",
+      "tcr_indice": 142.26
+    },
+    {
+      "mes": "2020-05",
+      "tcr_indice": 144.28
+    },
+    {
+      "mes": "2020-06",
+      "tcr_indice": 145.69
+    },
+    {
+      "mes": "2020-07",
+      "tcr_indice": 147.64
+    },
+    {
+      "mes": "2020-08",
+      "tcr_indice": 147.88
+    },
+    {
+      "mes": "2020-09",
+      "tcr_indice": 147.75
+    },
+    {
+      "mes": "2020-10",
+      "tcr_indice": 146.95
+    },
+    {
+      "mes": "2020-11",
+      "tcr_indice": 146.7
+    },
+    {
+      "mes": "2020-12",
+      "tcr_indice": 145.96
+    },
+    {
+      "mes": "2021-01",
+      "tcr_indice": 146.56
+    },
+    {
+      "mes": "2021-02",
+      "tcr_indice": 146.75
+    },
+    {
+      "mes": "2021-03",
+      "tcr_indice": 144.81
+    },
+    {
+      "mes": "2021-04",
+      "tcr_indice": 143.04
+    },
+    {
+      "mes": "2021-05",
+      "tcr_indice": 141.42
+    },
+    {
+      "mes": "2021-06",
+      "tcr_indice": 140.03
+    },
+    {
+      "mes": "2021-07",
+      "tcr_indice": 138.02
+    },
+    {
+      "mes": "2021-08",
+      "tcr_indice": 136.34
+    },
+    {
+      "mes": "2021-09",
+      "tcr_indice": 133.48
+    },
+    {
+      "mes": "2021-10",
+      "tcr_indice": 131.29
+    },
+    {
+      "mes": "2021-11",
+      "tcr_indice": 130.06
+    },
+    {
+      "mes": "2021-12",
+      "tcr_indice": 127.61
+    },
+    {
+      "mes": "2022-01",
+      "tcr_indice": 126.43
+    },
+    {
+      "mes": "2022-02",
+      "tcr_indice": 124.59
+    },
+    {
+      "mes": "2022-03",
+      "tcr_indice": 121.8
+    },
+    {
+      "mes": "2022-04",
+      "tcr_indice": 119.58
+    },
+    {
+      "mes": "2022-05",
+      "tcr_indice": 119.6
+    },
+    {
+      "mes": "2022-06",
+      "tcr_indice": 120.0
+    },
+    {
+      "mes": "2022-07",
+      "tcr_indice": 116.9
+    },
+    {
+      "mes": "2022-08",
+      "tcr_indice": 115.07
+    },
+    {
+      "mes": "2022-09",
+      "tcr_indice": 115.31
+    },
+    {
+      "mes": "2022-10",
+      "tcr_indice": 115.67
+    },
+    {
+      "mes": "2022-11",
+      "tcr_indice": 117.01
+    },
+    {
+      "mes": "2022-12",
+      "tcr_indice": 118.35
+    },
+    {
+      "mes": "2023-01",
+      "tcr_indice": 118.59
+    },
+    {
+      "mes": "2023-02",
+      "tcr_indice": 117.76
+    },
+    {
+      "mes": "2023-03",
+      "tcr_indice": 116.14
+    },
+    {
+      "mes": "2023-04",
+      "tcr_indice": 114.81
+    },
+    {
+      "mes": "2023-05",
+      "tcr_indice": 114.02
+    },
+    {
+      "mes": "2023-06",
+      "tcr_indice": 116.17
+    },
+    {
+      "mes": "2023-07",
+      "tcr_indice": 117.23
+    },
+    {
+      "mes": "2023-08",
+      "tcr_indice": 126.59
+    },
+    {
+      "mes": "2023-09",
+      "tcr_indice": 122.29
+    },
+    {
+      "mes": "2023-10",
+      "tcr_indice": 112.88
+    },
+    {
+      "mes": "2023-11",
+      "tcr_indice": 100.95
+    },
+    {
+      "mes": "2023-12",
+      "tcr_indice": 145.84
+    },
+    {
+      "mes": "2024-01",
+      "tcr_indice": 154.97
+    },
+    {
+      "mes": "2024-02",
+      "tcr_indice": 140.48
+    },
+    {
+      "mes": "2024-03",
+      "tcr_indice": 129.72
+    },
+    {
+      "mes": "2024-04",
+      "tcr_indice": 122.28
+    },
+    {
+      "mes": "2024-05",
+      "tcr_indice": 120.0
+    },
+    {
+      "mes": "2024-06",
+      "tcr_indice": 116.97
+    },
+    {
+      "mes": "2024-07",
+      "tcr_indice": 115.06
+    },
+    {
+      "mes": "2024-08",
+      "tcr_indice": 112.83
+    },
+    {
+      "mes": "2024-09",
+      "tcr_indice": 111.41
+    },
+    {
+      "mes": "2024-10",
+      "tcr_indice": 110.85
+    },
+    {
+      "mes": "2024-11",
+      "tcr_indice": 110.4
+    },
+    {
+      "mes": "2024-12",
+      "tcr_indice": 109.55
+    },
+    {
+      "mes": "2025-01",
+      "tcr_indice": 110.3
+    },
+    {
+      "mes": "2025-02",
+      "tcr_indice": 109.74
+    },
+    {
+      "mes": "2025-03",
+      "tcr_indice": 107.09
+    },
+    {
+      "mes": "2025-04",
+      "tcr_indice": 109.65
+    },
+    {
+      "mes": "2025-05",
+      "tcr_indice": 110.76
+    },
+    {
+      "mes": "2025-06",
+      "tcr_indice": 112.59
+    },
+    {
+      "mes": "2025-07",
+      "tcr_indice": 118.68
+    },
+    {
+      "mes": "2025-08",
+      "tcr_indice": 122.6
+    },
+    {
+      "mes": "2025-09",
+      "tcr_indice": 126.78
+    },
+    {
+      "mes": "2025-11",
+      "tcr_indice": 123.03
+    },
+    {
+      "mes": "2025-12",
+      "tcr_indice": 121.29
+    },
+    {
+      "mes": "2026-01",
+      "tcr_indice": 118.45
+    },
+    {
+      "mes": "2026-02",
+      "tcr_indice": 112.5
+    },
+    {
+      "mes": "2026-03",
+      "tcr_indice": 108.92
+    },
+    {
+      "mes": "2026-04",
+      "tcr_indice": 105.94
+    },
+    {
+      "mes": "2026-05",
+      "tcr_indice": 105.55
+    },
+    {
+      "mes": "2026-06",
+      "tcr_indice": 107.16
+    },
+    {
+      "mes": "2026-07",
+      "tcr_indice": 107.58
+    }
+  ],
+  "ultimo": {
+    "mes": "2026-07",
+    "tcr_indice": 107.58
+  },
+  "calculado_en": "2026-08-26 08:33:55"
+}

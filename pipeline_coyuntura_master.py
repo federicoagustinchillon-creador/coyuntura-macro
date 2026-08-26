@@ -25,6 +25,7 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 from src.sync_datos_del_dia import sincronizar_todo
+from src.fetch_tcr_bilateral import guardar_cache as guardar_cache_tcr
 from src.actualizador_datos import construir_base_datos_macro
 from src.generador_graficos_hd import generar_todas_las_infografias
 from src.generador_informe_diario import compilar_informe_diario
@@ -86,6 +87,18 @@ def ejecutar_pipeline_coyuntura_completo():
     # 0. Sincronizacion de feeds en vivo: registro macro interno + BCRA/yfinance de respaldo
     print("\n[0/5] Sincronizando feeds en vivo...")
     sincronizar_todo()
+
+    # 0.b Tipo de cambio real bilateral (atraso/competitividad cambiaria):
+    # 3 fuentes externas (BCRA, INDEC, BLS) con paginacion -- se cachea una
+    # vez por corrida, no en cada poll del dashboard. Envuelto en try/except:
+    # si alguna API externa esta caida, no debe tumbar el pipeline entero;
+    # el informe usa el ultimo cache valido en vez de fallar.
+    print("\n[0.b/5] Recalculando Tipo de Cambio Real bilateral (BCRA + INDEC + BLS)...")
+    try:
+        tcr_resultado = guardar_cache_tcr()
+        print(f"      -> TCR bilateral actualizado: {tcr_resultado['ultimo']}")
+    except Exception as e_tcr:
+        print(f"      [TCR Error] No se pudo actualizar (se usa el ultimo cache disponible): {e_tcr}")
 
     # 1. Base de Datos
     print("\n[1/5] Consolidando Base de Datos Macro-Financiera...")

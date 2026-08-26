@@ -902,8 +902,97 @@ def generar_todas_las_infografias(*args, **kwargs):
         "Fuentes: Bolsas y Mercados Argentinos (ByMA), New York Stock Exchange (NYSE) y balances corporativos."
     )
     
+    f8 = _crear_infografia_tcr()
+
     print("Todas las infografías maestras fueron generadas con éxito y sin solapamientos.")
-    return [f0, f1, f2, f3, f3b, f4, f5, f6, f7]
+    return [f0, f1, f2, f3, f3b, f4, f5, f6, f7, f8]
+
+
+# ==============================================================================
+# 10. FIGURA 8: TIPO DE CAMBIO REAL BILATERAL (ATRASO/COMPETITIVIDAD CAMBIARIA)
+# ==============================================================================
+def plot_tcr_master(ax, fig, tcr_data=None):
+    """A diferencia del resto de las figuras de este modulo, esta lee datos
+    reales del cache generado por src/fetch_tcr_bilateral.py (BCRA + INDEC +
+    BLS) en vez de un array de relleno -- si no hay cache todavia, lo dice
+    explicitamente en el propio grafico en vez de simular una serie."""
+    ax.set_facecolor("#FFFFFF")
+
+    if tcr_data is None or not tcr_data.get("serie"):
+        ax.axis('off')
+        ax.text(0.5, 0.5, "Sin cache de TCR bilateral todavia.\nCorrer: python src/fetch_tcr_bilateral.py",
+                ha='center', va='center', fontsize=9, color=C_SLATE, transform=ax.transAxes)
+        return
+
+    serie = tcr_data["serie"]
+    valores = [p["tcr_indice"] for p in serie]
+    meses = [p["mes"] for p in serie]
+    x_idx = np.arange(len(valores))
+
+    ax.axhline(100, color=C_GRAY, lw=1.1, linestyle=":", zorder=1)
+    ax.text(0.3, 100, f"Base {tcr_data['base_mes']} = 100", fontsize=6.8, color=C_GRAY,
+            va='bottom', ha='left')
+
+    # Recta entre observaciones reales (smooth=False) -- estandar institucional
+    # del proyecto: no se suaviza una serie de mercado real (ver docstring de
+    # _tooltipConFecha en dashboard/index.html para el mismo criterio del lado web).
+    ax.plot(x_idx, valores, color=C_NAVY, lw=1.7, zorder=3)
+    ax.fill_between(x_idx, valores, 100, where=[v < 100 for v in valores],
+                     color=C_RED, alpha=0.10, interpolate=True, zorder=2)
+    ax.fill_between(x_idx, valores, 100, where=[v >= 100 for v in valores],
+                     color=C_TEAL, alpha=0.10, interpolate=True, zorder=2)
+
+    ultimo = tcr_data["ultimo"]
+    ax.plot(x_idx[-1], ultimo["tcr_indice"], marker='o', markersize=5.5, color=C_NAVY, zorder=4)
+    ax.annotate(f"{ultimo['mes']}: {ultimo['tcr_indice']:.1f}", xy=(x_idx[-1], ultimo["tcr_indice"]),
+                xytext=(-8, 12), textcoords="offset points", ha='right', fontsize=7.5,
+                fontweight='bold', color=C_NAVY,
+                bbox=dict(boxstyle="round,pad=0.25", fc="#E0F2FE", ec="#BAE6FD", lw=0.7))
+
+    paso = max(1, len(meses) // 10)
+    tick_pos = list(range(0, len(meses), paso))
+    if tick_pos[-1] != len(meses) - 1:
+        tick_pos.append(len(meses) - 1)
+    ax.set_xticks(tick_pos)
+    ax.set_xticklabels([meses[i] for i in tick_pos], fontsize=6.8, color=C_SLATE, rotation=35, ha='right')
+
+    ax.set_ylabel(f"Índice TCR bilateral (Base {tcr_data['base_mes']} = 100)", fontsize=7.8, color=C_SLATE)
+    ax.grid(True, linestyle='--', color=C_GRID, lw=0.6, axis='y')
+
+
+def _crear_infografia_tcr():
+    """KPIs de esta infografia calculados en vivo desde el cache real (no
+    literales hardcodeados como el resto de create_master_infographic en
+    este modulo): a diferencia de las otras 9, aca el valor de la tarjeta
+    SI cambia solo cuando cambia el dato subyacente."""
+    from src.fetch_tcr_bilateral import cargar_cache
+    tcr_data = cargar_cache()
+
+    if tcr_data and tcr_data.get("ultimo"):
+        ultimo = tcr_data["ultimo"]
+        serie = tcr_data["serie"]
+        pico_reciente = max(serie[-13:], key=lambda p: p["tcr_indice"]) if len(serie) >= 2 else ultimo
+        variacion_desde_pico = 100 * (ultimo["tcr_indice"] / pico_reciente["tcr_indice"] - 1)
+        lectura = "atraso relativo" if ultimo["tcr_indice"] < 100 else "competitivo relativo"
+        kpis = [
+            (f"TCR BILATERAL ({ultimo['mes']})", f"{ultimo['tcr_indice']:.1f}", f"Base {tcr_data['base_mes']}=100 · {lectura}", C_NAVY if ultimo["tcr_indice"] >= 100 else C_RED),
+            ("PICO ÚLTIMOS 12 MESES", f"{pico_reciente['tcr_indice']:.1f}", f"en {pico_reciente['mes']}", C_AMBER),
+            ("VARIACIÓN DESDE EL PICO", f"{variacion_desde_pico:+.1f}%", "Apreciación real acumulada" if variacion_desde_pico < 0 else "Sin apreciación desde el pico", C_TEAL),
+        ]
+        fuente = "Fuentes: BCRA v4.0 (mayorista), INDEC (IPC nacional) y BLS (CPI-U). Índice base dic-2016 = 100."
+    else:
+        kpis = [("TCR BILATERAL", "s/d", "Cache no generado todavía", C_GRAY)]
+        fuente = "Correr python src/fetch_tcr_bilateral.py para generar el cache real (BCRA + INDEC + BLS)."
+
+    return create_master_infographic(
+        "chart_indec_8_tcr.png",
+        "BCRA / INDEC / BLS · TIPO DE CAMBIO REAL BILATERAL",
+        "Tipo de Cambio Real Bilateral ARS/USD -- Atraso y Competitividad Cambiaria",
+        "TCN mayorista deflactado por CPI relativo (EE.UU./Argentina), índice base dic-2016 = 100",
+        kpis,
+        lambda ax, fig: plot_tcr_master(ax, fig, tcr_data),
+        fuente,
+    )
 
 if __name__ == "__main__":
     generar_todas_las_infografias()
