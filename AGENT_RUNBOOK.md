@@ -4,6 +4,18 @@ Este documento es la **fuente única de verdad y guía operativa** para cualquie
 
 ---
 
+## 0. Regla de Cero Fabricación (OBLIGATORIA, prioridad sobre todo lo demás)
+
+Esta sección existe porque una corrida real de Gemini Spark (informe del 26-08-2026) violó esta regla de forma sistemática: inventó un Open Interest de futuros, una "Probabilidad de Salto Discreto" sin modelo detrás, una emisión de bonos de Pampa Energía que no existe, una curva completa de futuros Matba-Rofex sin conector real a ese mercado, citó una "Regla de Taylor" como si fuera un dato observado del BCRA, y fabricó un número de resolución de la CNV (RG 1162/2026). Nada de eso puede volver a pasar.
+
+- **Prohibido inventar cualquier cifra, cita normativa, emisión, precio o probabilidad** que no provenga de una fuente real y verificable (contrato `01_Bases_Datos/datos_del_dia.json`, un fetcher real del repositorio, o un cálculo reproducible sobre esos datos).
+- Si un dato no tiene fuente automatizable ni carga manual real disponible: **se omite el campo o se marca explícitamente como "s/d (sin fuente automatizable)"**. Nunca se rellena con un valor plausible.
+- Un **modelo o supuesto propio** (ej. dólar futuro por paridad de tasas CIP, Ratio de Absorción, un r* de Taylor asumido) se puede mostrar, pero SIEMPRE rotulado explícitamente como modelo/supuesto del analista -- nunca presentado como una cotización de mercado observada o un dato oficial.
+- Antes de dar por terminada una corrida, releer el informe generado y verificar que cada cifra específica (precio, tasa, probabilidad, número de resolución, monto de emisión) sea trazable a `datos_del_dia.json`, a un fetcher real (`src/fetch_*.py`) o a un cálculo documentado (`src/modelos_riesgo.py`) -- si no se puede trazar, se borra esa frase antes de publicar.
+- Ver `src/contexto_informe.py` para la lógica de referencia: es el módulo que unifica esta regla para los 3 generadores de este repositorio (diario, semanal, mensual) tras una auditoría que encontró el mismo problema en versiones anteriores de este propio pipeline -- no es exclusivo de Spark, así que no hay excusa para repetirlo.
+
+---
+
 ## 1. Filosofía de Creación de Valor, Tono Humano y Diseño Institucional
 
 Para superar el estándar de consultoras como 1816, Eco Go y bancas de inversión, el agente **no debe limitarse a volcar números fríos**. Toda generación debe incorporar tres pilares:
@@ -26,7 +38,9 @@ Para superar el estándar de consultoras como 1816, Eco Go y bancas de inversió
 
 ## 2. Contrato de Datos: `01_Bases_Datos/datos_del_dia.json`
 
-El agente debe consumir y/o actualizar el archivo JSON centralizado bajo el siguiente esquema canónico:
+El agente debe consumir y/o actualizar el archivo JSON centralizado. El esquema formal y validable está en `src/schema_datos_del_dia.json` (usarlo para validar, no reescribirlo de memoria).
+
+**Los valores del ejemplo de abajo son ilustrativos de la FORMA del esquema, no datos a copiar ni a usar como referencia de nivel actual.** Están congelados en la fecha en que se escribió este documento (21-08-2026) y hoy son viejos. Cualquier campo que el agente no pueda completar con un dato real del día debe quedar ausente del JSON (nunca relleno con estos valores de ejemplo ni con ningún otro inventado) -- ver Sección 0.
 
 ```json
 {
@@ -99,16 +113,27 @@ Cuando el agente sea convocado para actualizar o re-ejecutar el pipeline, debe s
 ```
 [PASO 1: Validación de Datos]
   │──> Validar datos_del_dia.json contra src/schema_datos_del_dia.json
-  └──> Si faltan campos, aplicar fallback histórico sin arrojar excepciones.
+  └──> Si faltan campos, el campo queda AUSENTE en el JSON (nunca se
+       rellena con un "fallback histórico" presentado como dato del día
+       -- eso es fabricación encubierta, ver Sección 0). Los 3
+       generadores ya toleran campos ausentes vía src/contexto_informe.py
+       y los marcan "s/d (sin fuente automatizable)" en el texto.
 
 [PASO 2: Generación de Infografías 300 DPI]
-  │──> Ejecutar src/generador_graficos_hd.py
+  │──> Ejecutar src/generador_graficos_hd.py (internamente ya trae
+  │    src/fetch_tcr_bilateral.py, src/fetch_series_secundarias.py y
+  │    src/modelos_riesgo.py para TCR, RIPTE/ISAC/EMBI-var y riesgo
+  │    sistémico/CIP -- no fabricar estos paneles si esos módulos
+  │    devuelven None, se omite el panel o se marca explícitamente)
   └──> Verificar creación de los 9 archivos PNG en 03_Figuras_HD/
 
 [PASO 3: Compilación de Documentos]
   │──> Nivel 1: src/generador_informe_diario.py (DOCX 2 págs)
   │──> Nivel 2: src/generador_paper_semanal.py (DOCX 4 págs APA 7)
   └──> Nivel 3: src/generador_informe_mensual_reportlab.py (PDF 14 págs ReportLab)
+  Los 3 generadores leen los datos reales a través de un único módulo
+  compartido, src/contexto_informe.py -- no volver a hardcodear un
+  número ni decidir por separado en cada generador qué fuente usar.
 
 [PASO 4: Exportación Oficial PDF]
   │──> Convertir DOCX a PDF vía win32com.client para diario y semanal
@@ -128,4 +153,5 @@ El agente no debe dar por terminada su tarea sin verificar que `verificar_estado
 - **Paper Semanal**: 4 páginas exactas (cobertura vertical > 60%).
 - **Informe Mensual Master**: 14 páginas exactas (ReportLab con marcadores interactivos).
 - **Google Drive**: Los 3 PDFs presentes y legibles.
-- **Resultado final**: `AUDITORÍA FINALIZADA CON ÉXITO: 0 ERRORES`.
+- **Cero Fabricación**: cada cifra específica del texto (precio, tasa, probabilidad, monto de emisión, número de resolución) es trazable a `datos_del_dia.json`, a un fetcher real (`src/fetch_*.py`) o a un cálculo de `src/modelos_riesgo.py` -- ninguna quedó sin fuente ni fue tomada del ejemplo de la Sección 2. Ver Sección 0.
+- **Resultado final**: `AUDITORÍA FINALIZADA CON ÉXITO: 0 ERRORES, 0 FABRICACIONES`.
