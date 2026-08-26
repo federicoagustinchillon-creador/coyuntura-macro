@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coyuntura Macro | Terminal de Acompañamiento</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] } } }
+  }
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js" crossorigin="anonymous"></script>
+
+<style>
+  body { background:#08090C; }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body class="bg-[#08090C] text-zinc-100 font-sans antialiased selection:bg-indigo-500/30 selection:text-indigo-300 min-h-screen">
+
+<div x-data="terminal()" x-init="init()" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <!-- Aviso de demo publica: esta version en GitHub Pages es de solo lectura
+       (sin backend detras) -- se aclara para que quede claro que no es el
+       dashboard completo, sino una instantanea navegable del mismo. -->
+  <div class="flex flex-wrap items-center justify-between gap-2 bg-indigo-500/[0.06] border border-indigo-500/20 rounded-xl px-4 py-2.5 text-xs font-mono text-indigo-300">
+    <span>Demo pública de solo lectura · el dashboard completo corre localmente contra el pipeline propio</span>
+    <a href="https://github.com/federicoagustinchillon-creador/coyuntura-macro" class="underline hover:text-indigo-200 transition-colors">Ver repositorio y código fuente</a>
+  </div>
+
+  <!-- Barra superior: evidencia de frescura por fuente, no una afirmacion generica de "conectado" -->
+  <header class="flex flex-col md:flex-row md:items-start md:justify-between pb-6 border-b border-white/[0.08] gap-4">
+    <div>
+      <div class="flex items-center space-x-3">
+        <div class="w-2.5 h-2.5 rounded-full" :class="ok ? 'bg-emerald-500' : 'bg-rose-500'"></div>
+        <span class="text-xs font-semibold uppercase tracking-widest" :class="ok ? 'text-emerald-400' : 'text-rose-400'" x-text="ok ? 'Instantánea cargada' : 'Error cargando instantánea'"></span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white mt-1">Coyuntura Macro &amp; Mercado de Capitales</h1>
+      <p class="text-xs text-zinc-400 mt-0.5">Terminal de acompañamiento entre informes</p>
+    </div>
+    <div class="flex flex-col items-start md:items-end gap-2">
+      <button @click="actualizarCotizacionesEnVivo()" :disabled="actualizandoVivo"
+              class="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-wait border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wide px-3 py-2 rounded-xl transition-colors">
+        <!-- lucide.createIcons() reemplaza este <i> por un <svg> en el DOM;
+             un :class de Alpine puesto directo ahi se pierde en el reemplazo
+             (carrera entre Alpine y Lucide). Se ata el binding a un <span>
+             contenedor que Lucide nunca toca. -->
+        <span :class="actualizandoVivo ? 'animate-spin' : ''" class="inline-flex">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+        </span>
+        <span x-text="actualizandoVivo ? 'Consultando BCRA / DolarAPI...' : 'Actualizar cotizaciones ahora'"></span>
+      </button>
+      <p class="text-[10px] text-zinc-500 font-mono max-w-[220px] text-right" x-text="vivoError || (ultimaActualizacionVivo ? 'Oficial/mayorista/CCL en vivo, directo desde tu navegador -- ' + ultimaActualizacionVivo : 'Trae oficial, mayorista y CCL en vivo directo de BCRA y DolarAPI (sin backend)')"></p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] font-mono">
+      <div class="bg-zinc-900/60 border border-white/10 px-3 py-1.5 rounded-xl">
+        <div class="text-zinc-500 text-[10px] uppercase tracking-wide">BCRA (oficial/tasas)</div>
+        <div class="text-white mt-0.5" x-text="fuentes.bcra_yfinance?.oficial_minorista?.fecha ? 'al ' + fmtFechaCorta(fuentes.bcra_yfinance.oficial_minorista.fecha) : 's/d'"></div>
+      </div>
+      <div class="bg-zinc-900/60 border border-white/10 px-3 py-1.5 rounded-xl">
+        <div class="text-zinc-500 text-[10px] uppercase tracking-wide">yfinance (Merval)</div>
+        <div class="text-white mt-0.5" x-text="fuentes.bcra_yfinance?.merval_ultimo_cierre?.fecha ? 'al ' + fmtFechaCorta(fuentes.bcra_yfinance.merval_ultimo_cierre.fecha) : 's/d'"></div>
+      </div>
+      <div class="bg-zinc-900/60 border border-white/10 px-3 py-1.5 rounded-xl">
+        <div class="text-zinc-500 text-[10px] uppercase tracking-wide">Vistas tácticas</div>
+        <div class="text-white mt-0.5" x-text="fuentes.vistas_timestamp ? fmtFechaCorta(fuentes.vistas_timestamp) : 's/d'"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- KPI Cards: Dólar -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Cambiario</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <template x-for="k in ['oficial_bna','mayorista','mep','ccl','blue','brecha_ccl_oficial_pct']" :key="k">
+        <div class="bg-zinc-900/60 backdrop-blur-md border p-4 rounded-2xl transition-colors"
+             :class="esVivo(k) ? 'border-emerald-500/30' : 'border-white/[0.08]'">
+          <p class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400" x-text="labelDolar(k)"></p>
+          <p class="mt-2 text-xl font-bold font-mono text-white tabular-nums" x-text="fmtDolar(k)"></p>
+          <p class="mt-1 text-[10px] font-mono" :class="esVivo(k) ? 'text-emerald-400' : 'text-zinc-500'" x-text="formatearFuente(fuenteDolar(k))"></p>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <!-- KPI Cards: Tasas / Inflación / Actividad / Referencia BCRA -->
+  <section class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+    <div class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Tasas en Pesos <span class="text-zinc-600 normal-case">· manual</span></h3>
+      <dl class="space-y-2 text-sm font-mono tabular-nums">
+        <div class="flex justify-between"><dt class="text-zinc-400">Lecap corta TEM</dt><dd class="text-white" x-text="pct(datos.tasas_ars?.lecap_corta_tem)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Lecap larga TEM</dt><dd class="text-white" x-text="pct(datos.tasas_ars?.lecap_larga_tem)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Boncer TZX27 TIR real</dt><dd class="text-white" x-text="pct(datos.tasas_ars?.boncer_tzx27_tir_real)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Breakeven inflación TEM</dt><dd class="text-white" x-text="pct(datos.tasas_ars?.breakeven_inflacion_tem)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Premio tasa fija</dt><dd class="text-emerald-400" x-text="(datos.tasas_ars?.premio_tasa_fija_pbs ?? 's/d') + ' pbs'"></dd></div>
+      </dl>
+    </div>
+    <div class="bg-zinc-900/60 backdrop-blur-md border border-emerald-500/30 p-5 rounded-2xl">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Referencia BCRA <span class="text-emerald-400 normal-case">· vivo</span></h3>
+      <dl class="space-y-2 text-sm font-mono tabular-nums">
+        <div class="flex justify-between"><dt class="text-zinc-400">BADLAR privados</dt><dd class="text-white" x-text="pct(datos.tasas_bcra_referencia?.badlar_privados_tna?.valor)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Pases 1 día</dt><dd class="text-white" x-text="pct(datos.tasas_bcra_referencia?.pases_1d_tna?.valor)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Reservas brutas</dt><dd class="text-white" x-text="fmt(datos.tasas_bcra_referencia?.reservas_brutas_usd_m?.valor) + ' M USD'"></dd></div>
+        <div class="text-[10px] text-zinc-500 pt-1" x-text="'al ' + fmtFechaCorta(datos.tasas_bcra_referencia?.badlar_privados_tna?.fecha)"></div>
+      </dl>
+    </div>
+    <div class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Inflación <span class="text-zinc-600 normal-case">· manual</span></h3>
+      <dl class="space-y-2 text-sm font-mono tabular-nums">
+        <div class="flex justify-between"><dt class="text-zinc-400">General MoM</dt><dd class="text-white" x-text="pct(datos.inflacion?.indec_general_mom)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Núcleo MoM</dt><dd class="text-white" x-text="pct(datos.inflacion?.indec_nucleo_mom)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">Regulados MoM</dt><dd class="text-white" x-text="pct(datos.inflacion?.indec_regulados_mom)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">DEIE Mendoza MoM</dt><dd class="text-white" x-text="pct(datos.inflacion?.deie_mendoza_mom)"></dd></div>
+      </dl>
+    </div>
+    <div class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Actividad <span class="text-zinc-600 normal-case">· manual</span></h3>
+      <dl class="space-y-2 text-sm font-mono tabular-nums">
+        <div class="flex justify-between"><dt class="text-zinc-400">EMAE i.a.</dt><dd class="text-white" x-text="pct(datos.actividad?.emae_interanual_pct)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">EMAE desest. MoM</dt><dd class="text-white" x-text="pct(datos.actividad?.emae_desestacionalizado_mom_pct)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">ISARC Mendoza i.a.</dt><dd class="text-white" x-text="pct(datos.actividad?.isarc_mendoza_ia_pct)"></dd></div>
+        <div class="flex justify-between"><dt class="text-zinc-400">ISARC San Juan i.a.</dt><dd class="text-white" x-text="pct(datos.actividad?.isarc_san_juan_ia_pct)"></dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- Panel de mercados: 4 graficos, 3 con historia real (BCRA/yfinance) + 1 manual -->
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">Mercados <span class="text-emerald-400 normal-case">· historial real 90 días</span></h2>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      <div class="bg-zinc-900/60 backdrop-blur-md border border-emerald-500/30 p-5 rounded-2xl">
+        <h3 class="text-sm font-semibold text-white tracking-tight mb-3">Tipo de Cambio Oficial vs. Mayorista</h3>
+        <div class="relative"><div id="chartFx" class="w-full h-60"></div>
+          <div x-show="!(historico.oficial_minorista||[]).length" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 font-mono">Cargando historial BCRA...</div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900/60 backdrop-blur-md border border-emerald-500/30 p-5 rounded-2xl">
+        <h3 class="text-sm font-semibold text-white tracking-tight mb-3">Tasas de Referencia (BADLAR vs. Pases 1 día)</h3>
+        <div class="relative"><div id="chartTasas" class="w-full h-60"></div>
+          <div x-show="!(historico.badlar_privados||[]).length" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 font-mono">Cargando historial BCRA...</div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900/60 backdrop-blur-md border border-emerald-500/30 p-5 rounded-2xl">
+        <h3 class="text-sm font-semibold text-white tracking-tight mb-3">Índice Merval</h3>
+        <div class="relative"><div id="chartMerval" class="w-full h-60"></div>
+          <div x-show="!(historico.merval||[]).length" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 font-mono">Cargando historial yfinance...</div>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl">
+        <div class="flex justify-between items-start mb-3">
+          <h3 class="text-sm font-semibold text-white tracking-tight">Curva Soberana USD <span class="text-zinc-600 text-xs font-normal">· manual</span></h3>
+          <span class="text-xs font-mono text-amber-400" x-text="'EMBI+ ' + (datos.soberano_usd?.embi_riesgo_pais_pbs ?? 's/d') + ' pbs'"></span>
+        </div>
+        <div class="relative"><div id="chartCurva" class="w-full h-60"></div>
+          <div x-show="!datos.soberano_usd?.nelson_siegel" class="absolute inset-0 flex items-center justify-center text-xs text-zinc-500 font-mono">Sin datos de curva soberana.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Vistas Black-Litterman -->
+  <section class="bg-zinc-900/60 backdrop-blur-md border border-emerald-500/30 p-6 rounded-2xl">
+    <h2 class="text-lg font-semibold text-white tracking-tight mb-1">Vistas Tácticas Black-Litterman <span class="text-emerald-400 text-xs font-normal normal-case">· juicio cualitativo interno</span></h2>
+    <p class="text-xs text-zinc-400 mb-4">Tesis de inversión vigentes. No son una serie de mercado verificada -- son la lectura táctica del analista, a diferencia del cambiario/tasas de arriba que sí vienen de BCRA/yfinance.</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="text-xs uppercase text-zinc-400 border-b border-white/[0.08]">
+          <tr>
+            <th class="py-2 px-3">Activo</th>
+            <th class="py-2 px-3">Tipo</th>
+            <th class="py-2 px-3 text-right">Retorno esperado anual</th>
+            <th class="py-2 px-3">Tesis</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/[0.04]">
+          <template x-for="v in (datos.black_litterman_tactical_views || [])" :key="v.asset">
+            <tr class="hover:bg-white/[0.02] transition-colors align-top">
+              <td class="py-3 px-3 font-bold font-mono text-white" x-text="v.asset"></td>
+              <td class="py-3 px-3 text-zinc-400" x-text="v.view_type === 'RELATIVE_TO_BENCHMARK' ? ('vs ' + v.relative_benchmark) : 'Absoluta'"></td>
+              <td class="py-3 px-3 text-right font-mono tabular-nums text-emerald-400" x-text="pct((v.view_return_annual ?? v.excess_return_annual) * 100)"></td>
+              <td class="py-3 px-3 text-zinc-300 text-xs max-w-md" x-text="v.thesis"></td>
+            </tr>
+          </template>
+          <tr x-show="!(datos.black_litterman_tactical_views || []).length">
+            <td colspan="4" class="py-6 text-center text-zinc-500 text-xs">Sin vistas activas en el último sync.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Equity líderes -->
+  <section class="bg-zinc-900/60 backdrop-blur-md border border-white/[0.08] p-6 rounded-2xl">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-semibold text-white tracking-tight">Renta Variable Líder</h2>
+      <div class="text-xs font-mono">
+        <span class="text-emerald-400">Merval (yfinance): <span x-text="fmt(datos.equity?.merval_ars)"></span> ARS</span>
+        <span class="text-zinc-500 ml-3">USD CCL (manual): <span x-text="fmt(datos.equity?.merval_usd_ccl)"></span></span>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="text-xs uppercase text-zinc-400 border-b border-white/[0.08]">
+          <tr><th class="py-2 px-3">Ticker</th><th class="py-2 px-3 text-right">EV/EBITDA</th><th class="py-2 px-3 text-right">Margen EBITDA</th><th class="py-2 px-3">Recomendación</th></tr>
+        </thead>
+        <tbody class="divide-y divide-white/[0.04] font-mono text-xs tabular-nums">
+          <template x-for="l in (datos.equity?.lideres || [])" :key="l.ticker">
+            <tr class="hover:bg-white/[0.02] transition-colors">
+              <td class="py-3 px-3 font-bold text-white" x-text="l.ticker"></td>
+              <td class="py-3 px-3 text-right text-zinc-300" x-text="fmt(l.ev_ebitda) + 'x'"></td>
+              <td class="py-3 px-3 text-right text-zinc-300" x-text="pct(l.margen_ebitda)"></td>
+              <td class="py-3 px-3">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                      :class="l.recom === 'SOBREPONDERAR' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : (l.recom === 'SUBPONDERAR' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-sky-500/10 text-sky-400 border border-sky-500/20')"
+                      x-text="l.recom"></span>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="text-center text-[10px] text-zinc-600 font-mono pt-4 space-y-1">
+    <p>Borde verde = dato vivo verificado contra fuente oficial (BCRA/yfinance/DolarAPI) · Sin borde = carga manual del contrato datos_del_dia.json</p>
+    <p>Instantánea publicada el <span x-text="publicadoEn"></span> · oficial/mayorista/CCL se pueden refrescar en vivo con el botón de arriba, el resto queda fijo al momento de publicación</p>
+  </footer>
+
+</div>
+
+<script>
+function terminal() {
+  return {
+    datos: {},
+    historico: {},
+    camposSincronizados: [],
+    fuentes: {},
+    ok: false,
+    publicadoEn: 's/d',
+    actualizandoVivo: false,
+    ultimaActualizacionVivo: '',
+    vivoError: '',
+
+    init() {
+      lucide.createIcons();
+      this.cargarInstantanea();
+      this.cargarHistorico();
+    },
+
+    // A diferencia del dashboard local (dashboard/index.html), esta version
+    // en GitHub Pages no tiene backend detras -- se carga una sola vez la
+    // instantanea estatica generada por dashboard/build_static_export.py.
+    // Nada de polling: sin proceso corriendo del otro lado, repreguntar el
+    // mismo archivo cada 60s no trae nada nuevo.
+    async cargarInstantanea() {
+      try {
+        const res = await fetch('./snapshot.json');
+        const body = await res.json();
+        this.datos = body.datos || {};
+        this.camposSincronizados = body.sync?.campos_actualizados || [];
+        this.fuentes = body.sync?.fuentes || {};
+        this.ok = !!body.sync?.ok;
+        // publicado_en es hora local (datetime.now() del export script, sin
+        // Z/offset) -- fmtFechaCorta ya sabe leer "YYYY-MM-DD HH:MM:SS" tal
+        // cual, no hace falta (ni corresponde) convertirla a instante UTC.
+        this.publicadoEn = body.publicado_en ? this.fmtFechaCorta(body.publicado_en) : 's/d';
+        this.$nextTick(() => { lucide.createIcons(); this.renderCurva(); });
+      } catch (e) {
+        this.ok = false;
+        console.error('Fallo al cargar snapshot.json', e);
+      }
+    },
+
+    // Unico dato realmente en vivo posible en una pagina 100% estatica:
+    // BCRA y DolarAPI habilitan CORS (Access-Control-Allow-Origin: *),
+    // verificado a mano contra ambos endpoints -- el navegador les puede
+    // pegar directo sin backend intermedio. yfinance (Merval) NO expone un
+    // endpoint publico con CORS abierto para esto, asi que Merval se queda
+    // como parte de la instantanea fija en vez de prometer algo que no se
+    // puede cumplir sin servidor propio.
+    async actualizarCotizacionesEnVivo() {
+      this.actualizandoVivo = true;
+      this.vivoError = '';
+      try {
+        const [ofi, may, ccl] = await Promise.all([
+          fetch('https://api.bcra.gob.ar/estadisticas/v4.0/monetarias/4').then(r => r.json()),
+          fetch('https://api.bcra.gob.ar/estadisticas/v4.0/monetarias/5').then(r => r.json()),
+          fetch('https://dolarapi.com/v1/dolares/contadoconliqui').then(r => r.json()),
+        ]);
+        const ultimoOfi = ofi?.results?.[0]?.detalle?.[0];
+        const ultimoMay = may?.results?.[0]?.detalle?.[0];
+        if (!ultimoOfi || !ultimoMay || !ccl?.compra) throw new Error('Respuesta incompleta de BCRA/DolarAPI');
+
+        this.datos.dolar = this.datos.dolar || {};
+        this.datos.dolar.oficial_bna = ultimoOfi.valor;
+        this.datos.dolar.mayorista = ultimoMay.valor;
+        this.datos.dolar.ccl = ccl.venta;
+        if (ultimoOfi.valor) {
+          this.datos.dolar.brecha_ccl_oficial_pct = Number((((ccl.venta / ultimoOfi.valor) - 1) * 100).toFixed(2));
+        }
+
+        const ahoraIso = new Date().toISOString();
+        this.camposSincronizados = this.camposSincronizados.filter(c => !c.startsWith('dolar.oficial_bna') && !c.startsWith('dolar.mayorista') && !c.startsWith('dolar.ccl') && !c.startsWith('dolar.brecha_ccl_oficial_pct'));
+        this.camposSincronizados.push(
+          `dolar.oficial_bna [BCRA_v4.0_monetarias(id=4):${ultimoOfi.fecha}]`,
+          `dolar.mayorista [BCRA_v4.0_monetarias(id=5):${ultimoMay.fecha}]`,
+          `dolar.ccl [dolarapi.com/contadoconliqui:${ahoraIso}]`,
+          'dolar.brecha_ccl_oficial_pct [calculado en tu navegador]',
+        );
+        this.ultimaActualizacionVivo = this.fmtFechaCorta(ahoraIso);
+      } catch (e) {
+        this.vivoError = 'No se pudo refrescar en vivo (' + e.message + '). Se mantiene la instantánea publicada.';
+        console.error('Fallo al actualizar cotizaciones en vivo', e);
+      } finally {
+        this.actualizandoVivo = false;
+      }
+    },
+
+    async cargarHistorico() {
+      try {
+        const res = await fetch('./historico.json');
+        this.historico = await res.json();
+        this.$nextTick(() => { this.renderFx(); this.renderTasas(); this.renderMerval(); });
+      } catch (e) {
+        console.error('Fallo al refrescar /api/historico', e);
+      }
+    },
+
+    _chart(id) {
+      // Las instancias de ECharts NUNCA deben vivir dentro del estado
+      // reactivo de Alpine (this.*): Alpine usa @vue/reactivity por debajo,
+      // que envuelve cualquier objeto guardado en un Proxy. ECharts depende
+      // de identidad de objeto real (WeakMaps internos, cierres con `this`)
+      // para su ciclo de tooltip/axisPointer -- contra un Proxy, dispatchAction
+      // ("showTip") corre sin errores pero nunca pinta nada, porque el
+      // objeto que ve el usuario en pantalla y el que recibe la llamada
+      // dejan de ser el mismo. Por eso viven en `chartInstances`, un objeto
+      // plano fuera de Alpine (ver mas abajo, junto a `activeCharts`).
+      if (!chartInstances[id]) {
+        const dom = document.getElementById(id);
+        if (!dom) return null;
+        chartInstances[id] = echarts.init(dom);
+        activeCharts.push(chartInstances[id]);
+        // ResizeObserver, no un unico resize() manual: Tailwind CDN aplica
+        // las clases de layout (h-60/w-full) DESPUES de que echarts.init
+        // mide el contenedor -- sin esto el canvas queda en 0px de ancho.
+        new ResizeObserver(() => chartInstances[id] && chartInstances[id].resize()).observe(dom);
+      }
+      return chartInstances[id];
+    },
+
+    // Formato de fecha local (dd-mm-yy / dd-mm), nunca el orden ingles mm-dd.
+    //
+    // Distincion importante: una fecha "pura" (YYYY-MM-DD, ej. la que
+    // devuelve el BCRA) es un dia calendario y se muestra tal cual. Un
+    // timestamp con hora y sufijo Z/offset (ej. dolarapi.com, que publica en
+    // UTC) es un INSTANTE real y hay que convertirlo a hora de Argentina
+    // antes de mostrarlo -- sin esto, entre las 21:00 y las 24:00 hora local
+    // el reloj UTC ya paso la medianoche y el dashboard mostraba una fecha
+    // que todavia no habia llegado ("manana" visto desde Buenos Aires).
+    fmtFechaCorta(iso) {
+      if (!iso) return 's/d';
+      const esInstante = /T.*([Zz]|[+-]\d{2}:?\d{2})$/.test(iso);
+      if (esInstante) {
+        const fecha = new Date(iso);
+        if (!Number.isNaN(fecha.getTime())) {
+          const p = new Intl.DateTimeFormat('es-AR', {
+            timeZone: 'America/Argentina/Buenos_Aires',
+            day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+          }).formatToParts(fecha).reduce((acc, x) => (acc[x.type] = x.value, acc), {});
+          return `${p.day}-${p.month}-${p.year} ${p.hour}:${p.minute}`;
+        }
+      }
+      const [y, m, d] = iso.slice(0, 10).split('-');
+      if (!y || !m || !d) return iso;
+      const resto = iso.slice(10).trim(); // " HH:MM:SS" si vino un timestamp sin Z (poco frecuente, no es un instante UTC)
+      return `${d}-${m}-${y.slice(2)}` + (resto ? ' ' + resto.slice(0, 5) : '');
+    },
+    fmtFechaEje(iso) {
+      const [, m, d] = iso.slice(0, 10).split('-');
+      return `${d}-${m}`;
+    },
+    // Reemplaza cualquier fecha ISO (con o sin hora/Z) embebida en un string
+    // de fuente por su formato local -- reusa fmtFechaCorta para no duplicar
+    // la logica de conversion de zona horaria en dos lugares distintos.
+    formatearFuente(texto) {
+      if (!texto) return texto;
+      return texto.replace(/\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:[Zz]|[+-]\d{2}:?\d{2})?)?/g, (m) => this.fmtFechaCorta(m));
+    },
+
+    _ejeFechas(serie) {
+      return {
+        type: 'category', data: serie.map(p => this.fmtFechaEje(p.fecha)), boundaryGap: false,
+        axisLine: { lineStyle: { color: '#3f3f46' } },
+        axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', fontSize: 10, interval: Math.ceil(serie.length / 6) }
+      };
+    },
+    _ejeValor(formatter) {
+      return {
+        type: 'value', scale: true,
+        axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', fontSize: 10, formatter },
+        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } }
+      };
+    },
+    // Tooltip con fecha completa en formato local (dd-mm-yy, con año) +
+    // valor y descripcion de cada serie -- lo que se ve "donde pongo el
+    // visor" (hover), independiente de las etiquetas fijas (endLabel).
+    _tooltipConFecha(serie, formatearValor, descripcion) {
+      return {
+        trigger: 'axis',
+        backgroundColor: 'rgba(18,18,21,0.95)',
+        borderColor: 'rgba(255,255,255,0.12)',
+        textStyle: { color: '#fafafa', fontSize: 12, fontFamily: 'JetBrains Mono' },
+        formatter: (params) => {
+          if (!params.length) return '';
+          const fecha = this.fmtFechaCorta(serie[params[0].dataIndex]?.fecha);
+          let html = `<div style="font-weight:600;margin-bottom:4px">${fecha}</div>`;
+          params.forEach(p => {
+            html += `<div>${p.marker} ${p.seriesName}: <b>${formatearValor(p.value)}</b></div>`;
+          });
+          if (descripcion) html += `<div style="color:#71717a;font-size:10px;margin-top:4px;max-width:220px;white-space:normal">${descripcion}</div>`;
+          return html;
+        }
+      };
+    },
+
+    // Estandar institucional: series de mercado se grafican con segmentos
+    // RECTOS entre observaciones reales (smooth:false) -- suavizar una serie
+    // financiera inventa curvatura entre puntos que el mercado no hizo.
+    // Suavizado (smooth:true) solo se reserva para curvas parametricas
+    // genuinamente continuas, como la Nelson-Siegel de renderCurva().
+    _endLabel(color, formatter) {
+      return { show: true, formatter, color, fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: 600 };
+    },
+    // ECharts a veces tira un error interno transitorio durante el primer
+    // render (visto en consola, no reproducido de forma determinista) sin
+    // que el grafico deje de dibujarse -- lo blindamos para que un fallo
+    // puntual de un chart no deje el resto sin actualizar.
+    _setOptionSeguro(chart, option) {
+      if (!chart) return;
+      try {
+        chart.setOption(option);
+      } catch (e) {
+        console.warn('setOption fallo, reintentando en el siguiente tick:', e);
+        setTimeout(() => { try { chart.setOption(option); } catch (e2) { console.error('setOption fallo de nuevo:', e2); } }, 50);
+      }
+    },
+
+    renderFx() {
+      const chart = this._chart('chartFx');
+      const oficial = this.historico.oficial_minorista || [], mayorista = this.historico.mayorista_a3500 || [];
+      if (!chart || !oficial.length) return;
+      this._setOptionSeguro(chart, {
+        tooltip: this._tooltipConFecha(oficial, (v) => '$' + v.toLocaleString('es-AR', {maximumFractionDigits: 2}), 'Tipo de cambio publicado por BCRA (promedio vendedor / A3500).'),
+        legend: { data: ['Oficial', 'Mayorista'], textStyle: { color: '#a1a1aa', fontSize: 10 }, top: 0 },
+        grid: { top: 28, right: 70, bottom: 24, left: 55 },
+        xAxis: this._ejeFechas(oficial),
+        yAxis: this._ejeValor('${value}'),
+        series: [
+          { name: 'Oficial', type: 'line', data: oficial.map(p => p.valor), smooth: false, showSymbol: false,
+            lineStyle: { color: '#10B981', width: 2 }, endLabel: this._endLabel('#10B981', (p) => '$' + p.value.toFixed(0)) },
+          { name: 'Mayorista', type: 'line', data: mayorista.map(p => p.valor), smooth: false, showSymbol: false,
+            lineStyle: { color: '#38BDF8', width: 1.5, type: 'dashed' }, endLabel: this._endLabel('#38BDF8', (p) => '$' + p.value.toFixed(0)) }
+        ]
+      });
+    },
+
+    renderTasas() {
+      const chart = this._chart('chartTasas');
+      const badlar = this.historico.badlar_privados || [], pases = this.historico.pases_1d || [];
+      if (!chart || !badlar.length) return;
+      this._setOptionSeguro(chart, {
+        tooltip: this._tooltipConFecha(badlar, (v) => v.toFixed(2) + '%', 'BADLAR: tasa privados a 30/35 días. Pases: tasa BCRA a 1 día (referencia corta).'),
+        legend: { data: ['BADLAR', 'Pases 1d'], textStyle: { color: '#a1a1aa', fontSize: 10 }, top: 0 },
+        grid: { top: 28, right: 60, bottom: 24, left: 45 },
+        xAxis: this._ejeFechas(badlar),
+        yAxis: this._ejeValor('{value}%'),
+        series: [
+          { name: 'BADLAR', type: 'line', data: badlar.map(p => p.valor), smooth: false, showSymbol: false,
+            lineStyle: { color: '#F59E0B', width: 2 }, endLabel: this._endLabel('#F59E0B', (p) => p.value.toFixed(1) + '%') },
+          { name: 'Pases 1d', type: 'line', data: pases.map(p => p.valor), smooth: false, showSymbol: false,
+            lineStyle: { color: '#6366F1', width: 1.5, type: 'dashed' }, endLabel: this._endLabel('#6366F1', (p) => p.value.toFixed(1) + '%') }
+        ]
+      });
+    },
+
+    renderMerval() {
+      const chart = this._chart('chartMerval');
+      const serie = this.historico.merval || [];
+      if (!chart || !serie.length) return;
+      this._setOptionSeguro(chart, {
+        tooltip: this._tooltipConFecha(serie, (v) => v.toLocaleString('es-AR', {maximumFractionDigits: 0}) + ' pts', 'Índice líder de acciones argentinas (BYMA), cierre diario en ARS.'),
+        grid: { top: 12, right: 70, bottom: 24, left: 65 },
+        xAxis: this._ejeFechas(serie),
+        yAxis: this._ejeValor((v) => (v / 1e6).toFixed(2) + 'M'),
+        series: [{
+          name: 'Merval', type: 'line', data: serie.map(p => p.close), smooth: false, showSymbol: false,
+          lineStyle: { color: '#818CF8', width: 2 },
+          endLabel: this._endLabel('#818CF8', (p) => (p.value / 1e6).toFixed(2) + 'M'),
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(129,140,248,0.20)' }, { offset: 1, color: 'rgba(129,140,248,0.0)' }
+          ]) }
+        }]
+      });
+    },
+
+    labelDolar(k) {
+      return { oficial_bna: 'Oficial (BCRA minorista)', mayorista: 'Mayorista (BCRA A3500)', mep: 'MEP', ccl: 'CCL', blue: 'Blue', brecha_ccl_oficial_pct: 'Brecha CCL/Of.' }[k];
+    },
+    esVivo(k) {
+      return this.camposSincronizados.some(c => c.startsWith('dolar.' + k));
+    },
+    // El registro interno tagea cada campo LIVE con su identificador tecnico
+    // real (nombre de variable/endpoint del proveedor, ej.
+    // "BCRA_v4.0_monetarias(id=4)") -- utilisimo para depurar, ilegible para
+    // cualquiera fuera del pipeline (un recruiter, un comite). Se traduce a
+    // una etiqueta legible antes de mostrarla; si aparece un identificador
+    // nuevo que todavia no esta mapeado, se muestra tal cual en vez de
+    // ocultarlo (mejor "raro" que fabricar una etiqueta falsa).
+    _ETIQUETAS_FUENTE: {
+      'BCRA_v4.0_monetarias(id=4)': 'BCRA (oficial)',
+      'BCRA_v4.0_monetarias(id=5)': 'BCRA (mayorista)',
+      'dolarapi.com/contadoconliqui': 'DolarAPI (CCL)',
+    },
+    fuenteDolar(k) {
+      const match = this.camposSincronizados.find(c => c.startsWith('dolar.' + k));
+      if (!match || !match.includes('[')) return 'carga manual';
+      const bruto = match.slice(match.indexOf('[') + 1, match.indexOf(']'));
+      const i = bruto.indexOf(':'); // separa "id:fecha" -- el id nunca trae ':', la fecha siempre
+      const id = i === -1 ? bruto : bruto.slice(0, i);
+      const fecha = i === -1 ? '' : bruto.slice(i + 1);
+      const etiqueta = this._ETIQUETAS_FUENTE[id] || id;
+      return fecha ? `${etiqueta}:${fecha}` : etiqueta;
+    },
+    fmtDolar(k) {
+      const v = this.datos.dolar ? this.datos.dolar[k] : undefined;
+      if (v === undefined || v === null) return 's/d';
+      return k.includes('pct') ? this.pct(v) : this.fmt(v);
+    },
+    fmt(v) {
+      if (v === undefined || v === null || Number.isNaN(v)) return 's/d';
+      return Number(v).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+    },
+    pct(v) {
+      if (v === undefined || v === null || Number.isNaN(v)) return 's/d';
+      return Number(v).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + '%';
+    },
+
+    renderCurva() {
+      const ns = this.datos.soberano_usd?.nelson_siegel;
+      const chart = this._chart('chartCurva');
+      if (!chart) return;
+      if (!ns) { chart.clear(); return; }
+
+      const tenores = [1, 2, 3, 5, 8, 12, 16, 20, 25];
+      const yields = tenores.map(t => {
+        const x = t / ns.tau;
+        const decay = (1 - Math.exp(-x)) / x;
+        return Number((ns.beta0 + ns.beta1 * decay + ns.beta2 * (decay - Math.exp(-x))).toFixed(2));
+      });
+
+      this._setOptionSeguro(chart, {
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(18,18,21,0.95)',
+          borderColor: 'rgba(255,255,255,0.12)',
+          textStyle: { color: '#fafafa', fontSize: 12, fontFamily: 'JetBrains Mono' },
+          formatter: (params) => {
+            const p = params[0];
+            return `<div style="font-weight:600;margin-bottom:4px">Tramo ${p.axisValue}</div>`
+              + `<div>${p.marker} TIR estimada: <b>${p.value.toFixed(2)}%</b></div>`
+              + `<div style="color:#71717a;font-size:10px;margin-top:4px;max-width:200px;white-space:normal">Curva parametrica ajustada a bonos soberanos Bonares/Globales.</div>`;
+          }
+        },
+        grid: { top: 12, right: 16, bottom: 24, left: 45 },
+        xAxis: {
+          type: 'category', data: tenores.map(t => t + 'y'), boundaryGap: false,
+          axisLine: { lineStyle: { color: '#3f3f46' } },
+          axisLabel: { color: '#71717a', fontFamily: 'JetBrains Mono', fontSize: 10 }
+        },
+        yAxis: this._ejeValor('{value}%'),
+        series: [{
+          name: 'TIR', type: 'line', data: yields, smooth: true,
+          symbol: 'circle', symbolSize: 5,
+          itemStyle: { color: '#818CF8', borderColor: '#08090C', borderWidth: 2 },
+          lineStyle: { color: '#6366F1', width: 2.5 },
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(99,102,241,0.25)' }, { offset: 1, color: 'rgba(99,102,241,0.0)' }
+          ]) }
+        }]
+      });
+    }
+  }
+}
+
+// Objeto plano deliberadamente fuera de Alpine.data() -- ver comentario en
+// _chart() de por que las instancias de ECharts no pueden vivir en `this`.
+const chartInstances = {};
+const activeCharts = [];
+let resizeRaf = null;
+window.addEventListener('resize', () => {
+  if (resizeRaf) cancelAnimationFrame(resizeRaf);
+  resizeRaf = requestAnimationFrame(() => activeCharts.forEach(c => c && c.resize()));
+});
+</script>
+</body>
+</html>

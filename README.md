@@ -5,6 +5,8 @@ Sistema integral y automatizado de ingesta de datos, modelización econométrica
 **Autor:** Federico Agustín Chillón  
 **Afiliación:** Investigación Cuantitativa Independiente · Ciencias Económicas — Universidad Nacional de Cuyo  
 
+**➜ [Ver el dashboard en vivo](https://federicoagustinchillon-creador.github.io/coyuntura-macro/)** -- demo pública sin necesidad de clonar el repositorio ni instalar nada (ver sección 4).
+
 ---
 
 ## 1. Arquitectura Modular del Repositorio
@@ -146,3 +148,26 @@ de PDFs, el ecosistema expone:
   Luego abrir `http://127.0.0.1:8420`. Los campos con borde verde en las
   tarjetas KPI indican dato vivo verificado contra su fuente oficial; el
   resto es carga manual.
+
+- **Demo pública estática** (`docs/`, servida por GitHub Pages en
+  [federicoagustinchillon-creador.github.io/coyuntura-macro](https://federicoagustinchillon-creador.github.io/coyuntura-macro/)):
+  para quien entra al repositorio desde GitHub y no va a clonar ni instalar
+  nada, una version de solo lectura del mismo dashboard. No corre FastAPI
+  (GitHub Pages es hosting estatico puro) -- carga una instantanea publicada
+  (`docs/snapshot.json` + `docs/historico.json`, generados por
+  `dashboard/build_static_export.py`) y, ademas, trae **oficial, mayorista y
+  CCL en vivo de verdad** con el boton "Actualizar cotizaciones ahora": BCRA
+  y DolarAPI habilitan CORS publico, asi que el navegador les pega
+  directo, sin backend intermedio. El indice Merval (yfinance) no expone un
+  endpoint asi, asi que se muestra fijo a la fecha de la instantanea en vez
+  de prometer algo que la arquitectura estatica no puede cumplir.
+
+  Para refrescar la instantanea publicada antes de compartir el link:
+  ```powershell
+  python dashboard/build_static_export.py
+  git add docs/ && git commit -m "chore(docs): refresca instantanea publica" && git push
+  ```
+
+  *Habilitacion (una sola vez, manual):* en GitHub, `Settings → Pages →
+  Source: Deploy from a branch → Branch: main, carpeta /docs`. Sin este
+  paso el link de arriba todavia no responde.
