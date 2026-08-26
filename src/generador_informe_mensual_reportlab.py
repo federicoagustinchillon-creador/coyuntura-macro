@@ -839,21 +839,23 @@ def generar_informe_mensual_reportlab():
     _lecap_larga_tem = tasas_ars.get("lecap_larga_tem")
     _lecap_corta_tna = round(_lecap_corta_tem * 12, 1) if _lecap_corta_tem is not None else None  # TNA simple (TEM x 12), no compuesta
     _lecap_larga_tna = round(_lecap_larga_tem * 12, 1) if _lecap_larga_tem is not None else None
+    # "Duration / Convex." se retira: 100% s/d en las 4 filas (no hay motor
+    # de pricing de bonos en el repositorio). "Bopreal Serie 3 (USD)" se
+    # retira como fila: sin esa columna, no le queda un solo dato real en
+    # ninguna de las restantes (ver Seccion 0 de AGENT_RUNBOOK.md).
     tabla_tactica_data = [
-        [Paragraph("<b>Instrumento / Especie</b>", cell_header_style), Paragraph("<b>TNA / TEM</b>", cell_header_style), Paragraph("<b>Duration / Convex.</b>", cell_header_style), Paragraph("<b>Breakeven / TIR</b>", cell_header_style), Paragraph("<b>Tesis & Ponderación Táctica</b>", cell_header_style)],
-        [Paragraph("Lecap (tramo corto)", cell_style_left), Paragraph(f"{_fmt1(_lecap_corta_tna)}% TNA ({_fmt1(_lecap_corta_tem)}% TEM)", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(f"BE: {_fmt1(tasas_ars.get('breakeven_inflacion_tem'))}% MoM", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Máximo carry con riesgo tasa mínimo. El contrato no especifica ticker ni plazo en días.", cell_style_left)],
-        [Paragraph("Lecap (tramo largo)", cell_style_left), Paragraph(f"{_fmt1(_lecap_larga_tna)}% TNA ({_fmt1(_lecap_larga_tem)}% TEM)", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("BE: s/d (contrato trae un único breakeven, sin desagregar por tramo)", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Captura tasa fija en el tramo largo de la curva Lecap.", cell_style_left)],
-        [Paragraph("Boncer TZX27", cell_style_left), Paragraph(f"CER + {_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}% TIR Real", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(f"TIR Real: +{_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}%", cell_style_center), Paragraph("<b>NEUTRAL</b> · Cobertura si regulados aceleran por encima de la tasa fija.", cell_style_left)],
-        [Paragraph("Bopreal Serie 3 (USD)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Sin campo en el contrato de datos (no hay motor de pricing de bonos en pesos/Bopreal en el repositorio).", cell_style_left)]
+        [Paragraph("<b>Instrumento / Especie</b>", cell_header_style), Paragraph("<b>TNA / TEM</b>", cell_header_style), Paragraph("<b>Breakeven / TIR</b>", cell_header_style), Paragraph("<b>Tesis & Ponderación Táctica</b>", cell_header_style)],
+        [Paragraph("Lecap (tramo corto)", cell_style_left), Paragraph(f"{_fmt1(_lecap_corta_tna)}% TNA ({_fmt1(_lecap_corta_tem)}% TEM)", cell_style_center), Paragraph(f"BE: {_fmt1(tasas_ars.get('breakeven_inflacion_tem'))}% MoM", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Máximo carry con riesgo tasa mínimo. El contrato no especifica ticker ni plazo en días.", cell_style_left)],
+        [Paragraph("Lecap (tramo largo)", cell_style_left), Paragraph(f"{_fmt1(_lecap_larga_tna)}% TNA ({_fmt1(_lecap_larga_tem)}% TEM)", cell_style_center), Paragraph("BE: s/d (contrato trae un único breakeven, sin desagregar por tramo)", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Captura tasa fija en el tramo largo de la curva Lecap.", cell_style_left)],
+        [Paragraph("Boncer TZX27", cell_style_left), Paragraph(f"CER + {_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}% TIR Real", cell_style_center), Paragraph(f"TIR Real: +{_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}%", cell_style_center), Paragraph("<b>NEUTRAL</b> · Cobertura si regulados aceleran por encima de la tasa fija.", cell_style_left)],
     ]
-    t_tactica = Table(tabla_tactica_data, colWidths=[105, 95, 85, 75, 172])
+    t_tactica = Table(tabla_tactica_data, colWidths=[125, 115, 100, 192])
     t_tactica.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F8FAFC")),
         ('BACKGROUND', (0,2), (-1,2), colors.white),
         ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,4), (-1,4), colors.white),
         ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
         ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
         ('TOPPADDING', (0,0), (-1,-1), 2.5),
@@ -893,8 +895,11 @@ def generar_informe_mensual_reportlab():
         [Paragraph("Canasta Básica Alimentaria (CBA Mendoza)", cell_style_left), Paragraph(f"${fmt_num(inflacion.get('canasta_basica_alimentaria_mza'), 0)}", cell_style_center), Paragraph("s/d (contrato no trae variación, solo nivel)", cell_style_center), Paragraph("Línea de Indigencia (umbral de ingresos requerido: carga manual).", cell_style_left)],
         [Paragraph("Canasta Básica Total (CBT Mendoza)", cell_style_left), Paragraph(f"${fmt_num(inflacion.get('canasta_basica_total_mza'), 0)}", cell_style_center), Paragraph("s/d (contrato no trae variación, solo nivel)", cell_style_center), Paragraph("Línea de Pobreza (brecha frente a ingresos no registrados: carga manual).", cell_style_left)],
         [Paragraph("Salario Formal Nominal (RIPTE)", cell_style_left), Paragraph(f"${fmt_num(ripte['valores'][-1], 0)}" if ripte else SIN_FUENTE, cell_style_center), Paragraph(f"{_fmt1(ripte.get('var_mensual_ultimo'), signo=True)}% MoM" if ripte else SIN_FUENTE, cell_style_center), Paragraph("RIPTE nacional nominal (Secretaría de Trabajo) -- no deflactado por inflación, no es \"salario real\".", cell_style_left)],
-        [Paragraph("Mora en Créditos de Consumo", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Sin conector automatizado en el repositorio.", cell_style_left)]
     ]
+    # "Mora en Creditos de Consumo" se retira: no tenia un solo dato real en
+    # ninguna columna (ni valor ni variacion), solo la explicacion de que no
+    # hay conector -- una fila asi no aporta nada que el texto de arriba no
+    # diga ya (ver Seccion 0 de AGENT_RUNBOOK.md).
     t_soc = Table(tabla_social_data, colWidths=[172, 75, 75, 210])
     t_soc.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
@@ -924,8 +929,13 @@ def generar_informe_mensual_reportlab():
     # mensual real del INDEC (src/fetch_series_indec_bcra.obtener_ipc_trayectoria,
     # que llega hasta el mes anterior) mas el mes vigente del contrato principal.
     # Interanual: el contrato y los fetchers disponibles no traen el nivel de
-    # indice de hace 12 meses -- se marca explicitamente sin fuente en vez de
-    # aproximarlo.
+    # indice de hace 12 meses en NINGUNA apertura -- una columna 100% "s/d"
+    # violaria la regla de cero fabricacion/cero relleno (AGENT_RUNBOOK.md,
+    # Seccion 0), asi que se retira la columna entera en vez de repetir el
+    # mismo "s/d" 10 veces. Por la misma razon se retiran las filas que, sin
+    # esa columna, quedarian sin un solo dato real (Vivienda, Transporte,
+    # Bienes, Alimentos, Estacionales -- ninguna tiene fuente de Mensual ni
+    # de Acumulado en el contrato).
     _acum_general, _n_acum = _acumulado_anio_calendario(
         (ipc_tray or {}).get("meses"), (ipc_tray or {}).get("general"), anio_informe, inflacion.get("indec_general_mom"))
     _acum_nucleo, _ = _acumulado_anio_calendario(
@@ -934,28 +944,21 @@ def generar_informe_mensual_reportlab():
         (ipc_tray or {}).get("meses"), (ipc_tray or {}).get("regulados"), anio_informe, inflacion.get("indec_regulados_mom"))
     _col_acum_header = f"Acum. {anio_informe} ({_n_acum} meses)" if _n_acum else f"Acum. {anio_informe}"
     _col_mensual_header = f"Mensual ({mes_nombre[:3]}-{str(anio_informe)[2:]})"
-    _ia_sd = "s/d (sin nivel de índice a 12 meses en el repo)"
 
     tabla_ipc_data = [
         [
             Paragraph("<b>Apertura / Jurisdicción</b>", cell_header_style),
             Paragraph(f"<b>{_col_mensual_header}</b>", cell_header_style),
             Paragraph(f"<b>{_col_acum_header}</b>", cell_header_style),
-            Paragraph("<b>Interanual (i.a.)</b>", cell_header_style)
         ],
-        [Paragraph("<b>Precios Regulados (Mayor Incidencia)</b>", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_regulados_mom'))}%", cell_style_center), Paragraph(f"{_fmt1(_acum_regulados)}%", cell_style_center), Paragraph(_ia_sd, cell_style_center)],
-        [Paragraph("Servicios (INDEC)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_servicios_mom'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
-        [Paragraph("Provincia de Mendoza (DEIE General)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('deie_mendoza_mom'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
-        [Paragraph("  Vivienda, agua, electricidad y gas (DEIE)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
-        [Paragraph("  Transporte y comunicaciones (DEIE)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
-        [Paragraph("Nivel General Nacional (INDEC)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_general_mom'))}%", cell_style_center), Paragraph(f"{_fmt1(_acum_general)}%", cell_style_center), Paragraph(_ia_sd, cell_style_center)],
-        [Paragraph("IPC Núcleo (INDEC)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_nucleo_mom'))}%", cell_style_center), Paragraph(f"{_fmt1(_acum_nucleo)}%", cell_style_center), Paragraph(_ia_sd, cell_style_center)],
-        [Paragraph("Bienes (INDEC)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
-        [Paragraph("  Alimentos y bebidas (DEIE Mendoza)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)],
-        [Paragraph("Estacionales (INDEC)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(_ia_sd, cell_style_center)]
+        [Paragraph("<b>Precios Regulados (Mayor Incidencia)</b>", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_regulados_mom'))}%", cell_style_center), Paragraph(f"{_fmt1(_acum_regulados)}%", cell_style_center)],
+        [Paragraph("Servicios (INDEC)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_servicios_mom'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center)],
+        [Paragraph("Provincia de Mendoza (DEIE General)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('deie_mendoza_mom'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center)],
+        [Paragraph("Nivel General Nacional (INDEC)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_general_mom'))}%", cell_style_center), Paragraph(f"{_fmt1(_acum_general)}%", cell_style_center)],
+        [Paragraph("IPC Núcleo (INDEC)", cell_style_left), Paragraph(f"{_fmt1(inflacion.get('indec_nucleo_mom'))}%", cell_style_center), Paragraph(f"{_fmt1(_acum_nucleo)}%", cell_style_center)],
     ]
 
-    t_ipc = Table(tabla_ipc_data, colWidths=[232, 100, 100, 100])
+    t_ipc = Table(tabla_ipc_data, colWidths=[232, 150, 150])
     t_ipc.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -963,12 +966,7 @@ def generar_informe_mensual_reportlab():
         ('BACKGROUND', (0,2), (-1,2), colors.white),
         ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#EFF6FF")),
         ('BACKGROUND', (0,4), (-1,4), colors.white),
-        ('BACKGROUND', (0,5), (-1,5), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,6), (-1,6), colors.HexColor("#F0FDF4")),
-        ('BACKGROUND', (0,7), (-1,7), colors.white),
-        ('BACKGROUND', (0,8), (-1,8), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,9), (-1,9), colors.white),
-        ('BACKGROUND', (0,10), (-1,10), colors.HexColor("#F8FAFC")),
+        ('BACKGROUND', (0,5), (-1,5), colors.HexColor("#F0FDF4")),
         ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
         ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
         ('TOPPADDING', (0,0), (-1,-1), 2.0),
@@ -978,18 +976,18 @@ def generar_informe_mensual_reportlab():
     ]))
     elements.append(t_ipc)
     elements.append(Spacer(1, 2.5))
-    elements.append(Paragraph("<i>Fuente:</i> INDEC y DEIE Mendoza (columnas mensuales); acumulado del año calendario derivado por capitalización compuesta de la trayectoria real INDEC (src/fetch_series_indec_bcra.py). Ordenado por incidencia decreciente.", fig_caption))
+    elements.append(Paragraph("<i>Fuente:</i> INDEC y DEIE Mendoza (columna mensual); acumulado del año calendario derivado por capitalización compuesta de la trayectoria real INDEC (src/fetch_series_indec_bcra.py). La variación interanual y las aperturas de Vivienda/Transporte/Bienes/Alimentos/Estacionales se retiran de este cuadro: ninguna tiene fuente automatizable en el repositorio (ver AGENT_RUNBOOK.md, Sección 0).", fig_caption))
     elements.append(Spacer(1, 2.5))
 
     elements.append(Paragraph("<b>Canales de Transmisión y Elasticidad de Pass-Through a Precios (estimación cualitativa del analista, no medición econométrica):</b>", h2_style))
     tabla_passthrough_data = [
-        [Paragraph("<b>Canal de Transmisión / Rubro</b>", cell_header_style), Paragraph("<b>Incidencia en IPC (pp)</b>", cell_header_style), Paragraph("<b>Elasticidad / Pass-Through</b>", cell_header_style), Paragraph("<b>Implicancia para Empresas y Consumo</b>", cell_header_style)],
-        [Paragraph("Tarifas de Electricidad y Gas de Red", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Directo (100% regulado) -- estimación cualitativa", cell_style_center), Paragraph("Aumento en costos fijos de PyMEs industriales y riego agrícola.", cell_style_left)],
-        [Paragraph("Combustibles y Fletes Interurbanos", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Rápido -- estimación cualitativa, sin medición", cell_style_center), Paragraph("Presión en logística de bodegas y distribución de alimentos.", cell_style_left)],
-        [Paragraph("Alimentos Secos y Productos de Almacén", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Moderado -- estimación cualitativa, sin medición", cell_style_center), Paragraph("Migración del consumidor hacia segundas y terceras marcas.", cell_style_left)],
-        [Paragraph("Indumentaria y Calzado", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Bajo -- estimación cualitativa, sin medición", cell_style_center), Paragraph("Caída en márgenes comerciales por necesidad de liquidar stock.", cell_style_left)]
+        [Paragraph("<b>Canal de Transmisión / Rubro</b>", cell_header_style), Paragraph("<b>Elasticidad / Pass-Through</b>", cell_header_style), Paragraph("<b>Implicancia para Empresas y Consumo</b>", cell_header_style)],
+        [Paragraph("Tarifas de Electricidad y Gas de Red", cell_style_left), Paragraph("Directo (100% regulado) -- estimación cualitativa", cell_style_center), Paragraph("Aumento en costos fijos de PyMEs industriales y riego agrícola.", cell_style_left)],
+        [Paragraph("Combustibles y Fletes Interurbanos", cell_style_left), Paragraph("Rápido -- estimación cualitativa, sin medición", cell_style_center), Paragraph("Presión en logística de bodegas y distribución de alimentos.", cell_style_left)],
+        [Paragraph("Alimentos Secos y Productos de Almacén", cell_style_left), Paragraph("Moderado -- estimación cualitativa, sin medición", cell_style_center), Paragraph("Migración del consumidor hacia segundas y terceras marcas.", cell_style_left)],
+        [Paragraph("Indumentaria y Calzado", cell_style_left), Paragraph("Bajo -- estimación cualitativa, sin medición", cell_style_center), Paragraph("Caída en márgenes comerciales por necesidad de liquidar stock.", cell_style_left)]
     ]
-    t_pt = Table(tabla_passthrough_data, colWidths=[162, 85, 95, 190])
+    t_pt = Table(tabla_passthrough_data, colWidths=[177, 155, 200])
     t_pt.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -1134,8 +1132,11 @@ def generar_informe_mensual_reportlab():
     elements.append(Spacer(1, 4))
 
     elements.append(Paragraph("<b>Cuadro. Variación Interanual del ISARC por Provincia:</b>", h2_style))
-    regional_header = [Paragraph("<b>Provincia</b>", cell_header_style), Paragraph("<b>ISARC Var. i.a.</b>", cell_header_style),
-                        Paragraph("<b>Nivel del Índice</b>", cell_header_style), Paragraph("<b>Desagregación Sectorial</b>", cell_header_style)]
+    # Nivel del indice y desagregacion sectorial se retiran: ninguna de las
+    # 3 provincias tiene ese dato en el contrato, asi que esas 2 columnas
+    # quedaban 100% "s/d" -- la misma regla que en el Cuadro 1 de IPC
+    # (ver Seccion 0 de AGENT_RUNBOOK.md).
+    regional_header = [Paragraph("<b>Provincia</b>", cell_header_style), Paragraph("<b>ISARC Var. i.a.</b>", cell_header_style)]
     regional_rows = [
         ("Mendoza", actividad.get("isarc_mendoza_ia_pct")),
         ("San Juan", actividad.get("isarc_san_juan_ia_pct")),
@@ -1154,11 +1155,9 @@ def generar_informe_mensual_reportlab():
         regional_data.append([
             Paragraph(f"<b>{prov}</b>", cell_style_left),
             celda_ia,
-            Paragraph(SIN_FUENTE, cell_style_center),
-            Paragraph(SIN_FUENTE, cell_style_center),
         ])
 
-    t_regional = Table(regional_data, colWidths=[80, 90, 170, 192])
+    t_regional = Table(regional_data, colWidths=[266, 266])
     t_regional.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -1173,7 +1172,8 @@ def generar_informe_mensual_reportlab():
     elements.append(Spacer(1, 3))
     elements.append(Paragraph(
         "<i>Fuente: datos_del_dia.json (actividad.isarc_*_ia_pct). ISARC: índice compuesto de elaboración propia; celda con intensidad de color proporcional a la magnitud "
-        "de la variación interanual (verde: expansión, rojo: contracción). Nivel del índice y desagregación sectorial: sin fuente pública automatizable, carga manual pendiente.</i>",
+        "de la variación interanual (verde: expansión, rojo: contracción). Nivel del índice y desagregación sectorial retirados de este cuadro: sin fuente pública automatizable "
+        "para ninguna de las 3 provincias.</i>",
         fig_caption
     ))
 
@@ -1463,7 +1463,7 @@ def generar_informe_mensual_reportlab():
     _var_tgs = variaciones_acciones.get("TGSU2", {}).get("var_semanal_pct")
 
     elements.append(Paragraph(
-        f"El índice S&P Merval cerró en {fmt_num(equity.get('merval_ars'), 0)} puntos ({_fmt1(equity.get('var_semanal_pct'), signo=True)}% semanal), impulsado por la "
+        f"El índice S&amp;P Merval cerró en {fmt_num(equity.get('merval_ars'), 0)} puntos ({_fmt1(equity.get('var_semanal_pct'), signo=True)}% semanal), impulsado por la "
         f"solidez operativa del sector energético y bancario. En el segmento energético, <b>YPF ({_fmt1(_ypfd.get('ev_ebitda'))}x EV/EBITDA y margen operativo del "
         f"{_fmt1(_ypfd.get('margen_ebitda'))}%)</b> y <b>Pampa Energía ({_fmt1(_pamp.get('ev_ebitda'))}x EV/EBITDA y margen del {_fmt1(_pamp.get('margen_ebitda'))}%)</b> "
         f"lideraron las preferencias del mercado. TGS no forma parte de equity.lideres en el contrato de datos: su retorno semanal real (yfinance) fue de "
@@ -1480,21 +1480,23 @@ def generar_informe_mensual_reportlab():
     elements.append(Image(_find_image("chart_indec_7_equity.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
+    # "Deuda Neta / EBITDA" se retira: 100% s/d en las 4 filas -- el
+    # contrato no trae ese campo para ninguna empresa (ver Seccion 0 de
+    # AGENT_RUNBOOK.md).
     tabla_equity_data = [
-        [Paragraph("<b>Empresa / Ticker ByMA</b>", cell_header_style), Paragraph("<b>Múltiplo EV/EBITDA</b>", cell_header_style), Paragraph("<b>Margen EBITDA %</b>", cell_header_style), Paragraph("<b>Deuda Neta / EBITDA</b>", cell_header_style), Paragraph("<b>Catalizadores Estratégicos & RIGI</b>", cell_header_style)],
-        [Paragraph("YPF S.A. (YPFD / NYSE)", cell_style_left), Paragraph(f"{_fmt1(_ypfd.get('ev_ebitda'))}x", cell_style_center), Paragraph(f"{_fmt1(_ypfd.get('margen_ebitda'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Liderazgo en Vaca Muerta y proyectos RIGI.", cell_style_left)],
-        [Paragraph("Pampa Energía (PAMP)", cell_style_left), Paragraph(f"{_fmt1(_pamp.get('ev_ebitda'))}x", cell_style_center), Paragraph(f"{_fmt1(_pamp.get('margen_ebitda'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Generación eléctrica y producción de shale gas.", cell_style_left)],
-        [Paragraph("Transportadora Gas del Sur (TGSU2)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(f"Fuera de equity.lideres del contrato; retorno semanal real: {_fmt1(_var_tgs, signo=True)}%.", cell_style_left)],
-        [Paragraph("Grupo Financiero Galicia (GGAL)", cell_style_left), Paragraph(f"{_fmt1(_ggal_l.get('ev_ebitda'))}x", cell_style_center), Paragraph(f"{_fmt1(_ggal_l.get('margen_ebitda'))}%", cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph("Consolidación bancaria y reactivación del crédito comercial.", cell_style_left)]
+        [Paragraph("<b>Empresa / Ticker ByMA</b>", cell_header_style), Paragraph("<b>Múltiplo EV/EBITDA</b>", cell_header_style), Paragraph("<b>Margen EBITDA %</b>", cell_header_style), Paragraph("<b>Catalizadores Estratégicos & RIGI</b>", cell_header_style)],
+        [Paragraph("YPF S.A. (YPFD / NYSE)", cell_style_left), Paragraph(f"{_fmt1(_ypfd.get('ev_ebitda'))}x", cell_style_center), Paragraph(f"{_fmt1(_ypfd.get('margen_ebitda'))}%", cell_style_center), Paragraph("Liderazgo en Vaca Muerta y proyectos RIGI.", cell_style_left)],
+        [Paragraph("Pampa Energía (PAMP)", cell_style_left), Paragraph(f"{_fmt1(_pamp.get('ev_ebitda'))}x", cell_style_center), Paragraph(f"{_fmt1(_pamp.get('margen_ebitda'))}%", cell_style_center), Paragraph("Generación eléctrica y producción de shale gas.", cell_style_left)],
+        [Paragraph("Transportadora Gas del Sur (TGSU2)", cell_style_left), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(SIN_FUENTE, cell_style_center), Paragraph(f"Fuera de equity.lideres del contrato; retorno semanal real: {_fmt1(_var_tgs, signo=True)}%.", cell_style_left)],
+        [Paragraph("Grupo Financiero Galicia (GGAL)", cell_style_left), Paragraph(f"{_fmt1(_ggal_l.get('ev_ebitda'))}x", cell_style_center), Paragraph(f"{_fmt1(_ggal_l.get('margen_ebitda'))}%", cell_style_center), Paragraph("Consolidación bancaria y reactivación del crédito comercial.", cell_style_left)]
     ]
-    t_eq = Table(tabla_equity_data, colWidths=[120, 75, 75, 75, 187])
+    t_eq = Table(tabla_equity_data, colWidths=[145, 90, 90, 207])
     t_eq.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F8FAFC")),
         ('BACKGROUND', (0,2), (-1,2), colors.white),
         ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,4), (-1,4), colors.white),
         ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
         ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
         ('TOPPADDING', (0,0), (-1,-1), 2.5),

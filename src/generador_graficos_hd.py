@@ -240,31 +240,40 @@ def plot_rates_breakeven(ax, fig, tasas_ars=None):
         ax1.text(0.5, 0.5, "Sin tasas Lecap cargadas\nen tasas_ars.*.",
                   ha='center', va='center', fontsize=8, color=C_SLATE, transform=ax1.transAxes)
     else:
+        # Barras, no linea: Corta/Larga son dos instrumentos discretos, no
+        # dos puntos de una curva continua -- una linea conectandolos sugiere
+        # una interpolacion que el contrato no respalda. El Boncer va en su
+        # propia barra con eje propio, en su propia posicion de x (no
+        # flotando entre las otras dos), para no sugerir una relacion de
+        # posicion que tampoco existe.
         x_lecap = [0, 1]
         y_lecap = [lecap_corta, lecap_larga]
-        ax1.plot(x_lecap, y_lecap, color=C_NAVY, lw=2.2, marker='o', markersize=6, markeredgecolor='white', label='Lecap (TEM %)')
+        ax1.bar(x_lecap, y_lecap, width=0.55, color=C_NAVY, alpha=0.9, zorder=3, label='Lecap (TEM %)')
         for xi, v in zip(x_lecap, y_lecap):
-            ax1.annotate(f"{v:.2f}%".replace(".", ","), (xi, v), xytext=(0, 8), textcoords="offset points",
+            ax1.annotate(f"{v:.2f}%".replace(".", ","), (xi, v), xytext=(0, 5), textcoords="offset points",
                          ha='center', fontsize=7.5, fontweight='bold', color=C_NAVY)
-        ax1.set_xticks(x_lecap)
-        ax1.set_xticklabels(["Corta", "Larga"], fontsize=7.5)
+        xticks = list(x_lecap)
+        xticklabels = ["Lecap Corta", "Lecap Larga"]
         ax1.set_ylabel("TEM Tasa Fija (%)", fontsize=7.5, color=C_NAVY)
-        _pad_lecap = max(0.10, (max(y_lecap) - min(y_lecap)) * 0.4)
-        ax1.set_ylim(min(y_lecap) - _pad_lecap, max(y_lecap) + _pad_lecap * 1.8)
-        ax1.set_xlim(-0.4, 1.4)
+        ax1.set_ylim(0, max(y_lecap) * 1.35)
 
         if boncer is not None:
+            x_boncer = 2
+            xticks.append(x_boncer)
+            xticklabels.append("Boncer TZX27\n(eje der.)")
             ax1_t = ax1.twinx()
             ax1_t.spines['top'].set_visible(False)
-            ax1_t.spines['left'].set_visible(False)
-            ax1_t.scatter([0.5], [boncer], color=C_AMBER, s=70, zorder=5, edgecolors='white', label='Boncer TZX27 (TIR Real %)')
-            ax1_t.annotate(f"{boncer:.2f}%".replace(".", ","), (0.5, boncer), xytext=(10, 0), textcoords="offset points",
-                           va='center', fontsize=7.2, fontweight='bold', color=C_AMBER)
+            ax1_t.bar([x_boncer], [boncer], width=0.55, color=C_AMBER, alpha=0.9, zorder=3, label='Boncer TZX27 (TIR Real %)')
+            ax1_t.annotate(f"{boncer:.2f}%".replace(".", ","), (x_boncer, boncer), xytext=(0, 5), textcoords="offset points",
+                           ha='center', fontsize=7.2, fontweight='bold', color=C_AMBER)
             ax1_t.set_ylabel("TIR Real Anual Boncer (%)", fontsize=7.5, color=C_AMBER, labelpad=6)
-            ax1_t.set_ylim(boncer - 1.0, boncer + 1.0)
+            ax1_t.set_ylim(0, boncer * 1.6)
             ax1_t.grid(False)
+        ax1.set_xticks(xticks)
+        ax1.set_xticklabels(xticklabels, fontsize=7.3)
+        ax1.set_xlim(-0.5, (x_boncer if boncer is not None else 1) + 0.5)
     ax1.set_title("A. Tasas en ARS (Lecap corta/larga + Boncer)", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
-    ax1.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
+    ax1.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6, zorder=0)
 
     breakeven = tasas_ars.get("breakeven_inflacion_tem")
     rem = tasas_ars.get("inflacion_esperada_rem_tem")
@@ -400,9 +409,6 @@ def plot_cuyo_redesigned(ax, fig, isac=None):
     else:
         ax1.text(0.5, 0.6, "Sin dato real de ISAC disponible en esta corrida.",
                 ha='center', va='center', fontsize=9, fontweight='bold', color=C_SLATE, transform=ax1.transAxes)
-
-    ax1.text(0.5, -0.30, "Vitivinicultura (INV) e hidrocarburos Mendoza (Secretaría de Energía): sin fuente confiable encontrada -- requiere carga manual.",
-            ha='center', va='center', fontsize=7.6, color=C_GRAY, transform=ax1.transAxes)
 
 # ==============================================================================
 # 4.1 FIGURA 3B: COMPARATIVO REGIONAL CUYO (MENDOZA / SAN JUAN / SAN LUIS)
@@ -938,9 +944,9 @@ def generar_todas_las_infografias(*args, **kwargs):
         "Construcción: Proxy Nacional Real (ISAC) -- Vino e Hidrocarburos sin Fuente Confiable",
         "ISAC nacional desestacionalizado (INDEC) como proxy de construcción; vitivinicultura e hidrocarburos de Mendoza sin conector",
         [
-            ("VITIVINICULTURA (INV)", "s/d", "Fuente candidata descartada -- ver docstring", C_GRAY),
-            ("HIDROCARBUROS (MENDOZA)", "s/d", "Sin conector automatizable", C_GRAY),
             ("ISAC NACIONAL", fmt_num(isac["nivel_ultimo"], 1) if isac else "s/d", (fmt_pct(isac["var_mensual_ultimo"], 1, True) + " MoM") if isac else "Sin dato", C_SLATE),
+            ("MÁXIMO (13M)", fmt_num(max(isac["valores"]), 1) if isac and isac.get("valores") else "s/d", f"{isac['meses'][isac['valores'].index(max(isac['valores']))]}" if isac and isac.get("valores") else "Sin dato", C_TEAL),
+            ("MÍNIMO (13M)", fmt_num(min(isac["valores"]), 1) if isac and isac.get("valores") else "s/d", f"{isac['meses'][isac['valores'].index(min(isac['valores']))]}" if isac and isac.get("valores") else "Sin dato", C_AMBER),
         ],
         lambda ax, fig: plot_cuyo_redesigned(ax, fig, isac),
         "Fuentes: INDEC (ISAC nacional, apis.datos.gob.ar). Vitivinicultura/hidrocarburos Mendoza sin fuente confiable encontrada."
