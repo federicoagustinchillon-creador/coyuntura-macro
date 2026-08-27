@@ -51,15 +51,31 @@ def auditar_ecosistema():
             print(f"[ERROR] Figura ausente: {fig_n}")
             
     # 3. Documentos Oficiales y Cobertura
+    # Antes esta lista apuntaba a nombres de archivo fijos con fecha
+    # hardcodeada ("2026-08-21_..."), asi que el dia que el pipeline
+    # generaba el entregable del dia siguiente, este auditor seguia
+    # revisando (y dando OK sobre) el PDF viejo sin darse cuenta de que
+    # habia uno mas nuevo sin auditar. Se busca el PDF mas reciente por
+    # fecha de modificacion en cada carpeta en vez de un nombre fijo.
+    def _pdf_mas_reciente(carpeta):
+        d = os.path.join(BASE_DIR, carpeta)
+        if not os.path.isdir(d):
+            return None
+        candidatos = [os.path.join(d, f) for f in os.listdir(d) if f.lower().endswith(".pdf")]
+        return max(candidatos, key=os.path.getmtime) if candidatos else None
+
     docs = {
-        "Monitor Diario (2 Págs)": (os.path.join(BASE_DIR, "04_Informes_Diarios", "2026-08-21_Monitor_Diario_Mercados.pdf"), 2),
-        "Paper Semanal APA 7 (4 Págs)": (os.path.join(BASE_DIR, "05_Informes_Semanales_APA7", "2026-08-21_Paper_Macroeconomico_Semanal.pdf"), 4),
-        "Informe Mensual Master (14 Págs)": (os.path.join(BASE_DIR, "06_Informes_Mensuales_OERU", "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf"), 14)
+        "Monitor Diario (2 Págs)": (_pdf_mas_reciente("04_Informes_Diarios"), 2),
+        "Paper Semanal APA 7 (4 Págs)": (_pdf_mas_reciente("05_Informes_Semanales_APA7"), 4),
+        # 15 paginas reales, no 14: la Seccion 7 (Microestructura Cambiaria)
+        # ocupa 2 paginas fisicas (cuerpo + tabla de futuros CIP) desde
+        # antes de esta auditoria; el "14" historico nunca reflejo eso.
+        "Informe Mensual Master (15 Págs)": (os.path.join(BASE_DIR, "06_Informes_Mensuales_OERU", "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf"), 15)
     }
     
     print("\n--- AUDITORÍA DE PÁGINAS Y COBERTURA VERTICAL ---")
     for nombre, (ruta_pdf, pags_esperadas) in docs.items():
-        if not os.path.exists(ruta_pdf):
+        if not ruta_pdf or not os.path.exists(ruta_pdf):
             errores.append(f"PDF ausente: {nombre}")
             print(f"[ERROR] PDF ausente: {nombre}")
             continue
@@ -83,16 +99,67 @@ def auditar_ecosistema():
             print(f"     Pág {i+1:2d}: Altura contenido = {max_y:5.1f} pt / 720 pt | Cobertura: {cov_pct:5.1f}%")
             
     # 4. Sincronización Google Drive
+    # Antes esto solo confirmaba que la carpeta existia y contaba archivos
+    # en 07_Reportes_Ejecutivos_PDF -- eso da falsos "OK" cuando el espejo
+    # tiene la cantidad correcta de archivos pero con contenido VIEJO (el
+    # caso real encontrado: los PDFs de 07 en Drive coincidian en cantidad
+    # pero eran de una corrida anterior). Se compara por hash SHA-256
+    # archivo por archivo contra el repo principal en las carpetas de
+    # entregables reales, y se reporta cualquier carpeta huerfana sin
+    # trackear en git (residuos de limpiezas incompletas).
     print("\n--- VERIFICACIÓN DE ESPEJO GOOGLE DRIVE ---")
-    if os.path.exists(GDRIVE_DIR):
-        print(f"[OK] Directorio Google Drive accesible: {GDRIVE_DIR}")
-        pdf_drive = os.path.join(GDRIVE_DIR, "07_Reportes_Ejecutivos_PDF")
-        if os.path.exists(pdf_drive):
-            files_drive = os.listdir(pdf_drive)
-            print(f"[OK] Google Drive PDFs disponibles ({len(files_drive)} archivos): {files_drive}")
-    else:
+    if not os.path.isdir(GDRIVE_DIR):
         print("[ADVERTENCIA] Directorio Google Drive no accesible localmente")
-        
+        errores.append("Espejo de Google Drive no accesible")
+    else:
+        print(f"[OK] Directorio Google Drive accesible: {GDRIVE_DIR}")
+        import hashlib
+        import subprocess as _sp
+
+        def _sha(p):
+            h = hashlib.sha256()
+            with open(p, "rb") as fh:
+                h.update(fh.read())
+            return h.hexdigest()
+
+        carpetas_espejo = [
+            "01_Bases_Datos", "03_Figuras_HD", "04_Informes_Diarios",
+            "05_Informes_Semanales_APA7", "06_Informes_Mensuales_OERU",
+            "07_Reportes_Ejecutivos_PDF",
+        ]
+        divergencias = 0
+        for carpeta in carpetas_espejo:
+            rdir = os.path.join(BASE_DIR, carpeta)
+            ddir = os.path.join(GDRIVE_DIR, carpeta)
+            if not os.path.isdir(rdir):
+                continue
+            for root, dirsub, files in os.walk(rdir):
+                if ".git" in dirsub: dirsub.remove(".git")
+                for fn in files:
+                    rp = os.path.join(root, fn)
+                    rel = os.path.relpath(rp, BASE_DIR)
+                    dp = os.path.join(GDRIVE_DIR, rel)
+                    if not os.path.isfile(dp):
+                        divergencias += 1
+                        errores.append(f"Drive: falta {rel}")
+                        print(f"[ERROR] Drive: falta {rel}")
+                    elif _sha(rp) != _sha(dp):
+                        divergencias += 1
+                        errores.append(f"Drive: contenido distinto en {rel}")
+                        print(f"[ERROR] Drive: contenido DISTINTO en {rel} (repo y espejo no coinciden)")
+        if divergencias == 0:
+            print("[OK] Los entregables del repo y del espejo de Drive coinciden byte a byte.")
+
+        if os.path.isdir(os.path.join(GDRIVE_DIR, ".git")):
+            r = _sp.run(["git", "status", "--porcelain", "--ignored"], cwd=GDRIVE_DIR, capture_output=True, text=True)
+            huerfanos = [l[3:] for l in r.stdout.splitlines() if l.startswith("??")]
+            if huerfanos:
+                errores.append(f"Drive: {len(huerfanos)} archivo(s)/carpeta(s) sin trackear (residuo de limpiezas incompletas)")
+                print(f"[ALERTA] Drive tiene {len(huerfanos)} entrada(s) sin trackear en git: {huerfanos}")
+                print("         -> correr 'git clean -fd' dentro del espejo para eliminarlas.")
+            else:
+                print("[OK] Espejo de Drive sin residuos sin trackear (git clean -fdn vacio).")
+
     print("\n=================================================================")
     if errores:
         print(f"AUDITORÍA FINALIZADA CON {len(errores)} ERRORES:")
