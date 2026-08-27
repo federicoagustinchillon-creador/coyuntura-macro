@@ -1,6 +1,6 @@
 """
 ================================================================================
-COMPILADOR MAESTRO DE INFORME MENSUAL REPORTLAB (14 PÁGINAS EDITORIALES)
+COMPILADOR MAESTRO DE INFORME MENSUAL REPORTLAB (15 PÁGINAS EDITORIALES)
 ================================================================================
 Autor: Federico Agustín Chillón
 Facultad de Ciencias Económicas — Universidad Nacional de Cuyo
@@ -127,21 +127,31 @@ class ZeroWhitespaceCanvas(canvas.Canvas):
         footer_line_y = 30
         footer_text_y = 18
 
+        # Orden reordenado (economia real -> monetario -> mercados externos ->
+        # calendario) a pedido del usuario ("el orden de la estructura"): las
+        # keys quedan atadas a la IDENTIDAD de cada seccion, no a su numero de
+        # pagina viejo -- se remapean todas al reordenar.
         page_bookmarks = {
             1: ("Portada Institucional", "sec_cover"),
             2: ("Índice y Metodología", "sec_toc"),
             3: ("Resumen Ejecutivo y Escenarios", "sec_exec"),
-            4: ("1. Arbitraje en ARS y Breakeven", "sec_tactical"),
+            4: ("1. Nivel de Actividad General (EMAE)", "sec_emae"),
             5: ("2. Precios y Salarios (INDEC)", "sec_prices"),
             6: ("Cuadro 1. Aperturas IPC y Pass-Through", "sec_tab_ipc"),
-            7: ("3. Nivel de Actividad General (EMAE)", "sec_emae"),
-            8: ("4. Producción Sectorial en Cuyo", "sec_cuyo"),
-            9: ("4.1 Comparativo Regional ISARC", "sec_regional_cuyo"),
-            10: ("5. Balance BCRA y Regla de Taylor", "sec_monetary"),
+            7: ("3. Producción Sectorial en Cuyo", "sec_cuyo"),
+            8: ("3.1 Comparativo Regional ISARC", "sec_regional_cuyo"),
+            9: ("4. Balance BCRA y Postura Monetaria", "sec_monetary"),
+            10: ("5. Arbitraje en ARS y Breakeven", "sec_tactical"),
             11: ("6. Curva Soberana Nelson-Siegel", "sec_yield"),
             12: ("7. Microestructura FX y Rofex", "sec_fx"),
-            13: ("8. Renta Variable y Balances", "sec_equity"),
-            14: ("9. Flash Normativo y Referencias", "sec_refs")
+            # Pagina 13 es la continuacion de la Seccion 7 (cuadro de dolar
+            # futuro CIP) -- esa seccion ocupa 2 paginas fisicas, no 1, asi
+            # que Renta Variable y Flash Normativo quedan corridas una
+            # pagina mas adelante de lo que un mapeo "1 seccion = 1 pagina"
+            # asumiria. Esto ya pasaba antes del reordenamiento (el total
+            # de paginas del documento siempre fue 15, no 14).
+            14: ("8. Renta Variable y Balances", "sec_equity"),
+            15: ("9. Flash Normativo y Referencias", "sec_refs")
         }
 
         if self._pageNumber in page_bookmarks:
@@ -496,7 +506,7 @@ def generar_informe_mensual_reportlab():
     # (tasas, precios, soberano, actividad), lo que la usuaria senalo como
     # "hipercargada". El detalle que tenian esos bloques (Lefi discontinuado,
     # tasa de pases, breakeven, Nelson-Siegel, ISARC) ya esta desarrollado
-    # en profundidad en las Secciones 1, 2, 5, 6 y 4.1 del cuerpo del
+    # en profundidad en las Secciones 2, 3.1, 4, 5 y 6 del cuerpo del
     # informe -- no se pierde informacion, se deja de repetirla 2-3 veces.
 
     # 6. Bloque de Firma de Autor y Filiación Formal
@@ -524,23 +534,31 @@ def generar_informe_mensual_reportlab():
     elements.append(Paragraph("Índice General y Estructura del Informe", h1_style))
     elements.append(HRFlowable(width="100%", thickness=1.0, color=PRIMARY, spaceBefore=0, spaceAfter=5))
 
+    # Orden reordenado a pedido del usuario: economia real primero (EMAE,
+    # precios, sectorial), despues regimen monetario y mercados (BCRA, tasas
+    # en pesos, deuda soberana, cambiario, equity), y cierre. Antes la
+    # Seccion 1 arrancaba directo en un tema de mesa de dinero (tasas ARS)
+    # sin haber presentado todavia el diagnostico de actividad y precios, y
+    # el Balance del BCRA (regimen monetario) quedaba lejos de Tasas ARS
+    # (mismo mercado, pesos) separado por 3 secciones de economia real.
     toc_entries = [
         ("CAT", "RESUMEN EJECUTIVO & ESCENARIOS", "", ""),
         ("MAIN", "Resumen Ejecutivo, Matriz de Escenarios y Asignación de Carteras", "3", "sec_exec"),
-        ("CAT", "CUERPO DEL INFORME", "", ""),
-        ("MAIN", "1. Arbitraje de Tasas en ARS, Breakeven y Recomendaciones", "4", "sec_tactical"),
+        ("CAT", "ECONOMÍA REAL", "", ""),
+        ("MAIN", "1. Nivel de Actividad Económica General (EMAE)", "4", "sec_emae"),
         ("MAIN", "2. Dinámica de Precios, Canastas Básicas y Salario Real", "5", "sec_prices"),
         ("SUB", "Cuadro 1. Índice de Precios al Consumidor (IPC INDEC y DEIE Mendoza)", "6", "sec_tab_ipc"),
-        ("MAIN", "3. Nivel de Actividad Económica General (EMAE)", "7", "sec_emae"),
-        ("MAIN", "4. Desagregación Sectorial y Producción en Cuyo (INV, Petróleo, Cemento)", "8", "sec_cuyo"),
-        ("SUB", "4.1. Comparativo Regional: Índice Sintético de Actividad (Mendoza, San Juan, San Luis)", "9", "sec_regional_cuyo"),
-        ("MAIN", "5. Balance del BCRA, Pasivos Cuasifiscales y Brecha de Taylor", "10", "sec_monetary"),
+        ("MAIN", "3. Desagregación Sectorial y Producción en Mendoza y Cuyo", "7", "sec_cuyo"),
+        ("SUB", "3.1. Comparativo Regional: Índice Sintético de Actividad (Mendoza, San Juan, San Luis)", "8", "sec_regional_cuyo"),
+        ("CAT", "RÉGIMEN MONETARIO Y MERCADOS", "", ""),
+        ("MAIN", "4. Balance del BCRA, Pasivos Cuasifiscales y Postura Monetaria", "9", "sec_monetary"),
+        ("MAIN", "5. Arbitraje de Tasas en ARS, Breakeven y Recomendaciones de Cartera", "10", "sec_tactical"),
         ("MAIN", "6. Estructura Temporal de la Deuda Soberana y Modelo Nelson-Siegel", "11", "sec_yield"),
         ("SUB", "Cuadro 2. Parámetros del modelo Nelson-Siegel y rendimientos de mercado", "11", "sec_yield"),
-        ("MAIN", "7. Microestructura Cambiaria, Futuros Rofex y Probabilidades Implícitas", "12", "sec_fx"),
-        ("MAIN", "8. Sector Financiero, Renta Variable y Radar de Balances", "13", "sec_equity"),
+        ("MAIN", "7. Microestructura Cambiaria, Derivados Rofex y Fragilidad Sistémica", "12", "sec_fx"),
+        ("MAIN", "8. Sector Financiero, Renta Variable y Radar de Balances", "14", "sec_equity"),
         ("CAT", "ANEXO & CIERRE", "", ""),
-        ("MAIN", "9. Flash Normativo, Contexto Internacional y Referencias APA 7ma", "14", "sec_refs")
+        ("MAIN", "9. Flash Normativo, Contexto Internacional y Referencias APA 7ma", "15", "sec_refs")
     ]
 
     toc_table_data = []
@@ -750,61 +768,39 @@ def generar_informe_mensual_reportlab():
     elements.append(PageBreak())
 
     # =============================================================
-    # PÁGINA 4: 1. ARBITRAJE EN PESOS Y BREAKEVEN
+    # PÁGINA 4: 1. ACTIVIDAD EMAE (INFOGRAFÍA INDEC MASTER)
     # =============================================================
-    elements.append(Paragraph("1. Arbitraje de Tasas en ARS, Breakeven y Recomendaciones de Cartera", h1_style))
+    elements.append(Paragraph("1. Estimador Mensual de Actividad Económica (EMAE)", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
-    _breakeven_mensual = tasas_ars.get("breakeven_inflacion_tem")
-    _breakeven_anualizado = round(100 * ((1 + _breakeven_mensual / 100) ** 12 - 1), 2) if _breakeven_mensual is not None else None
+    _emae_tendencia_mom = None
+    if emae_hist and len(emae_hist.get("tendencia_ciclo", [])) >= 2:
+        _t_serie = emae_hist["tendencia_ciclo"]
+        _emae_tendencia_mom = round(100 * (_t_serie[-1] / _t_serie[-2] - 1), 2)
+    _tendencia_txt = (
+        f"La tendencia-ciclo (serie real INDEC, src/fetch_series_indec_bcra.py) avanzó {_fmt1(_emae_tendencia_mom, signo=True)}% mensual"
+        if _emae_tendencia_mom is not None else f"La tendencia-ciclo mensual: {SIN_FUENTE}"
+    )
     elements.append(Paragraph(
-        f"El mercado de deuda en pesos refleja una marcada preferencia por el carry trade de corto plazo. La curva de Lecaps (tasa fija) opera con TEMs de "
-        f"{_fmt1(tasas_ars.get('lecap_corta_tem'))}% (tramo corto) a {_fmt1(tasas_ars.get('lecap_larga_tem'))}% (tramo largo) -- el contrato no especifica plazos "
-        f"en días ni tickers puntuales para estos dos puntos. El único título Boncer con dato real es TZX27, con TIR real de +{_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}% anual "
-        f"({SIN_FUENTE} para otros Boncer como TZX28). A partir de esta estructura, el <b>breakeven de inflación implícita</b> se sitúa en {_fmt1(_breakeven_mensual)}% mensual para el "
-        f"tramo corto y {_fmt1(_breakeven_anualizado)}% anualizado (derivado por capitalización compuesta simple del dato mensual, no una serie anualizada observada aparte).",
+        f"El Estimador Mensual de Actividad Económica (EMAE) creció {_fmt1(actividad.get('emae_interanual_pct'), signo=True)}% en la comparación interanual y avanzó "
+        f"{_fmt1(actividad.get('emae_desestacionalizado_mom_pct'), signo=True)}% en su medición desestacionalizada respecto al mes previo. {_tendencia_txt}, ratificando la "
+        "trayectoria de recuperación de la actividad.",
         body_style
     ))
     elements.append(Paragraph(
-        f"Dado que el REM proyecta una inflación mensual de {_fmt1(tasas_ars.get('inflacion_esperada_rem_tem'))}% (el contrato solo trae este punto, no un sendero descendente), "
-        f"la tasa fija ofrece un premio de {fmt_num(tasas_ars.get('premio_tasa_fija_pbs'), 0)} pb mensuales sobre la inflación esperada. La estrategia táctica óptima consiste en "
-        "maximizar exposición en Lecaps del tramo corto para capturar el diferencial de rendimiento real sin asumir el riesgo de extensión de duration.",
+        f"El contrato de datos no desagrega el EMAE por sector de actividad (minería, agro, comercio, industria, intermediación financiera, construcción): la desagregación "
+        f"sectorial con variación i.a./MoM que solía mostrarse aquí no tiene fuente automatizable en el repositorio: {SIN_FUENTE} y se omite en vez de presentar cifras no verificadas.",
         body_style
     ))
     elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_1_rates.png"), width=532, height=300))
+    elements.append(Image(_find_image("chart_indec_emae_master.png"), width=532, height=300))
     elements.append(Spacer(1, 4))
 
-    _lecap_corta_tem = tasas_ars.get("lecap_corta_tem")
-    _lecap_larga_tem = tasas_ars.get("lecap_larga_tem")
-    _lecap_corta_tna = round(_lecap_corta_tem * 12, 1) if _lecap_corta_tem is not None else None  # TNA simple (TEM x 12), no compuesta
-    _lecap_larga_tna = round(_lecap_larga_tem * 12, 1) if _lecap_larga_tem is not None else None
-    # "Duration / Convex." se retira: 100% s/d en las 4 filas (no hay motor
-    # de pricing de bonos en el repositorio). "Bopreal Serie 3 (USD)" se
-    # retira como fila: sin esa columna, no le queda un solo dato real en
-    # ninguna de las restantes (ver Seccion 0 de AGENT_RUNBOOK.md).
-    tabla_tactica_data = [
-        [Paragraph("<b>Instrumento / Especie</b>", cell_header_style), Paragraph("<b>TNA / TEM</b>", cell_header_style), Paragraph("<b>Breakeven / TIR</b>", cell_header_style), Paragraph("<b>Tesis & Ponderación Táctica</b>", cell_header_style)],
-        [Paragraph("Lecap (tramo corto)", cell_style_left), Paragraph(f"{_fmt1(_lecap_corta_tna)}% TNA ({_fmt1(_lecap_corta_tem)}% TEM)", cell_style_center), Paragraph(f"BE: {_fmt1(tasas_ars.get('breakeven_inflacion_tem'))}% MoM", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Máximo carry con riesgo tasa mínimo. El contrato no especifica ticker ni plazo en días.", cell_style_left)],
-        [Paragraph("Lecap (tramo largo)", cell_style_left), Paragraph(f"{_fmt1(_lecap_larga_tna)}% TNA ({_fmt1(_lecap_larga_tem)}% TEM)", cell_style_center), Paragraph("BE: s/d (contrato trae un único breakeven, sin desagregar por tramo)", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Captura tasa fija en el tramo largo de la curva Lecap.", cell_style_left)],
-        [Paragraph("Boncer TZX27", cell_style_left), Paragraph(f"CER + {_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}% TIR Real", cell_style_center), Paragraph(f"TIR Real: +{_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}%", cell_style_center), Paragraph("<b>NEUTRAL</b> · Cobertura si regulados aceleran por encima de la tasa fija.", cell_style_left)],
-    ]
-    t_tactica = Table(tabla_tactica_data, colWidths=[125, 115, 100, 192])
-    t_tactica.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,2), (-1,2), colors.white),
-        ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
-        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
-        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 2.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-    ]))
-    elements.append(t_tactica)
-
+    elements.append(Paragraph(
+        "<i>El INDEC no publica el EMAE desagregado por rama de actividad con la granularidad mensual que requeriría un semáforo sectorial -- la tabla que solía "
+        "presentarse aquí (minería, agro, finanzas, construcción, comercio) no tiene conector real en este repositorio y se retira en vez de mostrar valores no verificados.</i>",
+        fig_caption
+    ))
     elements.append(PageBreak())
 
     # =============================================================
@@ -991,45 +987,9 @@ def generar_informe_mensual_reportlab():
     elements.append(PageBreak())
 
     # =============================================================
-    # PÁGINA 7: 3. ACTIVIDAD EMAE (INFOGRAFÍA INDEC MASTER)
+    # PÁGINA 7: 3. SECTORES CUYO (INFOGRAFÍA INDEC MASTER)
     # =============================================================
-    elements.append(Paragraph("3. Estimador Mensual de Actividad Económica (EMAE)", h1_style))
-    elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
-
-    _emae_tendencia_mom = None
-    if emae_hist and len(emae_hist.get("tendencia_ciclo", [])) >= 2:
-        _t_serie = emae_hist["tendencia_ciclo"]
-        _emae_tendencia_mom = round(100 * (_t_serie[-1] / _t_serie[-2] - 1), 2)
-    _tendencia_txt = (
-        f"La tendencia-ciclo (serie real INDEC, src/fetch_series_indec_bcra.py) avanzó {_fmt1(_emae_tendencia_mom, signo=True)}% mensual"
-        if _emae_tendencia_mom is not None else f"La tendencia-ciclo mensual: {SIN_FUENTE}"
-    )
-    elements.append(Paragraph(
-        f"El Estimador Mensual de Actividad Económica (EMAE) creció {_fmt1(actividad.get('emae_interanual_pct'), signo=True)}% en la comparación interanual y avanzó "
-        f"{_fmt1(actividad.get('emae_desestacionalizado_mom_pct'), signo=True)}% en su medición desestacionalizada respecto al mes previo. {_tendencia_txt}, ratificando la "
-        "trayectoria de recuperación de la actividad.",
-        body_style
-    ))
-    elements.append(Paragraph(
-        f"El contrato de datos no desagrega el EMAE por sector de actividad (minería, agro, comercio, industria, intermediación financiera, construcción): la desagregación "
-        f"sectorial con variación i.a./MoM que solía mostrarse aquí no tiene fuente automatizable en el repositorio: {SIN_FUENTE} y se omite en vez de presentar cifras no verificadas.",
-        body_style
-    ))
-    elements.append(Spacer(1, 2))
-    elements.append(Image(_find_image("chart_indec_emae_master.png"), width=532, height=300))
-    elements.append(Spacer(1, 4))
-
-    elements.append(Paragraph(
-        "<i>El INDEC no publica el EMAE desagregado por rama de actividad con la granularidad mensual que requeriría un semáforo sectorial -- la tabla que solía "
-        "presentarse aquí (minería, agro, finanzas, construcción, comercio) no tiene conector real en este repositorio y se retira en vez de mostrar valores no verificados.</i>",
-        fig_caption
-    ))
-    elements.append(PageBreak())
-
-    # =============================================================
-    # PÁGINA 8: 4. SECTORES CUYO (INFOGRAFÍA INDEC MASTER)
-    # =============================================================
-    elements.append(Paragraph("4. Desagregación Sectorial y Producción en Mendoza y Cuyo", h1_style))
+    elements.append(Paragraph("3. Desagregación Sectorial y Producción en Mendoza y Cuyo", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
@@ -1053,9 +1013,9 @@ def generar_informe_mensual_reportlab():
     elements.append(PageBreak())
 
     # =============================================================
-    # PÁGINA 9: 4.1 COMPARATIVO REGIONAL CUYO (MENDOZA / SAN JUAN / SAN LUIS)
+    # PÁGINA 8: 3.1 COMPARATIVO REGIONAL CUYO (MENDOZA / SAN JUAN / SAN LUIS)
     # =============================================================
-    elements.append(Paragraph("4.1. Comparativo Regional: Índice Sintético de Actividad (ISARC)", h1_style))
+    elements.append(Paragraph("3.1. Comparativo Regional: Índice Sintético de Actividad (ISARC)", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     elements.append(Paragraph(
@@ -1120,9 +1080,9 @@ def generar_informe_mensual_reportlab():
     elements.append(PageBreak())
 
     # =============================================================
-    # PÁGINA 10: 5. BALANCE BCRA Y REGLA DE TAYLOR
+    # PÁGINA 9: 4. BALANCE BCRA Y POSTURA MONETARIA
     # =============================================================
-    elements.append(Paragraph("5. Balance del BCRA, Pasivos Cuasifiscales y Brecha de Taylor", h1_style))
+    elements.append(Paragraph("4. Balance del BCRA, Pasivos Cuasifiscales y Postura Monetaria", h1_style))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
 
     _base_monetaria_ultimo = None
@@ -1178,6 +1138,64 @@ def generar_informe_mensual_reportlab():
         ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     elements.append(t_rin)
+
+    elements.append(PageBreak())
+
+    # =============================================================
+    # PÁGINA 10: 5. ARBITRAJE EN PESOS Y BREAKEVEN
+    # =============================================================
+    elements.append(Paragraph("5. Arbitraje de Tasas en ARS, Breakeven y Recomendaciones de Cartera", h1_style))
+    elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
+
+    _breakeven_mensual = tasas_ars.get("breakeven_inflacion_tem")
+    _breakeven_anualizado = round(100 * ((1 + _breakeven_mensual / 100) ** 12 - 1), 2) if _breakeven_mensual is not None else None
+    elements.append(Paragraph(
+        f"El mercado de deuda en pesos refleja una marcada preferencia por el carry trade de corto plazo. La curva de Lecaps (tasa fija) opera con TEMs de "
+        f"{_fmt1(tasas_ars.get('lecap_corta_tem'))}% (tramo corto) a {_fmt1(tasas_ars.get('lecap_larga_tem'))}% (tramo largo) -- el contrato no especifica plazos "
+        f"en días ni tickers puntuales para estos dos puntos. El único título Boncer con dato real es TZX27, con TIR real de +{_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}% anual "
+        f"({SIN_FUENTE} para otros Boncer como TZX28). A partir de esta estructura, el <b>breakeven de inflación implícita</b> se sitúa en {_fmt1(_breakeven_mensual)}% mensual para el "
+        f"tramo corto y {_fmt1(_breakeven_anualizado)}% anualizado (derivado por capitalización compuesta simple del dato mensual, no una serie anualizada observada aparte).",
+        body_style
+    ))
+    elements.append(Paragraph(
+        f"Dado que el REM proyecta una inflación mensual de {_fmt1(tasas_ars.get('inflacion_esperada_rem_tem'))}% (el contrato solo trae este punto, no un sendero descendente), "
+        f"la tasa fija ofrece un premio de {fmt_num(tasas_ars.get('premio_tasa_fija_pbs'), 0)} pb mensuales sobre la inflación esperada. La estrategia táctica óptima consiste en "
+        "maximizar exposición en Lecaps del tramo corto para capturar el diferencial de rendimiento real sin asumir el riesgo de extensión de duration.",
+        body_style
+    ))
+    elements.append(Spacer(1, 2))
+    elements.append(Image(_find_image("chart_indec_1_rates.png"), width=532, height=300))
+    elements.append(Spacer(1, 4))
+
+    _lecap_corta_tem = tasas_ars.get("lecap_corta_tem")
+    _lecap_larga_tem = tasas_ars.get("lecap_larga_tem")
+    _lecap_corta_tna = round(_lecap_corta_tem * 12, 1) if _lecap_corta_tem is not None else None  # TNA simple (TEM x 12), no compuesta
+    _lecap_larga_tna = round(_lecap_larga_tem * 12, 1) if _lecap_larga_tem is not None else None
+    # "Duration / Convex." se retira: 100% s/d en las 4 filas (no hay motor
+    # de pricing de bonos en el repositorio). "Bopreal Serie 3 (USD)" se
+    # retira como fila: sin esa columna, no le queda un solo dato real en
+    # ninguna de las restantes (ver Seccion 0 de AGENT_RUNBOOK.md).
+    tabla_tactica_data = [
+        [Paragraph("<b>Instrumento / Especie</b>", cell_header_style), Paragraph("<b>TNA / TEM</b>", cell_header_style), Paragraph("<b>Breakeven / TIR</b>", cell_header_style), Paragraph("<b>Tesis & Ponderación Táctica</b>", cell_header_style)],
+        [Paragraph("Lecap (tramo corto)", cell_style_left), Paragraph(f"{_fmt1(_lecap_corta_tna)}% TNA ({_fmt1(_lecap_corta_tem)}% TEM)", cell_style_center), Paragraph(f"BE: {_fmt1(tasas_ars.get('breakeven_inflacion_tem'))}% MoM", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Máximo carry con riesgo tasa mínimo. El contrato no especifica ticker ni plazo en días.", cell_style_left)],
+        [Paragraph("Lecap (tramo largo)", cell_style_left), Paragraph(f"{_fmt1(_lecap_larga_tna)}% TNA ({_fmt1(_lecap_larga_tem)}% TEM)", cell_style_center), Paragraph("BE: s/d (contrato trae un único breakeven, sin desagregar por tramo)", cell_style_center), Paragraph("<b>SOBREPONDERAR</b> · Captura tasa fija en el tramo largo de la curva Lecap.", cell_style_left)],
+        [Paragraph("Boncer TZX27", cell_style_left), Paragraph(f"CER + {_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}% TIR Real", cell_style_center), Paragraph(f"TIR Real: +{_fmt1(tasas_ars.get('boncer_tzx27_tir_real'))}%", cell_style_center), Paragraph("<b>NEUTRAL</b> · Cobertura si regulados aceleran por encima de la tasa fija.", cell_style_left)],
+    ]
+    t_tactica = Table(tabla_tactica_data, colWidths=[125, 115, 100, 192])
+    t_tactica.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F8FAFC")),
+        ('BACKGROUND', (0,2), (-1,2), colors.white),
+        ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
+        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
+        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+    ]))
+    elements.append(t_tactica)
 
     elements.append(PageBreak())
 
