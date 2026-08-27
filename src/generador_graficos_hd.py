@@ -455,17 +455,23 @@ def plot_regional_cuyo(ax, fig, actividad=None):
     ni la desagregacion sectorial (industria/construccion/empleo), que la
     version anterior de este grafico presentaba con un literal de relleno
     (`regional_rows`) identico en las 3 provincias en distintas corridas.
-    Panel A: unico dato real disponible. Panel B: se declara explicitamente
-    que no hay fuente automatizable en vez de simular la desagregacion."""
+
+    Version anterior: Panel A con las 3 barras, Panel B vacio (solo un
+    texto "sin fuente automatizable") -- el usuario senalo que varios
+    graficos del modulo "les falta valor agregado". En vez de dejar medio
+    grafico en blanco, se usa el unico dato real adicional que YA esta en
+    el mismo `actividad` (emae_interanual_pct, ya cargado en el contrato y
+    citado en otras secciones) como linea de referencia nacional -- permite
+    leer de un vistazo si cada provincia crece por encima o por debajo del
+    promedio pais, sin fabricar ningun dato nuevo."""
     ax.axis('off')
-    ax1 = fig.add_axes([0.12, 0.11, 0.36, 0.50])
-    ax2 = fig.add_axes([0.58, 0.11, 0.34, 0.50])
+    ax1 = fig.add_axes([0.09, 0.11, 0.85, 0.50])
     ax1.set_facecolor("#FFFFFF")
-    ax2.set_facecolor("#FFFFFF")
 
     actividad = actividad or {}
     provincias_campos = [("Mendoza", "isarc_mendoza_ia_pct"), ("San Juan", "isarc_san_juan_ia_pct"), ("San Luis", "isarc_san_luis_ia_pct")]
     datos = [(p, actividad.get(c)) for p, c in provincias_campos if actividad.get(c) is not None]
+    emae_ia = actividad.get("emae_interanual_pct")
 
     if not datos:
         ax1.axis('off')
@@ -476,23 +482,30 @@ def plot_regional_cuyo(ax, fig, actividad=None):
         isarc_ia = [v for _, v in datos]
         colores_prov = [C_NAVY, C_TEAL, C_AMBER][:len(provincias)]
         x = np.arange(len(provincias))
-        ax1.bar(x, isarc_ia, width=0.52, color=colores_prov, alpha=0.92)
-        ax1.axhline(0, color=C_SLATE, lw=0.8)
+        ax1.bar(x, isarc_ia, width=0.42, color=colores_prov, alpha=0.92, zorder=3)
+        ax1.axhline(0, color=C_SLATE, lw=0.8, zorder=2)
         for i, ia in enumerate(isarc_ia):
             ax1.annotate(f"{ia:+.1f}%".replace(".", ","), (x[i], ia), xytext=(0, 4 if ia >= 0 else -12), textcoords="offset points",
                          ha='center', fontsize=8.2, fontweight='bold', color=colores_prov[i])
         ax1.set_xticks(x)
-        ax1.set_xticklabels(provincias, fontsize=7.6)
-        ax1.set_ylabel("Var. interanual ISARC (%)", fontsize=7.2, color=C_SLATE)
-        _pad = max(abs(v) for v in isarc_ia) * 0.4
-        ax1.set_ylim(min(0, min(isarc_ia)) - _pad, max(isarc_ia) + _pad)
-        ax1.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6)
-    ax1.set_title("A. ISARC: Variación Interanual por Provincia", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
+        ax1.set_xticklabels(provincias, fontsize=8.0)
+        ax1.set_ylabel("Variación interanual (%)", fontsize=7.5, color=C_SLATE)
+        _valores_escala = list(isarc_ia) + ([emae_ia] if emae_ia is not None else [])
+        _pad = max(abs(v) for v in _valores_escala) * 0.35
+        ax1.set_ylim(min(0, min(_valores_escala)) - _pad, max(_valores_escala) + _pad)
+        ax1.grid(axis='y', linestyle='--', color=C_GRID, lw=0.6, zorder=0)
 
-    ax2.axis('off')
-    ax2.text(0.5, 0.5, "Nivel del índice (base 100) y desagregación\npor sector (industria/construcción/empleo)\nsin fuente pública automatizable.\nRequiere carga manual desde\nDEIE Mendoza / IPEC San Juan / IPEC San Luis.",
-             ha='center', va='center', fontsize=7.8, color=C_SLATE, transform=ax2.transAxes)
-    ax2.set_title("B. Desagregación Sectorial (sin fuente automatizable)", fontsize=8.0, fontweight='bold', color=C_NAVY, loc='left')
+        if emae_ia is not None:
+            ax1.axhline(emae_ia, color=C_RED, lw=1.5, linestyle='--', zorder=2.5)
+            _emae_fmt = f"{emae_ia:+.1f}%".replace(".", ",")
+            # Ancla en x=1 (posicion de la barra del medio, San Juan): con 3
+            # provincias esa columna deja el espacio mas despejado alrededor
+            # de la linea de referencia sin pisar ninguna barra, a diferencia
+            # de anclar en el borde izquierdo (se superponia con Mendoza).
+            ax1.text(1, emae_ia, f"EMAE Nacional i.a.: {_emae_fmt}",
+                      ha='center', va='bottom', fontsize=7.4, fontweight='bold', color=C_RED,
+                      bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.85))
+    ax1.set_title("ISARC: Variación Interanual por Provincia vs. EMAE Nacional", fontsize=8.3, fontweight='bold', color=C_NAVY, loc='left')
 
 # ==============================================================================
 # 5. FIGURA 4: BALANCE CONSOLIDADO BCRA & REGLA DE TAYLOR
@@ -1005,11 +1018,11 @@ def generar_todas_las_infografias(*args, **kwargs):
         "chart_indec_3b_regional_cuyo.png",
         "DEIE MENDOZA / IPEC SAN JUAN / IPEC SAN LUIS",
         "Comparativo Regional: Índice Sintético de Actividad (ISARC)",
-        "Variación interanual por provincia (contrato manual) -- nivel y desagregación sectorial sin fuente pública",
+        "Variación interanual por provincia (contrato manual) vs. EMAE nacional -- nivel del índice y desagregación sectorial sin fuente pública",
         [
             ("ISARC MENDOZA", fmt_pct(actividad.get("isarc_mendoza_ia_pct"), 1, True), "Var. i.a., carga manual", C_NAVY),
-            ("ISARC SAN JUAN", fmt_pct(actividad.get("isarc_san_juan_ia_pct"), 1, True), "Var. i.a., carga manual", C_TEAL),
             ("ISARC SAN LUIS", fmt_pct(actividad.get("isarc_san_luis_ia_pct"), 1, True), "Var. i.a., carga manual", C_AMBER),
+            ("EMAE NACIONAL", fmt_pct(actividad.get("emae_interanual_pct"), 1, True), "Benchmark i.a., ver línea de referencia", C_RED),
         ],
         lambda ax, fig: plot_regional_cuyo(ax, fig, actividad),
         "Fuente: contrato datos_del_dia.json (actividad.*). Nivel de índice y desagregación sectorial sin fuente automatizable."
