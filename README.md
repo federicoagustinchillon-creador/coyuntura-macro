@@ -10,16 +10,6 @@ Sistema integral y automatizado de ingesta de datos, modelización econométrica
 ---
 
 ## 1. Arquitectura Modular del Repositorio
-# Pipeline de Investigación Macroeconómica Cuantitativa y Mercado de Capitales
-
-Sistema integral y automatizado de ingesta de datos, modelización econométrica y publicación periódica (diaria, semanal y mensual) de informes de coyuntura macroeconómica argentina y regional para comités de inversión, mesas de dinero y el ámbito académico.
-
-**Autor:** Federico Agustín Chillón  
-**Afiliación:** Investigación Cuantitativa Independiente · Ciencias Económicas — Universidad Nacional de Cuyo  
-
----
-
-## 1. Arquitectura Modular del Repositorio
 
 ```
 coyuntura-macro/
@@ -28,13 +18,13 @@ coyuntura-macro/
 ├── AGENTS.md                                  # Protocolo mandatorio de ejecución y sincronización
 ├── README.md                                  # Documentación técnica, metodológica y operativa
 │
-├── src/                                       # Módulos de procesamiento analítico y compilación
+├── src/                                       # Módulos de procesamiento analítico y compilación editorial
 │   ├── actualizador_datos.py                  # Ingesta, consolidación y cálculo de tasas reales (Fisher)
-│   ├── generador_graficos_hd.py               # Renderizado de 9 infografías vectoriales a 300 DPI con tarjetas KPI
-│   ├── generador_informe_diario.py            # Compilador flash diario (2 páginas)
-│   ├── generador_paper_semanal.py             # Compilador paper semanal académico (4 páginas APA 7)
-│   ├── generador_informe_mensual_master.py     # Compilador informe mensual master en DOCX
-│   └── generador_informe_mensual_reportlab.py # Compilador maestro ReportLab (14 páginas, ZeroWhitespaceCanvas, TOC y Outlines)
+│   ├── generador_graficos_hd.py               # Renderizado de 10 infografías vectoriales a 300 DPI (diseño Tufte / FT)
+│   ├── generador_informe_diario_reportlab.py  # Monitor Flash Diario (2 páginas exactas, doble columna y pull-quote)
+│   ├── generador_paper_semanal_reportlab.py   # Paper Semanal Académico (4 páginas exactas APA 7, Nelson-Siegel, escenarios)
+│   ├── generador_informe_mensual_reportlab.py # Informe Mensual Master (15 páginas exactas, 5 componentes editoriales superiores)
+│   └── contexto_informe.py                    # Carga y estructuración del contexto macrofinanciero dinámico
 │
 ├── 01_Bases_Datos/                            # Base de datos centralizada
 │   └── Base_Datos_Macro_Financiera.xlsx       # 5 solapas: Cambiario, Curva USD, Pesos, BCRA, Inflación
@@ -43,7 +33,7 @@ coyuntura-macro/
 │   ├── ejecutar_pipeline_completo.bat         # Batch runner para Windows Task Scheduler
 │   └── verificar_estado_ecosistema.py         # Auditor automático de páginas, figuras y cobertura vertical
 │
-├── 03_Figuras_HD/                             # 9 Infografías vectoriales en 300 DPI con diseño de banca privada
+├── 03_Figuras_HD/                             # 10 Infografías vectoriales en 300 DPI con diseño de banca privada
 │   ├── chart_indec_emae_master.png            # Serie histórica 32 meses EMAE + Desest. + Tendencia-Ciclo
 │   ├── chart_indec_1_rates.png                # Curva Lecaps vs. Boncer CER + Breakeven vs. REM
 │   ├── chart_indec_2_ipc.png                  # Dispersión minorista/mayorista + Convergencia 2026
@@ -52,23 +42,21 @@ coyuntura-macro/
 │   ├── chart_indec_4_monetary.png             # Pasivos monetarios Base/Lefi/Pases + Regla de Taylor
 │   ├── chart_indec_5_sovereign.png            # Curva spot Nelson-Siegel Bonares/Globales + Forward f(t)
 │   ├── chart_indec_6_fx.png                   # Cotizaciones y brechas spot + Futuros Matba-Rofex con prob. salto
-│   └── chart_indec_7_equity.png               # Renta variable líder + Radar EV/EBITDA vs. Margen
+│   ├── chart_indec_7_equity.png               # Renta variable líder + Radar EV/EBITDA vs. Margen
+│   └── chart_indec_8_tcr.png                  # Tipo de Cambio Real Bilateral Argentina-EEUU (base 2016=100)
 │
-├── 04_Informes_Diarios/                       # Monitor Flash Diario de Mercados (2 páginas)
-│   ├── 2026-08-21_Monitor_Diario_Mercados.docx
-│   └── 2026-08-21_Monitor_Diario_Mercados.pdf
+├── 04_Informes_Diarios/                       # Monitor Flash Diario de Mercados (2 páginas exactas)
+│   └── 2026-08-25_Monitor_Diario_Mercados.pdf
 │
-├── 05_Informes_Semanales_APA7/                # Papers semanales de investigación macro (4 páginas APA 7)
-│   ├── 2026-08-21_Paper_Macroeconomico_Semanal.docx
-│   └── 2026-08-21_Paper_Macroeconomico_Semanal.pdf
+├── 05_Informes_Semanales_APA7/                # Papers semanales de investigación macro (4 páginas exactas APA 7)
+│   └── 2026-08-25_Paper_Macroeconomico_Semanal.pdf
 │
-├── 06_Informes_Mensuales_OERU/                # Informes mensuales de investigación (14 páginas ReportLab)
-│   ├── Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.docx
+├── 06_Informes_Mensuales_OERU/                # Informes mensuales de investigación (15 páginas exactas ReportLab)
 │   └── Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf
 │
 └── 07_Reportes_Ejecutivos_PDF/                # Documentos ejecutivos consolidados listos para comités
-    ├── 2026-08-21_Monitor_Diario_Mercados.pdf
-    ├── 2026-08-21_Paper_Macroeconomico_Semanal.pdf
+    ├── 2026-08-25_Monitor_Diario_Mercados.pdf
+    ├── 2026-08-25_Paper_Macroeconomico_Semanal.pdf
     └── Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf
 ```
 
@@ -102,11 +90,30 @@ $$\text{ISARC}_{i,t} = \sum_{k=1}^K w_k \cdot I_{i,k,t}$$
 ### F. Tipo de Cambio Real Bilateral (Atraso/Competitividad Cambiaria)
 Distinto de la brecha cambiaria (prima de mercado paralelo por cepo): mide la desalineación del tipo de cambio frente al poder de compra relativo entre Argentina y Estados Unidos, indexado a 100 en diciembre de 2016 (misma base que el IPC nacional vigente del INDEC):
 $$\text{TCR}_{indice}(t) = 100 \cdot \frac{TCN(t)}{TCN(t_0)} \cdot \frac{P_{EEUU}(t)/P_{EEUU}(t_0)}{P_{ARG}(t)/P_{ARG}(t_0)}$$
-Un valor por debajo de 100 indica apreciación real (atraso) relativa al punto de partida; por encima de 100, depreciación real (mayor competitividad). Fuentes: BCRA v4.0 (tipo de cambio mayorista A3500), INDEC vía el portal de series de tiempo del Estado (IPC nacional) y BLS (CPI-U) -- ver `src/fetch_tcr_bilateral.py`.
+### G. Fragilidad y Co-Movimiento Sistémico (Kritzman & Li, 2010)
+Para monitorear el riesgo de contagio multiactivo sin relying en correlaciones lineales simples:
+$$\text{Absorption Ratio} = \frac{\sum_{j=1}^k \lambda_j}{\sum_{i=1}^N \lambda_i}, \quad d_t^2 = (y_t - \mu)' \Sigma^{-1} (y_t - \mu)$$
+Donde $d_t^2$ representa la distancia de Mahalanobis frente a la distribución histórica conjunta de rendimientos, alertando desacoples de liquidez.
+
+### H. Demanda Monetaria y Equilibrio de Pasivos (Cagan / Baumol-Tobin)
+$$\ln(M/P)_t = \alpha_0 - \eta \, i_t + \gamma \, y_t + \varepsilon_t$$
+Formaliza la elasticidad de la demanda de dinero frente a la tasa nominal de política monetaria ($i_t$) y la extinción de pasivos remunerados del BCRA.
 
 ---
 
-## 3. Instrucciones de Ejecución y Automatización Desatendida
+## 3. Arquitectura Editorial Institucional (Estándar Wall Street / BIS)
+
+Para garantizar un estándar visual y analítico a la altura de Goldman Sachs GIR, Fondo Monetario Internacional y Bank for International Settlements, se erradicó por completo la redundancia de cuadrículas de relleno ("tablitis"), reemplazándolas por 5 técnicas editoriales superiores calibradas al presupuesto vertical de página:
+
+1. **Prosa Analítica en Doble Columna Asimétrica:** Descomposición causal de variables contrapuesta con implicancias operativas para tesorerías y carteras.
+2. **Tesis Cuantitativa con Lead-ins en Negrita y Filete Capilar:** Factores críticos y catalizadores sectoriales estructurados jerárquicamente con borde lateral Oxford Navy (`#0B2545`).
+3. **Matrices de Escenarios Condicionales Calibrados:** Proyecciones a 90/180 días con asignación de probabilidades paramétricas (Escenario Base, Tensión y Salida/Convergencia) y directrices tácticas.
+4. **Formulaciones Matemáticas de Primeros Principios:** Bloques LaTeX embebidos para fundamentos teóricos rigurosos (Nelson-Siegel, Fisher Breakeven, Paridad CIP, Cagan/Baumol-Tobin, Mahalanobis).
+5. **Pull-Quotes de Impacto Editorial:** Dictámenes ejecutivos de autor enmarcados por filetes capilares institucionales.
+
+---
+
+## 4. Instrucciones de Ejecución y Automatización Desatendida
 
 Para ejecutar el pipeline completo de forma desatendida y sincronizada:
 
@@ -125,11 +132,11 @@ Para ejecutar el pipeline completo de forma desatendida y sincronizada:
   python 02_Scripts_Automatizacion/verificar_estado_ecosistema.py
   ```
 
-El pipeline ejecutará automáticamente la validación de bases, renderizado de las 9 infografías vectoriales a 300 DPI con diseño de banca privada, compilación de los 3 niveles de informes en Word y ReportLab (14 páginas editoriales), exportación oficial a PDF vía Microsoft Word COM (`win32com.client`) y consolidación de entregables ejecutivos tanto localmente como en el espejo canónico de Google Drive (`C:\Users\fedea\Google Drive\coyuntura-macro`).
+El pipeline ejecutará automáticamente la validación de bases, renderizado de las 10 infografías vectoriales a 300 DPI con diseño Tufte / FT, compilación de los 3 niveles de informes en ReportLab (Mensual de 15 páginas exactas, Semanal de 4 páginas y Diario de 2 páginas), exportación oficial de entregables ejecutivos tanto localmente como en el espejo canónico de Google Drive (`C:\Users\fedea\Google Drive\coyuntura-macro`).
 
 ---
 
-## 4. Feeds en Vivo y Dashboard Web de Acompañamiento
+## 5. Feeds en Vivo y Dashboard Web de Acompañamiento
 
 Para el consumo entre informes (lunes a jueves), ademas del ciclo editorial
 de PDFs, el ecosistema expone:
