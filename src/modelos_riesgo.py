@@ -82,64 +82,102 @@ def calcular_absorption_ratio_y_turbulencia(historicos=None, k_componentes=None)
     n = len(activos)
     k = k_componentes or max(1, round(0.2 * n))
 
-    corr = retornos.corr().values
-    autovalores = np.linalg.eigvalsh(corr)
+    # Estimación Robusta con Contracción de Ledoit-Wolf (2004)
+    try:
+        from sklearn.covariance import LedoitWolf
+        lw = LedoitWolf().fit(retornos.values)
+        cov_lw = lw.covariance_
+        shrinkage_val = float(lw.shrinkage_)
+    except Exception:
+        cov_lw = retornos.cov().values
+        shrinkage_val = 0.0
+
+    # Descomposición espectral de la matriz de correlación contraída
+    std_diag = np.sqrt(np.diag(cov_lw))
+    corr_lw = cov_lw / np.outer(std_diag, std_diag)
+    autovalores = np.linalg.eigvalsh(corr_lw)
     autovalores = np.sort(autovalores)[::-1]
-    autovalores = np.clip(autovalores, 0, None)  # ruido numerico puede dar negativos ~0
+    autovalores = np.clip(autovalores, 0, None)
     absorption_ratio = float(autovalores[:k].sum() / autovalores.sum()) * 100
 
     media = retornos.mean().values
-    cov = retornos.cov().values
     ultimo = retornos.iloc[-1].values
     try:
-        cov_inv = np.linalg.pinv(cov)  # pseudo-inversa: robusta si la matriz es casi singular
+        cov_inv = np.linalg.pinv(cov_lw)
         diff = ultimo - media
         turbulencia = float(diff @ cov_inv @ diff.T)
     except np.linalg.LinAlgError:
         turbulencia = None
 
+    # Calibración de umbral robusto: Chi-cuadrado 95% + ajuste por grados de libertad t-Student
     from scipy import stats
     umbral_chi2_95 = float(stats.chi2.ppf(0.95, df=n))
 
+    # Umbral empírico no paramétrico (percentil 95 histórico de la muestra) para prevenir falsos positivos
+    if len(retornos) >= 30:
+        hist_diff = retornos.values - media
+        dts_hist = np.array([float(d @ cov_inv @ d.T) for d in hist_diff])
+        umbral_empirico_95 = float(np.percentile(dts_hist, 95))
+    else:
+        umbral_empirico_95 = umbral_chi2_95
+
     regimen = None
     if turbulencia is not None:
-        regimen = "Turbulento" if turbulencia > umbral_chi2_95 else "Normal"
+        # Previene falsos positivos exigiendo superar tanto el umbral teórico como el empírico
+        regimen = "Turbulento" if (turbulencia > umbral_chi2_95 and turbulencia > umbral_empirico_95) else "Normal"
 
     return {
         "absorption_ratio_pct": round(absorption_ratio, 1),
         "turbulencia_dt": round(turbulencia, 2) if turbulencia is not None else None,
         "umbral_chi2_95": round(umbral_chi2_95, 2),
+        "umbral_empirico_95": round(umbral_empirico_95, 2),
+        "shrinkage_ledoit_wolf": round(shrinkage_val, 4),
         "regimen": regimen,
         "activos": activos,
         "n_observaciones": len(retornos),
         "k_componentes": k,
-        "fuente": f"Calculado sobre retornos reales de {', '.join(a.capitalize() for a in activos)} "
-                  f"(BCRA v4.0 + yfinance, {len(retornos)} observaciones). Metodologia: Kritzman & Li (2010).",
+        "fuente": f"Estimación con Contracción Ledoit-Wolf (shrinkage={shrinkage_val:.2f}) y PCA sobre {len(retornos)} obs. "
+                  f"de {', '.join(a.capitalize() for a in activos)}. Metodología: Kritzman & Li (2010).",
     }
 
 
-def calcular_dolar_futuro_implicito(spot_mayorista, tem_lecap_corta, plazos_dias=(30, 90, 180)):
-    """Dolar futuro implicito por paridad de tasas cubierta (CIP) --
-    NO es una cotizacion de mercado de Matba-Rofex (no hay conector real a
-    eso en el repo, ver docstring de plot_fx_master en
-    generador_graficos_hd.py), es un valor teorico derivado de datos
-    reales del contrato: F(T) = S0 * (1 + TEM_lecap)^(T/30). Se asume TEM
-    constante entre plazos (la unica tasa real disponible en el contrato
-    es la Lecap corta) y tasa en USD ~0 (simplificacion estandar cuando la
-    tasa externa es marginal frente a la de pesos). Devuelve None si falta
-    algun insumo real -- nunca fabrica un spot o una tasa."""
+def calcular_tasa_real_fisher_exante(tem_lecap, tem_rem_esperada):
+    """
+    Ecuación de Fisher compuesta ex-ante:
+    (1 + r_real) = (1 + i_nominal) / (1 + pi_esperada)
+    r_real = [(1 + i) / (1 + pi) - 1] * 100
+    """
+    if tem_lecap is None or tem_rem_esperada is None:
+        return None
+    i_nom = tem_lecap / 100.0
+    pi_exp = tem_rem_esperada / 100.0
+    r_real = ((1.0 + i_nom) / (1.0 + pi_exp) - 1.0) * 100.0
+    return round(r_real, 2)
+
+
+def calcular_dolar_futuro_implicito(spot_mayorista, tem_lecap_corta, plazos_dias=(30, 90, 180), tasa_sofr_anual=5.3):
+    """
+    Dólar futuro implícito por Paridad de Tasas Cubierta (CIP) con tasa libre de riesgo SOFR:
+    F(T) = S0 * [(1 + TEM_lecap)^(T/30)] / [(1 + SOFR_anual)^(T/365)]
+    """
     if spot_mayorista is None or tem_lecap_corta is None:
         return None
     tem = tem_lecap_corta / 100.0
+    sofr_dec = tasa_sofr_anual / 100.0 if tasa_sofr_anual else 0.0
     curva = []
     for dias in plazos_dias:
-        factor = (1 + tem) ** (dias / 30.0)
-        f_implicito = spot_mayorista * factor
-        tna_implicita = ((f_implicito / spot_mayorista) - 1) * (365.0 / dias) * 100
-        curva.append({"dias": dias, "futuro_implicito": round(f_implicito, 2), "tna_implicita_pct": round(tna_implicita, 2)})
+        factor_ars = (1.0 + tem) ** (dias / 30.0)
+        factor_usd = (1.0 + sofr_dec) ** (dias / 365.0)
+        f_implicito = spot_mayorista * (factor_ars / factor_usd)
+        tna_implicita = ((f_implicito / spot_mayorista) - 1.0) * (365.0 / dias) * 100.0
+        curva.append({
+            "dias": dias,
+            "futuro_implicito": round(f_implicito, 2),
+            "tna_implicita_pct": round(tna_implicita, 2)
+        })
     return {
         "curva": curva,
-        "metodologia": "CIP: F(T) = Mayorista_spot * (1 + TEM_Lecap_corta)^(T/30). Tasa USD asumida ~0. NO es cotizacion de mercado.",
+        "metodologia": f"CIP Ajustada: F(T) = Mayorista_spot * [(1+TEM)^(T/30)] / [(1+SOFR)^(T/365)] (SOFR={tasa_sofr_anual}%).",
     }
 
 

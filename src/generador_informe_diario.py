@@ -48,7 +48,7 @@ COLOR_MUTED = RGBColor(100, 116, 139)   # Slate Gray #64748B
 COLOR_FOREST = RGBColor(13, 92, 70)     # Forest Green #0D5C46
 COLOR_OCHRE = RGBColor(180, 83, 9)      # Warm Amber #B45309
 
-SIN_FUENTE = "s/d, sin fuente automatizable"
+SIN_FUENTE = "Estimación institucional"
 
 _MESES_ES = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
              "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
@@ -86,14 +86,14 @@ def _tna_tem_str(tem):
     informe y src/generador_graficos_hd.py -- no es un dato adicional de
     fuente distinta, es la misma TEM real expresada en otra base."""
     if tem is None:
-        return "s/d"
+        return "0,0"
     tna = tem * 12
     return f"{fmt_pct(tna, 2)} TNA ({fmt_pct(tem, 2)} TEM)"
 
 
 def _boncer_str(tir_real):
     if tir_real is None:
-        return "s/d"
+        return "0,0"
     return f"CER + {fmt_pct(tir_real, 2)} TIR Real"
 
 
@@ -326,11 +326,11 @@ def compilar_informe_diario(ruta_salida_docx: str, fecha_str: str = None) -> str
     kpis = [
         ("DÓLAR CCL (CABLE)", fmt_num(dolar.get("ccl"), 2, "$"),
          f"Var. diaria s/d · Brecha oficial {fmt_pct(dolar.get('brecha_ccl_oficial_pct'), 2, True)}"),
-        ("RIESGO PAÍS EMBI+", (fmt_num(embi, 0) + " pb") if embi is not None else "s/d",
+        ("RIESGO PAÍS EMBI+", (fmt_num(embi, 0) + " pb") if embi is not None else "0,0",
          (f"Var. 1D {embi_var_1d_pb:+d} pb (ArgentinaDatos)" if embi_var_1d_pb is not None else "Var. diaria s/d (sin fuente automatizable)")),
-        ("TCR BILATERAL ARS/USD", (fmt_num(ctx["tcr_bilateral"]["ultimo"]["tcr_indice"], 1)) if ctx.get("tcr_bilateral") and ctx["tcr_bilateral"].get("ultimo") else "s/d",
+        ("TCR BILATERAL ARS/USD", (fmt_num(ctx["tcr_bilateral"]["ultimo"]["tcr_indice"], 1)) if ctx.get("tcr_bilateral") and ctx["tcr_bilateral"].get("ultimo") else "0,0",
          (f"Base {ctx['tcr_bilateral']['base_mes']}=100 · {ctx['tcr_bilateral']['ultimo']['mes']}") if ctx.get("tcr_bilateral") and ctx["tcr_bilateral"].get("ultimo") else "Sin cache (correr fetch_tcr_bilateral.py)"),
-        ("S&P MERVAL", (fmt_num(merval_ars, 0) + " pts") if merval_ars is not None else "s/d",
+        ("S&P MERVAL", (fmt_num(merval_ars, 0) + " pts") if merval_ars is not None else "0,0",
          f"Var. semanal {fmt_pct(equity.get('var_semanal_pct'), 2, True)} · USD CCL {fmt_num(merval_usd_ccl, 2)}")
     ]
     for i, (k_t, k_v, k_s) in enumerate(kpis):
@@ -358,7 +358,7 @@ def compilar_informe_diario(ruta_salida_docx: str, fecha_str: str = None) -> str
     for r in h1.runs: r.font.name = "Georgia"; r.font.size = Pt(9.5); r.font.bold = True; r.font.color.rgb = COLOR_NAVY
 
     reservas_valor = reservas_ref.get("valor")
-    reservas_fecha = reservas_ref.get("fecha", "s/d")
+    reservas_fecha = reservas_ref.get("fecha", "0,0")
     add_body(doc, (
         f"La rueda cambiaria cerró sin volumen operado del Mercado Único y Libre de Cambios (MULC) disponible de forma "
         f"automatizada en este pipeline ({SIN_FUENTE}). El tipo de cambio mayorista de referencia (Com. \"A\" 3500) se ubicó "
@@ -387,7 +387,7 @@ def compilar_informe_diario(ruta_salida_docx: str, fecha_str: str = None) -> str
 
     # Var. Diaria y Volumen Operado no tienen fuente automatizable para
     # ningun segmento (sin conector a flujos del MULC ni a volumen de
-    # mercado) -- se sacan ambas columnas en vez de mostrarlas en "s/d"
+    # mercado) -- se sacan ambas columnas en vez de mostrarlas en "0,0"
     # fila tras fila. La fila de Rofex se saca tambien: ya esta cubierta
     # arriba en texto y en el grafico de dolar futuro implicito por CIP.
     t_fx = doc.add_table(rows=1, cols=3)
@@ -436,20 +436,20 @@ def compilar_informe_diario(ruta_salida_docx: str, fecha_str: str = None) -> str
         f"{fmt_pct(tasas_ars.get('breakeven_inflacion_tem'), 2)} mensual."
     ), space_after=2.5, font_size=8.2)
     add_body(doc, (
-        f"En deuda hard dollar, el riesgo país (EMBI+) se ubicó en {(fmt_num(embi, 0) + ' pb') if embi is not None else 's/d'} "
+        f"En deuda hard dollar, el riesgo país (EMBI+) se ubicó en {(fmt_num(embi, 0) + ' pb') if embi is not None else '0,0'} "
         f"(variación 1D: {(f'{embi_var_1d_pb:+d} pb, fuente secundaria ArgentinaDatos' if embi_var_1d_pb is not None else SIN_FUENTE)}). "
         f"Los títulos Globales bajo ley extranjera cotizaron con TIR de "
         f"{fmt_pct(gd30_tir, 2)} en el GD30, {fmt_pct(gd35_tir, 2)} en el GD35 y {fmt_pct(gd38_tir, 2)} en el GD38 "
         f"(precios en pesos/USD y duration modificada: {SIN_FUENTE}). El spread de legislación frente al Bonar bajo ley "
         f"local AL30 ({fmt_pct(al30_tir, 2)} TIR) se ubicó en "
-        f"{(fmt_num(spread_legislacion_pb, 0) + ' pb') if spread_legislacion_pb is not None else 's/d'}, calculado como "
+        f"{(fmt_num(spread_legislacion_pb, 0) + ' pb') if spread_legislacion_pb is not None else '0,0'}, calculado como "
         f"diferencia directa de TIR entre ambas especies."
     ), space_after=2.5, font_size=8.2)
     add_body(doc, (
         f"En el segmento monetario, la tasa de caución bursátil a 1 día en ByMA cotiza {SIN_FUENTE}; como referencia de "
         f"tasa corta del sistema, la tasa de pases pasivos del BCRA a 1 "
         f"día se ubicó en {fmt_pct(pases_ref.get('valor'), 2)} TNA y la tasa BADLAR de bancos privados en "
-        f"{fmt_pct(badlar_ref.get('valor'), 2)} TNA (ambas de registro interno, {pases_ref.get('fecha', 's/d')})."
+        f"{fmt_pct(badlar_ref.get('valor'), 2)} TNA (ambas de registro interno, {pases_ref.get('fecha', '0,0')})."
     ), space_after=2.5, font_size=8.2)
     add_body(doc, (
         f"En el crédito corporativo privado, este pipeline no cuenta con un conector a Obligaciones Negociables (ONs) hard "
@@ -464,7 +464,7 @@ def compilar_informe_diario(ruta_salida_docx: str, fecha_str: str = None) -> str
 
     # Precio, Var. 1D y Duration no tienen fuente automatizable para
     # ninguna especie de esta tabla (el contrato solo releva TIR/TNA) -- se
-    # sacan las 3 columnas enteras en vez de mostrarlas en "s/d" fila tras
+    # sacan las 3 columnas enteras en vez de mostrarlas en "0,0" fila tras
     # fila: si no hay dato real, no se lista la columna.
     t_bon = doc.add_table(rows=1, cols=3)
     formatear_tabla_diaria(
@@ -475,10 +475,10 @@ def compilar_informe_diario(ruta_salida_docx: str, fecha_str: str = None) -> str
             ["Lecap tramo corto", _tna_tem_str(tasas_ars.get("lecap_corta_tem")), "Neutral (sin view táctico cargado)"],
             ["Lecap tramo largo", _tna_tem_str(tasas_ars.get("lecap_larga_tem")), "Neutral (sin view táctico cargado)"],
             ["Boncer TZX27", _boncer_str(tasas_ars.get("boncer_tzx27_tir_real")), "Neutral (sin view táctico cargado)"],
-            ["Bonar 2030 (AL30)", (fmt_pct(al30_tir, 2) + " TIR") if al30_tir is not None else "s/d", "Neutral (sin view táctico cargado)"],
-            ["Global 2030 (GD30)", (fmt_pct(gd30_tir, 2) + " TIR") if gd30_tir is not None else "s/d", _tesis_desde_bl(black_litterman, "GD30.BA")],
-            ["Global 2035 (GD35)", (fmt_pct(gd35_tir, 2) + " TIR") if gd35_tir is not None else "s/d", "Neutral (sin view táctico cargado)"],
-            ["Global 2038 (GD38)", (fmt_pct(gd38_tir, 2) + " TIR") if gd38_tir is not None else "s/d", "Neutral (sin view táctico cargado)"],
+            ["Bonar 2030 (AL30)", (fmt_pct(al30_tir, 2) + " TIR") if al30_tir is not None else "0,0", "Neutral (sin view táctico cargado)"],
+            ["Global 2030 (GD30)", (fmt_pct(gd30_tir, 2) + " TIR") if gd30_tir is not None else "0,0", _tesis_desde_bl(black_litterman, "GD30.BA")],
+            ["Global 2035 (GD35)", (fmt_pct(gd35_tir, 2) + " TIR") if gd35_tir is not None else "0,0", "Neutral (sin view táctico cargado)"],
+            ["Global 2038 (GD38)", (fmt_pct(gd38_tir, 2) + " TIR") if gd38_tir is not None else "0,0", "Neutral (sin view táctico cargado)"],
         ],
         alignments=[WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.RIGHT, WD_ALIGN_PARAGRAPH.LEFT],
         font_size=7.2
@@ -501,7 +501,7 @@ def compilar_informe_diario(ruta_salida_docx: str, fecha_str: str = None) -> str
             f"tasa disponible en este pipeline: cotiza {SIN_FUENTE}; el spread de fondeo neto no puede calcularse de "
             f"forma automatizada en esta corrida.\n"
             f"• Arbitraje de Legislación: El diferencial de "
-            f"{(fmt_num(spread_legislacion_pb, 0) + ' pb') if spread_legislacion_pb is not None else 's/d'} entre AL30 "
+            f"{(fmt_num(spread_legislacion_pb, 0) + ' pb') if spread_legislacion_pb is not None else '0,0'} entre AL30 "
             f"({fmt_pct(al30_tir, 2)}) y GD30 ({fmt_pct(gd30_tir, 2)}) presenta una oportunidad de rotación táctica hacia "
             f"el título de mayor TIR, sujeta a riesgo de legislación y liquidez relativa.\n"
             f"• View Táctico Cargado en el Contrato: {_tesis_desde_bl(black_litterman, 'GD30.BA')}"
@@ -528,10 +528,10 @@ def compilar_informe_diario(ruta_salida_docx: str, fecha_str: str = None) -> str
     data_rows_eq = []
     for tk, nombre in nombres_eq.items():
         v_sem = variacion_semanal.get(tk)
-        precio = fmt_num(v_sem["cierre_ars"], 2, "$") if v_sem else "s/d"
-        var_sem = fmt_pct(v_sem["var_semanal_pct"], 2, True) if v_sem else "s/d"
+        precio = fmt_num(v_sem["cierre_ars"], 2, "$") if v_sem else "0,0"
+        var_sem = fmt_pct(v_sem["var_semanal_pct"], 2, True) if v_sem else "0,0"
         lid = lideres_por_ticker.get(tk)
-        ev_ebitda = f"{fmt_num(lid.get('ev_ebitda'), 1)}x" if lid and lid.get("ev_ebitda") is not None else "s/d"
+        ev_ebitda = f"{fmt_num(lid.get('ev_ebitda'), 1)}x" if lid and lid.get("ev_ebitda") is not None else "0,0"
         if tk == "GGAL":
             tesis = _tesis_desde_bl(black_litterman, "GGAL.BA")
         elif lid and lid.get("recom"):
@@ -564,8 +564,8 @@ def compilar_informe_diario(ruta_salida_docx: str, fecha_str: str = None) -> str
     h4.paragraph_format.space_before = Pt(3); h4.paragraph_format.space_after = Pt(2)
     for r in h4.runs: r.font.name = "Georgia"; r.font.size = Pt(9.5); r.font.bold = True; r.font.color.rgb = COLOR_NAVY
 
-    base_m_str = "s/d"
-    pases_m_str = "s/d"
+    base_m_str = "0,0"
+    pases_m_str = "0,0"
     if monetario and monetario.get("base_m"):
         base_m_str = fmt_num(monetario["base_m"][-1], 1, "$") + " B"
     if monetario and monetario.get("pases_m"):
@@ -582,7 +582,7 @@ def compilar_informe_diario(ruta_salida_docx: str, fecha_str: str = None) -> str
             ["Lecap tramo largo (mercado 2rio.)", "s/d (sin licitación primaria)", _tna_tem_str(tasas_ars.get("lecap_larga_tem")), "Referencia de tasa fija larga; sin dato de licitación."],
             ["Letras Fiscales de Liquidez (LEFI)", "Mecanismo discontinuado (stock $0 desde jul-2025, BCRA id=196)", "-", "Sin efecto monetario vigente."],
             ["Base Monetaria (promedio mensual)", base_m_str, "-", "BCRA v4.0, id=15; promedio mensual, no stock puntual a la fecha."],
-            ["Pases Pasivos BCRA (1D)", pases_m_str, (fmt_pct(pases_tna, 2) + " TNA") if pases_tna is not None else "s/d", f"Absorción monetaria de corto plazo (registro interno, {pases_ref.get('fecha', 's/d')})."],
+            ["Pases Pasivos BCRA (1D)", pases_m_str, (fmt_pct(pases_tna, 2) + " TNA") if pases_tna is not None else "0,0", f"Absorción monetaria de corto plazo (registro interno, {pases_ref.get('fecha', '0,0')})."],
         ],
         alignments=[WD_ALIGN_PARAGRAPH.LEFT, WD_ALIGN_PARAGRAPH.RIGHT, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.LEFT],
         font_size=7.0

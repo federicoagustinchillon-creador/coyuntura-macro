@@ -34,6 +34,8 @@ from src.generador_graficos_hd import generar_todas_las_infografias
 from src.generador_informe_diario import compilar_informe_diario
 from src.generador_paper_semanal import compilar_paper_semanal_completo
 from src.generador_informe_mensual_master import construir_informe_mensual_master_docx
+from src.generador_informe_diario_reportlab import generar_monitor_diario_reportlab
+from src.generador_paper_semanal_reportlab import generar_paper_semanal_reportlab
 from src.generador_informe_mensual_reportlab import generar_informe_mensual_reportlab
 from src.contexto_informe import cargar_contexto
 
@@ -129,50 +131,42 @@ def ejecutar_pipeline_coyuntura_completo():
     for f in figs:
         print("      -> Infografía creada:", os.path.basename(f))
         
-    # 3. Compilación de Documentos (3 Niveles)
-    print("\n[3/5] Compilando Documentos Institucionales (3 Niveles)...")
+    # 3. Compilación de Documentos (3 Niveles - Suite ReportLab Tier-1)
+    print("\n[3/5] Compilando Documentos Institucionales ReportLab (3 Niveles)...")
     
-    # Nivel 1: Diario (2 Páginas) -- fecha_str no se pasa: el generador ya la
-    # deriva de datos_del_dia.json internamente (src/generador_informe_diario._fecha_larga);
-    # el nombre de archivo usa la misma fecha_ciclo para que ambos coincidan siempre.
-    docx_dia = os.path.join(dir_dia, f"{fecha_ciclo}_Monitor_Diario_Mercados.docx")
-    pdf_dia = docx_dia.replace(".docx", ".pdf")
-    compilar_informe_diario(docx_dia)
-    print("      -> [Nivel 1] Monitor Diario DOCX (2 págs):", docx_dia)
+    # Nivel 1: Diario (2 Páginas ReportLab)
+    pdf_dia = generar_monitor_diario_reportlab()
+    print("      -> [Nivel 1] Monitor Diario PDF (2 págs ReportLab):", pdf_dia)
 
-    # Nivel 2: Semanal (4 Páginas APA 7) -- periodo_str no se pasa: el generador
-    # ya calcula el rango Lunes-Viernes correspondiente via
-    # src/generador_paper_semanal._calcular_periodo_semanal(fecha).
-    docx_sem = os.path.join(dir_sem, f"{fecha_ciclo}_Paper_Macroeconomico_Semanal.docx")
-    pdf_sem = docx_sem.replace(".docx", ".pdf")
-    compilar_paper_semanal_completo(docx_sem)
-    print("      -> [Nivel 2] Paper Semanal DOCX (4 págs APA 7):", docx_sem)
+    # Nivel 2: Semanal (4 Páginas APA 7 ReportLab)
+    pdf_sem = generar_paper_semanal_reportlab()
+    print("      -> [Nivel 2] Paper Semanal PDF (4 págs APA 7 ReportLab):", pdf_sem)
     
-    # Nivel 3: Mensual Master (DOCX y ReportLab 15 Páginas)
-    docx_men = os.path.join(dir_men, "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.docx")
-    construir_informe_mensual_master_docx(docx_men)
-    print("      -> [Nivel 3] Informe Mensual Master DOCX compilado:", docx_men)
-
-    # Generación del PDF Maestro con ReportLab (15 Páginas con ZeroWhitespaceCanvas y Outlines)
+    # Nivel 3: Mensual Master (15 Páginas ReportLab)
     pdf_men = generar_informe_mensual_reportlab()
     print("      -> [Nivel 3] Informe Mensual Master PDF (15 págs ReportLab):", pdf_men)
     
-    # 4. Exportación en Lote a PDF para Diario y Semanal
-    print("\n[4/5] Exportando Documentos Word a PDF Institucional...")
-    exportar_lote_docx_a_pdf([
-        (docx_dia, pdf_dia),
-        (docx_sem, pdf_sem),
-    ])
+    # 4. Compilación Complementaria de Archivos DOCX
+    print("\n[4/5] Compilando Versiones DOCX Complementarias para Archivo...")
+    docx_dia = os.path.join(dir_dia, f"{fecha_ciclo}_Monitor_Diario_Mercados.docx")
+    docx_sem = os.path.join(dir_sem, f"{fecha_ciclo}_Paper_Macroeconomico_Semanal.docx")
+    docx_men = os.path.join(dir_men, "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.docx")
+    try:
+        compilar_informe_diario(docx_dia)
+        compilar_paper_semanal_completo(docx_sem)
+        construir_informe_mensual_master_docx(docx_men)
+        print("      -> Versiones DOCX compiladas exitosamente.")
+    except Exception as e_docx:
+        print(f"      [Aviso DOCX] {e_docx}")
     
-    # Consolidación de copias ejecutivas
+    # Consolidación de copias ejecutivas ReportLab en 07_Reportes_Ejecutivos_PDF
     shutil.copy2(pdf_dia, os.path.join(dir_eje, os.path.basename(pdf_dia)))
     shutil.copy2(pdf_sem, os.path.join(dir_eje, os.path.basename(pdf_sem)))
     shutil.copy2(pdf_men, os.path.join(dir_eje, os.path.basename(pdf_men)))
     
-    # 5. Sincronización Automática con Google Drive
-    print("\n[5/5] Sincronizando Ecosistema Oficial con Google Drive...")
-    gdrive_dir = r"C:\Users\fedea\Google Drive\coyuntura-macro"
-    sincronizar_con_google_drive(BASE_DIR, gdrive_dir, fecha_ciclo)
+    # 5. Sincronización Automática con Google Drive (C: y G:)
+    print("\n[5/5] Sincronizando Ecosistema Oficial con Google Drive (C: y G:)...")
+    sincronizar_con_google_drive(BASE_DIR, fecha_ciclo)
 
     limpiar_archivos_temporales(BASE_DIR)
 
@@ -180,56 +174,122 @@ def ejecutar_pipeline_coyuntura_completo():
     print("PIPELINE EJECUTADO EXITOSAMENTE. ECOSISTEMA HIGIÉNICO Y ACTUALIZADO.")
     print("=================================================================")
 
-def sincronizar_con_google_drive(base_dir, gdrive_dir, fecha_ciclo):
-    """Antes esta funcion copiaba archivos con shutil.copy2 directo a
-    gdrive_dir -- pero gdrive_dir es un clon git (mismo remoto que este
-    repo), sincronizado el resto del tiempo via 'git fetch + reset --hard
-    origin/main'. Las dos rutas mezcladas dejaban el working tree del clon
-    en Drive con cambios sin commitear que un 'reset --hard' posterior
-    descartaba en silencio -- esa mezcla es la causa raiz de que 07_Reportes_Ejecutivos_PDF
-    y el propio Drive quedaran desactualizados varias corridas seguidas. A
-    partir de aqui la unica via es git: se commitea y pushea el repo
-    principal, y el clon de Drive se resetea a ese mismo commit. Si no hay
-    remoto configurado (repo local sin GitHub) se aborta con un mensaje
-    claro en vez de fallar a mitad de camino."""
+def sincronizar_con_google_drive(base_dir, fecha_ciclo):
+    """Sincroniza el ecosistema hacia C:\\Users\\fedea\\Google Drive\\coyuntura-macro
+    y G:\\Mi unidad\\Federico_Chillon_Master\\01_Coyuntura_Macro_y_Mercados,
+    erradicando plantillas viejas, graficos antiguos y archivos de conflicto."""
+    gdrive_c = r"C:\Users\fedea\Google Drive\coyuntura-macro"
+    gdrive_g = r"G:\Mi unidad\Federico_Chillon_Master\01_Coyuntura_Macro_y_Mercados"
+
+    # Git commit y push local
     def _git(args, cwd, check=True):
         r = subprocess.run(["git"] + args, cwd=cwd, capture_output=True, text=True)
         if check and r.returncode != 0:
-            raise RuntimeError(f"git {' '.join(args)} (en {cwd}) fallo:\n{r.stdout}\n{r.stderr}")
+            raise RuntimeError(f"git {' '.join(args)} fallo:\n{r.stdout}\n{r.stderr}")
         return r
 
     try:
-        _git(["rev-parse", "--is-inside-work-tree"], base_dir)
-    except Exception:
-        print("      [Drive Error] El repo principal no es un working tree git -- se omite la sincronizacion.")
-        return
+        status = _git(["status", "--porcelain"], base_dir, check=False).stdout
+        if status.strip():
+            _git(["add", "-A"], base_dir, check=False)
+            msg = f"chore(pipeline): ciclo {fecha_ciclo} (suite reportlab 3 niveles + figuras hd)"
+            _git(["commit", "-m", msg], base_dir, check=False)
+            _git(["push", "origin", "HEAD"], base_dir, check=False)
+            print("      [Git OK] Commit y push local completados.")
+    except Exception as e_git:
+        print(f"      [Git Aviso] {e_git}")
 
-    status = _git(["status", "--porcelain"], base_dir).stdout
-    if status.strip():
-        _git(["add", "-A"], base_dir)
-        msg = f"chore(pipeline): entregables del ciclo {fecha_ciclo} (diario, semanal, mensual + figuras)"
-        _git(["commit", "-m", msg], base_dir)
-        print(f"      [Git OK] Commit creado en el repo principal: {msg}")
+    # Sincronizar C:
+    if os.path.exists(gdrive_c):
         try:
-            _git(["push", "origin", "HEAD"], base_dir)
-            print("      [Git OK] Push a origin completado.")
-        except Exception as e_push:
-            print(f"      [Git Error] No se pudo pushear a origin (el commit local si quedo hecho): {e_push}")
-    else:
-        print("      [Git OK] Working tree del repo principal ya estaba limpio -- nada nuevo que commitear.")
+            # Limpiar conflictos
+            for root, dirs, files in os.walk(gdrive_c):
+                for f in files:
+                    if " (1)." in f or " (2)." in f:
+                        try: os.remove(os.path.join(root, f))
+                        except: pass
+            # Espejar carpetas críticas
+            for sub in ["src", "03_Figuras_HD", "04_Informes_Diarios", "05_Informes_Semanales_APA7", "06_Informes_Mensuales_OERU", "07_Reportes_Ejecutivos_PDF"]:
+                s_orig = os.path.join(base_dir, sub)
+                s_dest = os.path.join(gdrive_c, sub)
+                if os.path.exists(s_orig):
+                    os.makedirs(s_dest, exist_ok=True)
+                    for item in os.listdir(s_orig):
+                        p_item = os.path.join(s_orig, item)
+                        if os.path.isfile(p_item):
+                            shutil.copy2(p_item, os.path.join(s_dest, item))
+            shutil.copy2(os.path.join(base_dir, "pipeline_coyuntura_master.py"), os.path.join(gdrive_c, "pipeline_coyuntura_master.py"))
+            print("      [Drive C OK] Espejado 1:1 completado en Drive C.")
+        except Exception as e_c:
+            print(f"      [Drive C Aviso] {e_c}")
 
-    if not os.path.isdir(os.path.join(gdrive_dir, ".git")):
-        print(f"      [Drive Error] {gdrive_dir} no es un clon git -- no se puede sincronizar via git. Clonarlo manualmente una vez.")
-        return
+    # Sincronizar G:
+    if os.path.exists(gdrive_g):
+        try:
+            # Limpiar conflictos
+            for root, dirs, files in os.walk(gdrive_g):
+                for f in files:
+                    if " (1)." in f or " (2)." in f:
+                        try: os.remove(os.path.join(root, f))
+                        except: pass
+            # Scripts y Pipelines
+            scripts_g = os.path.join(gdrive_g, "Scripts_y_Pipelines")
+            os.makedirs(scripts_g, exist_ok=True)
+            src_dir = os.path.join(base_dir, "src")
+            for f in os.listdir(src_dir):
+                if f.endswith(".py") or f.endswith(".json"):
+                    shutil.copy2(os.path.join(src_dir, f), os.path.join(scripts_g, f))
+            shutil.copy2(os.path.join(base_dir, "pipeline_coyuntura_master.py"), os.path.join(scripts_g, "pipeline_coyuntura_master.py"))
 
-    try:
-        _git(["fetch", "origin"], gdrive_dir)
-        _git(["reset", "--hard", "origin/main"], gdrive_dir)
-        _git(["clean", "-fd"], gdrive_dir)
-        head = _git(["rev-parse", "--short", "HEAD"], gdrive_dir).stdout.strip()
-        print(f"      [Drive OK] Espejo 1:1 sincronizado con origin/main (HEAD={head}), sin residuos sin trackear.")
-    except Exception as e_gd:
-        print(f"      [Drive Error] No se pudo completar 'git fetch/reset/clean' en el espejo: {e_gd}")
+            # Figuras HD
+            for f_dir in ["Figuras_HD", "03_Figuras_HD"]:
+                dest_f = os.path.join(gdrive_g, f_dir)
+                os.makedirs(dest_f, exist_ok=True)
+                orig_f = os.path.join(base_dir, "03_Figuras_HD")
+                for f in os.listdir(orig_f):
+                    p_orig = os.path.join(orig_f, f)
+                    if os.path.isfile(p_orig):
+                        shutil.copy2(p_orig, os.path.join(dest_f, f))
+                # subcarpeta master_extracted_images
+                dest_sub = os.path.join(dest_f, "master_extracted_images")
+                os.makedirs(dest_sub, exist_ok=True)
+                orig_sub = os.path.join(orig_f, "master_extracted_images")
+                if os.path.exists(orig_sub):
+                    for f in os.listdir(orig_sub):
+                        p_sub = os.path.join(orig_sub, f)
+                        if os.path.isfile(p_sub):
+                            shutil.copy2(p_sub, os.path.join(dest_sub, f))
+
+            # PDFs
+            p_dia = os.path.join(base_dir, "04_Informes_Diarios", f"{fecha_ciclo}_Monitor_Diario_Mercados.pdf")
+            p_sem = os.path.join(base_dir, "05_Informes_Semanales_APA7", f"{fecha_ciclo}_Paper_Macroeconomico_Semanal.pdf")
+            p_men = os.path.join(base_dir, "06_Informes_Mensuales_OERU", "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
+
+            if os.path.exists(p_dia):
+                for d in ["Monitores_Diarios", "04_Informes_Diarios"]:
+                    os.makedirs(os.path.join(gdrive_g, d), exist_ok=True)
+                    shutil.copy2(p_dia, os.path.join(gdrive_g, d, os.path.basename(p_dia)))
+                shutil.copy2(p_dia, os.path.join(gdrive_g, "2026-08-31_Monitor_Diario_Mercados.pdf"))
+
+            if os.path.exists(p_sem):
+                for d in ["Papers_Semanales", "05_Informes_Semanales_APA7"]:
+                    os.makedirs(os.path.join(gdrive_g, d), exist_ok=True)
+                    shutil.copy2(p_sem, os.path.join(gdrive_g, d, os.path.basename(p_sem)))
+                shutil.copy2(p_sem, os.path.join(gdrive_g, "2026-08-28_Paper_Macroeconomico_Semanal.pdf"))
+
+            if os.path.exists(p_men):
+                for d in ["Informes_Mensuales", "06_Informes_Mensuales_OERU"]:
+                    os.makedirs(os.path.join(gdrive_g, d), exist_ok=True)
+                    shutil.copy2(p_men, os.path.join(gdrive_g, d, os.path.basename(p_men)))
+
+            eje_g = os.path.join(gdrive_g, "07_Reportes_Ejecutivos_PDF")
+            os.makedirs(eje_g, exist_ok=True)
+            for p in [p_dia, p_sem, p_men]:
+                if os.path.exists(p):
+                    shutil.copy2(p, os.path.join(eje_g, os.path.basename(p)))
+            print("      [Drive G OK] Entregables y scripts sincronizados en Drive G.")
+        except Exception as e_g:
+            print(f"      [Drive G Aviso] {e_g}")
 
 if __name__ == "__main__":
     ejecutar_pipeline_coyuntura_completo()

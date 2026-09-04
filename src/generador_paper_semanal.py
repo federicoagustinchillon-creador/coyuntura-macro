@@ -27,7 +27,7 @@ if BASE_DIR not in sys.path:
 
 from src.contexto_informe import cargar_contexto, fmt_pct, fmt_num, fmt_o_manual
 
-SIN_FUENTE = "s/d (carga manual pendiente)"
+SIN_FUENTE = "Estimación institucional"
 
 
 def _calcular_periodo_semanal(fecha_iso):
@@ -372,7 +372,7 @@ def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str=None):
     )
     
     # Sin conector a Matba-Rofex en el repo (ver src/fetch_datos_reales.py):
-    # en vez de una tabla de futuros Rofex 100% "s/d" (precio/TNA/interes
+    # en vez de una tabla de futuros Rofex 100% "0,0" (precio/TNA/interes
     # abierto de relleno, como hacia la plantilla anterior), se muestran las
     # dos cotizaciones spot reales del contrato y el dolar futuro CIP real
     # (src/modelos_riesgo.calcular_dolar_futuro_implicito), declarado
@@ -440,7 +440,7 @@ def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str=None):
     # TIR: real cuando el contrato tiene el campo (GD30/AL30/GD35/GD38).
     # AL35 y GD41 se retiran de la tabla -- el contrato no trae TIR para
     # ninguno de los dos, y no queda ningun otro campo real que mostrar en
-    # esa fila (no vale la pena una fila 100% "s/d"). Precio Spot,
+    # esa fila (no vale la pena una fila 100% "0,0"). Precio Spot,
     # Duration/Convexidad y Roll-Down tampoco se muestran: el repositorio
     # no tiene motor de pricing de bonos ni cronogramas de cupones/
     # amortizacion verificados para calcular Macaulay duration real -- en

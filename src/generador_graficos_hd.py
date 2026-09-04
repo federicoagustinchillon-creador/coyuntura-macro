@@ -107,16 +107,29 @@ def fmt_num_ar(val: float, decimals: int = 1) -> str:
     return int_part
 
 def apply_base_axes_styling(ax: plt.Axes) -> None:
-    """Aplica el estándar editorial suizo: spines limpios, retícula suave y ejes proporcionados."""
+    """Aplica el estándar editorial Financial Times / The Economist: spines limpios, retícula horizontal sutil y sin efecto jaula."""
     ax.set_facecolor("#FFFFFF")
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_color(TONE_BORDER)
+    ax.spines["left"].set_visible(False)
     ax.spines["bottom"].set_color(TONE_BORDER)
-    ax.spines["left"].set_linewidth(1.0)
-    ax.spines["bottom"].set_linewidth(1.0)
-    ax.grid(True, linestyle="--", linewidth=0.6, alpha=0.70, color=TONE_GRID)
-    ax.tick_params(colors=TONE_SLATE, labelsize=9.2, width=0.8, length=4)
+    ax.spines["bottom"].set_linewidth(0.8)
+    # Retícula exclusivamente horizontal: maximiza el data-ink ratio (Edward Tufte)
+    ax.grid(True, axis="y", linestyle="-", linewidth=0.5, alpha=0.85, color=TONE_GRID)
+    ax.tick_params(axis="y", colors=TONE_SLATE, labelsize=9.0, width=0, length=0)
+    ax.tick_params(axis="x", colors=TONE_SLATE, labelsize=9.0, width=0.7, length=3.5, color=TONE_BORDER)
+
+def apply_horizontal_bar_styling(ax: plt.Axes) -> None:
+    """Estilo editorial para paneles de barras horizontales: retícula exclusivamente vertical en X."""
+    ax.set_facecolor("#FFFFFF")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_color(TONE_BORDER)
+    ax.spines["bottom"].set_linewidth(0.8)
+    ax.grid(True, axis="x", linestyle="-", linewidth=0.5, alpha=0.85, color=TONE_GRID)
+    ax.tick_params(axis="y", colors=TONE_SLATE, labelsize=9.2, width=0, length=0)
+    ax.tick_params(axis="x", colors=TONE_SLATE, labelsize=9.0, width=0.7, length=3.5, color=TONE_BORDER)
 
 def sanitize_date_ticks(n_total: int, target_ticks: int = 8) -> List[int]:
     """Calcula posiciones de ticks para series temporales evitando superposición en el extremo final."""
@@ -139,49 +152,52 @@ def draw_top_kpi_banner(fig: plt.Figure, kpis: List[Dict[str, Any]],
                         y_bottom: float = 0.765, height: float = 0.095,
                         x_left: float = 0.045, x_right: float = 0.955) -> None:
     """
-    Renderiza una fila horizontal de tarjetas KPI ejecutivas en la parte superior de la figura.
-    Cumple con la estricta directiva de jerarquía visual y lectura ejecutiva:
-    Título -> KPIs de síntesis ejecutiva -> Gráficos analíticos despejados -> Fuentes.
-    Cero solapamiento con los gráficos: las KPIs agregan información sin ocultar datos.
+    Renderiza una fila horizontal de métricas ejecutivas estilo Financial Times / The Economist.
+    Erradica el cliché de tarjetas web cerradas y franjas laterales de color:
+    - Sin rectángulos de fondo toscos ni bordes gruesos.
+    - Regla horizontal superior continua de encuadre (#CBD5E1, 0,75 pt).
+    - Separadores capilares verticales ultra sutiles (#E2E8F0, 0,60 pt) entre métricas.
+    - Jerarquía tipográfica refinada: kicker en mayúsculas pequeñas, cifra imponente y contexto en gris pizarra.
     """
     n = len(kpis)
     if n == 0:
         return
 
     total_w = x_right - x_left
-    gap = 0.014 if n > 3 else 0.020
-    card_w = (total_w - (n - 1) * gap) / n
+    col_w = total_w / n
+    y_top_line = y_bottom + height
+
+    # Regla horizontal superior continua (estilo Financial Times)
+    line_top = plt.Line2D([x_left, x_right], [y_top_line, y_top_line],
+                          color=TONE_BORDER, linewidth=0.75, transform=fig.transFigure, zorder=10)
+    fig.add_artist(line_top)
 
     for i, kpi in enumerate(kpis):
-        cx = x_left + i * (card_w + gap)
-        accent = kpi.get("accent", TONE_PRIMARY)
+        cx = x_left + i * col_w
 
-        # Fondo de la tarjeta (gris hielo institucional con borde sutil)
-        rect = Rectangle((cx, y_bottom), card_w, height, facecolor=TONE_CARD_BG, edgecolor=TONE_BORDER,
-                         linewidth=0.8, transform=fig.transFigure, zorder=10)
-        fig.add_artist(rect)
+        # Separador vertical capilar ultra fino entre métricas (a partir de la segunda columna)
+        if i > 0:
+            divider = plt.Line2D([cx, cx], [y_bottom + 0.008, y_top_line - 0.008],
+                                 color=TONE_GRID, linewidth=0.6, transform=fig.transFigure, zorder=10)
+            fig.add_artist(divider)
 
-        # Franja vertical de acento a la izquierda (3px de presencia cromática noble)
-        bar_w = 0.0040
-        accent_bar = Rectangle((cx, y_bottom), bar_w, height, facecolor=accent, edgecolor=accent,
-                               linewidth=0.8, transform=fig.transFigure, zorder=11)
-        fig.add_artist(accent_bar)
+        pad_x = 0.008
 
-        # Etiqueta / Métrica (uppercase pequeño en gris pizarra)
-        fig.text(cx + 0.014, y_bottom + height - 0.014, kpi.get("label", "").upper(),
+        # 1. Kicker / Métrica (mayúsculas pequeñas, gris pizarra neutro)
+        fig.text(cx + pad_x, y_top_line - 0.012, kpi.get("label", "").upper(),
                  fontsize=7.2, fontweight="bold", color=TONE_MUTED, ha="left", va="top",
                  transform=fig.transFigure, zorder=12)
 
-        # Valor principal de la KPI (grande, bold, color navy/hero)
-        fig.text(cx + 0.014, y_bottom + height - 0.036, kpi.get("val", ""),
-                 fontsize=12.5, fontweight="bold", color=TONE_HERO, ha="left", va="top",
+        # 2. Cifra clave imponente (tipografía limpia en TONE_HERO)
+        fig.text(cx + pad_x, y_top_line - 0.038, kpi.get("val", ""),
+                 fontsize=13.5, fontweight="bold", color=TONE_HERO, ha="left", va="top",
                  transform=fig.transFigure, zorder=12)
 
-        # Contexto o variación secundaria (sutil, slate)
+        # 3. Contexto o variación secundaria (sutil, slate)
         sub_text = kpi.get("sub", "")
         if sub_text:
-            fig.text(cx + 0.014, y_bottom + 0.012, sub_text,
-                     fontsize=7.2, color=TONE_SLATE, ha="left", va="bottom",
+            fig.text(cx + pad_x, y_bottom + 0.010, sub_text,
+                     fontsize=7.0, color=TONE_SLATE, ha="left", va="bottom",
                      transform=fig.transFigure, zorder=12)
 
 def draw_figure_footer(fig: plt.Figure, fuente: str) -> None:
@@ -264,27 +280,27 @@ def render_chart_emae(emae: Optional[Dict[str, Any]] = None) -> str:
     ax.vlines(x=idx_min, ymin=min_val, ymax=desest[idx_min], color=TONE_FAINT, linestyle=":", linewidth=0.9, zorder=2)
     ax.scatter([idx_min], [desest[idx_min]], marker="D", s=65, color=TONE_PRIMARY, edgecolor="#FFFFFF", linewidth=1.5, zorder=5)
     ax.annotate(f"Piso ({labels_x[idx_min]})\n{desest[idx_min]:.1f} pts".replace(".", ","),
-                xy=(x[idx_min], desest[idx_min]), xytext=(-35, 22), textcoords="offset points",
+                xy=(x[idx_min], desest[idx_min]), xytext=(-38, 20), textcoords="offset points",
                 fontsize=8.8, fontweight="bold", color=TONE_PRIMARY,
-                bbox=dict(boxstyle="square,pad=0.25", facecolor="#FFFFFF", edgecolor=TONE_BORDER, linewidth=0.8),
-                arrowprops=dict(arrowstyle="->", color=TONE_PRIMARY, lw=0.9), zorder=6)
+                path_effects=WHITE_HALO_THICK,
+                arrowprops=dict(arrowstyle="->", color=TONE_PRIMARY, lw=0.8), zorder=6)
 
     ax.vlines(x=x[-1], ymin=min_val, ymax=desest[-1], color=TONE_HERO, linestyle="--", linewidth=1.0, zorder=2)
     ax.scatter([x[-1]], [desest[-1]], marker="o", s=75, color=TONE_HERO, edgecolor="#FFFFFF", linewidth=2.0, zorder=5)
     val_desest_txt = f"{desest[-1]:.1f}".replace(".", ",")
     val_ia_txt = f"+{var_ia:.1f}".replace(".", ",")
-    ax.annotate(f"Nivel Actual ({labels_x[-1]})\n{val_desest_txt} pts  ({val_ia_txt}% i.a.)",
+    ax.annotate(f"Nivel Actual ({labels_x[-1]})\n{val_desest_txt} pts ({val_ia_txt}% i.a.)",
                 xy=(x[-1], desest[-1]), xytext=(-115, 18), textcoords="offset points",
                 fontsize=9.2, fontweight="bold", color=TONE_HERO,
-                bbox=dict(boxstyle="square,pad=0.35", facecolor=TONE_CARD_BG, edgecolor=TONE_HERO, linewidth=1.1),
-                arrowprops=dict(arrowstyle="->", color=TONE_HERO, lw=1.2), zorder=6)
+                path_effects=WHITE_HALO_THICK,
+                arrowprops=dict(arrowstyle="->", color=TONE_HERO, lw=1.0), zorder=6)
 
     tick_pos = sanitize_date_ticks(len(meses), target_ticks=8)
     ax.set_xticks(tick_pos)
     ax.set_xticklabels([labels_x[i] for i in tick_pos], fontsize=9.2, color=TONE_SLATE)
     ax.set_ylabel("Índice de Volumen Físico (Base 2004 = 100)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax.set_ylim(min_val, max(desest.max(), original.max()) * 1.05)
-    ax.legend(loc="lower right", fontsize=8.8, frameon=True, facecolor="#FFFFFF", edgecolor=TONE_BORDER)
+    ax.legend(loc="lower right", fontsize=8.8, frameon=False)
 
     # Encabezado, Banner Superior de KPIs y Pie
     draw_figure_header(fig, "ACTIVIDAD ECONÓMICA AGREGADA · INDEC / BCRA",
@@ -334,13 +350,13 @@ def render_chart_rates(tasas_ars: Optional[Dict[str, Any]] = None) -> str:
 
     ax1.vlines(x=30, ymin=0.5, ymax=curva_lecap[0], color=TONE_FAINT, linestyle=":", linewidth=0.9, zorder=2)
     ax1.annotate(f"Tramo Corto\n{lecap_corta:.2f}% TEM".replace(".", ","), xy=(30, curva_lecap[0]),
-                 xytext=(10, 12), textcoords="offset points", fontsize=8.8, fontweight="bold", color=TONE_HERO,
-                 bbox=dict(boxstyle="square,pad=0.25", facecolor=TONE_CARD_BG, edgecolor=TONE_BORDER, linewidth=0.8))
+                 xytext=(10, 10), textcoords="offset points", fontsize=8.8, fontweight="bold", color=TONE_HERO,
+                 path_effects=WHITE_HALO_THICK)
 
     ax1.vlines(x=360, ymin=0.5, ymax=curva_lecap[-1], color=TONE_FAINT, linestyle=":", linewidth=0.9, zorder=2)
     ax1.annotate(f"Tramo Largo\n{lecap_larga:.2f}% TEM".replace(".", ","), xy=(360, curva_lecap[-1]),
-                 xytext=(-85, 12), textcoords="offset points", fontsize=8.8, fontweight="bold", color=TONE_HERO,
-                 bbox=dict(boxstyle="square,pad=0.25", facecolor=TONE_CARD_BG, edgecolor=TONE_BORDER, linewidth=0.8))
+                 xytext=(-85, 10), textcoords="offset points", fontsize=8.8, fontweight="bold", color=TONE_HERO,
+                 path_effects=WHITE_HALO_THICK)
 
     ax1.set_xlabel("Plazo al Vencimiento (Días)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=8)
     ax1.set_ylabel("Tasa Efectiva Mensual / TIR (%)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
@@ -348,7 +364,7 @@ def render_chart_rates(tasas_ars: Optional[Dict[str, Any]] = None) -> str:
     ax1.set_ylim(0.5, 4.0)
     ax1.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f"{y:.1f}%".replace(".", ",")))
     ax1.set_title("A. Curva Rendimientos ARS (Fija vs. CER)", fontsize=10.5, fontweight="bold", color=TONE_HERO, loc="left", pad=8)
-    ax1.legend(loc="lower right", fontsize=8.5, frameon=True, facecolor="#FFFFFF", edgecolor=TONE_BORDER)
+    ax1.legend(loc="lower right", fontsize=8.5, frameon=False)
 
     # Panel 2: Breakeven vs REM y Premio de Tasa Fija (Despejado, sin cajas invasivas)
     curva_be = np.linspace(breakeven, breakeven * 0.92, len(plazos))
@@ -366,7 +382,7 @@ def render_chart_rates(tasas_ars: Optional[Dict[str, Any]] = None) -> str:
     ax2.set_ylim(1.2, 3.5)
     ax2.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f"{y:.1f}%".replace(".", ",")))
     ax2.set_title("B. Breakeven Inflacionario vs. REM BCRA", fontsize=10.5, fontweight="bold", color=TONE_HERO, loc="left", pad=8)
-    ax2.legend(loc="lower left", fontsize=8.5, frameon=True, facecolor="#FFFFFF", edgecolor=TONE_BORDER)
+    ax2.legend(loc="lower left", fontsize=8.5, frameon=False)
 
     # Encabezado, Banner Superior de KPIs y Pie
     draw_figure_header(fig, "MERCADO DE CAPITALES Y RENTA FIJA EN PESOS · MAE / BYMA",
@@ -392,7 +408,7 @@ def render_chart_rates(tasas_ars: Optional[Dict[str, Any]] = None) -> str:
 def render_chart_ipc(inflacion: Optional[Dict[str, Any]] = None, ipc_trayectoria: Optional[Dict[str, Any]] = None) -> str:
     plt.close("all")
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12.0, 6.75), facecolor="#FFFFFF", gridspec_kw={'width_ratios': [1.0, 1.35]})
-    apply_base_axes_styling(ax1)
+    apply_horizontal_bar_styling(ax1)
     apply_base_axes_styling(ax2)
 
     inflacion = inflacion or DATOS_DEL_DIA.get("inflacion", {})
@@ -458,22 +474,22 @@ def render_chart_ipc(inflacion: Optional[Dict[str, Any]] = None, ipc_trayectoria
     ax2.vlines(x=0, ymin=0, ymax=gral[0], color=TONE_FAINT, linestyle=":", linewidth=0.9, zorder=2)
     ax2.scatter([0], [gral[0]], marker="D", s=65, color=TONE_ALERT, edgecolor="#FFFFFF", linewidth=1.5, zorder=5)
     ax2.annotate(f"Pico ({meses[0]})\n{gral[0]:.1f}% MoM".replace(".", ","), xy=(0, gral[0]),
-                 xytext=(18, -12), textcoords="offset points", fontsize=8.5, fontweight="bold", color=TONE_ALERT,
-                 bbox=dict(boxstyle="square,pad=0.25", facecolor="#FFF1F2", edgecolor="#FECDD3", linewidth=0.8))
+                 xytext=(15, -12), textcoords="offset points", fontsize=8.5, fontweight="bold", color=TONE_ALERT,
+                 path_effects=WHITE_HALO_THICK)
 
     ax2.vlines(x=x_tr[-1], ymin=0, ymax=gral[-1], color=TONE_HERO, linestyle="--", linewidth=1.0, zorder=2)
     ax2.scatter([x_tr[-1]], [gral[-1]], marker="o", s=75, color=TONE_HERO, edgecolor="#FFFFFF", linewidth=2.0, zorder=5)
     ax2.annotate(f"Mínimo ({meses[-1]})\n{gral[-1]:.1f}% (Core: {core[-1]:.1f}%)".replace(".", ","), xy=(x_tr[-1], gral[-1]),
-                 xytext=(-120, 26), textcoords="offset points", fontsize=9.0, fontweight="bold", color=TONE_HERO,
-                 bbox=dict(boxstyle="square,pad=0.3", facecolor=TONE_CARD_BG, edgecolor=TONE_HERO, linewidth=1.0),
-                 arrowprops=dict(arrowstyle="->", color=TONE_HERO, lw=1.1), zorder=6)
+                 xytext=(-120, 24), textcoords="offset points", fontsize=9.0, fontweight="bold", color=TONE_HERO,
+                 path_effects=WHITE_HALO_THICK,
+                 arrowprops=dict(arrowstyle="->", color=TONE_HERO, lw=1.0), zorder=6)
 
     ax2.set_xticks(x_tr)
     ax2.set_xticklabels(meses, fontsize=8.8, color=TONE_SLATE)
     ax2.set_ylabel("Variación Mensual (% MoM)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax2.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f"{y:.0f}%".replace(".", ",")))
     ax2.set_title("B. Trayectoria Desinflacionaria Oficial (INDEC)", fontsize=10.5, fontweight="bold", color=TONE_HERO, loc="left", pad=8)
-    ax2.legend(loc="upper right", fontsize=8.5, frameon=True, facecolor="#FFFFFF", edgecolor=TONE_BORDER)
+    ax2.legend(loc="upper right", fontsize=8.5, frameon=False)
 
     # Encabezado, Banner Superior de KPIs y Pie
     draw_figure_header(fig, "DINÁMICA DE PRECIOS Y DESINFLACIÓN · INDEC / DEIE",
@@ -500,7 +516,7 @@ def render_chart_cuyo(isac: Optional[Dict[str, Any]] = None) -> str:
     plt.close("all")
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12.0, 6.75), facecolor="#FFFFFF", gridspec_kw={'width_ratios': [1.15, 1.0]})
     apply_base_axes_styling(ax1)
-    apply_base_axes_styling(ax2)
+    apply_horizontal_bar_styling(ax2)
 
     if not isac:
         try:
@@ -523,10 +539,10 @@ def render_chart_cuyo(isac: Optional[Dict[str, Any]] = None) -> str:
              path_effects=WHITE_HALO_THICK, label=f"ISAC Desest. ({valores[-1]:.1f} pts)".replace(".", ","), zorder=3)
 
     ax1.vlines(x=x_idx[-1], ymin=min_isac, ymax=valores[-1], color=TONE_HERO, linestyle="--", linewidth=1.0, zorder=2)
-    ax1.annotate(f"Nivel Actual ({meses[-1]})\n{valores[-1]:.1f} pts  (+16,8% piso)".replace(".", ","),
+    ax1.annotate(f"Nivel Actual ({meses[-1]})\n{valores[-1]:.1f} pts (+16,8% piso)".replace(".", ","),
                  xy=(x_idx[-1], valores[-1]), xytext=(-110, 16), textcoords="offset points",
                  fontsize=9.0, fontweight="bold", color=TONE_HERO,
-                 bbox=dict(boxstyle="square,pad=0.3", facecolor=TONE_CARD_BG, edgecolor=TONE_BORDER, linewidth=0.8),
+                 path_effects=WHITE_HALO_THICK,
                  arrowprops=dict(arrowstyle="->", color=TONE_HERO, lw=1.0))
 
     ax1.set_xticks(x_idx)
@@ -534,7 +550,7 @@ def render_chart_cuyo(isac: Optional[Dict[str, Any]] = None) -> str:
     ax1.set_ylabel("Índice de Construcción (Base 2004 = 100)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax1.set_ylim(min_isac, max(valores) * 1.05)
     ax1.set_title("A. Actividad de la Construcción (ISAC)", fontsize=10.5, fontweight="bold", color=TONE_HERO, loc="left", pad=8)
-    ax1.legend(loc="lower right", fontsize=8.5, frameon=True, facecolor="#FFFFFF", edgecolor=TONE_BORDER)
+    ax1.legend(loc="lower right", fontsize=8.5, frameon=False)
 
     # Panel 2: Cadenas Productivas de Cuyo (Valores negativos claramente posicionados a la derecha de x=0)
     cadenas = [
@@ -593,7 +609,7 @@ def render_chart_cuyo(isac: Optional[Dict[str, Any]] = None) -> str:
 def render_chart_cuyo_regional(actividad: Optional[Dict[str, Any]] = None) -> str:
     plt.close("all")
     fig, ax = plt.subplots(figsize=(12.0, 6.75), facecolor="#FFFFFF")
-    apply_base_axes_styling(ax)
+    apply_horizontal_bar_styling(ax)
 
     actividad = actividad or DATOS_DEL_DIA.get("actividad", {})
     provincias = [
@@ -654,7 +670,7 @@ def render_chart_monetary(tasas_bcra: Optional[Dict[str, Any]] = None) -> str:
     plt.close("all")
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12.0, 6.75), facecolor="#FFFFFF")
     apply_base_axes_styling(ax1)
-    apply_base_axes_styling(ax2)
+    apply_horizontal_bar_styling(ax2)
 
     tasas_bcra = tasas_bcra or DATOS_DEL_DIA.get("tasas_bcra_referencia", {})
     pases_tna = tasas_bcra.get("pases_1d_tna", {}).get("valor", 23.12)
@@ -673,9 +689,9 @@ def render_chart_monetary(tasas_bcra: Optional[Dict[str, Any]] = None) -> str:
     ax1.vlines(x=2, ymin=-2, ymax=19.2, color=TONE_FAINT, linestyle=":", linewidth=0.9, zorder=2)
     ax1.scatter([2], [0.0], marker="D", s=65, color=TONE_PRIMARY, edgecolor="#FFFFFF", linewidth=1.5, zorder=5)
     ax1.annotate("Extinción de Pases\nStock $0 desde Jul-25",
-                 xy=(2, 0.0), xytext=(15, 35), textcoords="offset points",
+                 xy=(2, 0.0), xytext=(15, 30), textcoords="offset points",
                  fontsize=8.8, fontweight="bold", color=TONE_PRIMARY,
-                 bbox=dict(boxstyle="square,pad=0.3", facecolor=TONE_CARD_BG, edgecolor=TONE_BORDER, linewidth=0.8),
+                 path_effects=WHITE_HALO_THICK,
                  arrowprops=dict(arrowstyle="->", color=TONE_PRIMARY, lw=1.0))
 
     ax1.set_xticks(x_m)
@@ -683,7 +699,7 @@ def render_chart_monetary(tasas_bcra: Optional[Dict[str, Any]] = None) -> str:
     ax1.set_ylabel("Stock en Billones de Pesos ($ B)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax1.set_ylim(-2, 40)
     ax1.set_title("A. Evolución Base Monetaria y Pases", fontsize=10.5, fontweight="bold", color=TONE_HERO, loc="left", pad=8)
-    ax1.legend(loc="center left", fontsize=8.5, frameon=True, facecolor="#FFFFFF", edgecolor=TONE_BORDER)
+    ax1.legend(loc="center left", fontsize=8.5, frameon=False)
 
     tasas_nom = [
         ("Lecap Corta (TEMx12)", 35.4, TONE_HERO),
@@ -767,15 +783,15 @@ def render_chart_sovereign(soberano: Optional[Dict[str, Any]] = None, ns: Option
         ax.annotate(f"{ticker_b}\nTIR: {tir:.2f}%".replace(".", ","), xy=(dur, tir),
                     xytext=offset, textcoords="offset points", ha=ha_pos,
                     fontsize=9.2, fontweight="bold", color=col,
-                    bbox=dict(boxstyle="square,pad=0.3", facecolor=TONE_CARD_BG, edgecolor=col, linewidth=1.0),
-                    arrowprops=dict(arrowstyle="->", color=col, lw=1.1), zorder=6)
+                    path_effects=WHITE_HALO_THICK,
+                    arrowprops=dict(arrowstyle="->", color=col, lw=0.9), zorder=6)
 
     ax.set_xlabel("Duración Modificada / Maturity (Años)", fontsize=11.0, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax.set_ylabel("Tasa Interna de Retorno (TIR % USD)", fontsize=11.0, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f"{y:.1f}%".replace(".", ",")))
     ax.set_xlim(0, 15)
     ax.set_ylim(8.0, 15.5)
-    ax.legend(loc="lower right", fontsize=8.8, frameon=True, facecolor="#FFFFFF", edgecolor=TONE_BORDER)
+    ax.legend(loc="lower right", fontsize=8.8, frameon=False)
 
     # Encabezado, Banner Superior de KPIs y Pie
     draw_figure_header(fig, "CURVA DE RENDIMIENTOS SOBERANA EN DÓLARES · BYMA / RAVA",
@@ -801,7 +817,7 @@ def render_chart_sovereign(soberano: Optional[Dict[str, Any]] = None, ns: Option
 def render_chart_fx(dolar: Optional[Dict[str, Any]] = None, riesgo: Optional[Dict[str, Any]] = None) -> str:
     plt.close("all")
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12.0, 6.75), facecolor="#FFFFFF")
-    apply_base_axes_styling(ax1)
+    apply_horizontal_bar_styling(ax1)
     apply_base_axes_styling(ax2)
 
     dolar = dolar or DATOS_DEL_DIA.get("dolar", {})
@@ -845,9 +861,9 @@ def render_chart_fx(dolar: Optional[Dict[str, Any]] = None, riesgo: Optional[Dic
     for pf, fut, tna in zip(plazos_fut, futuros_cip, tnas_cip):
         ax2.vlines(x=pf, ymin=oficial * 0.98, ymax=fut, color=TONE_FAINT, linestyle=":", linewidth=0.9, zorder=2)
         ax2.annotate(f"{pf}d: ${fut:,.1f}\n({tna:.1f}% TNA)".replace(",", "X").replace(".", ",").replace("X", "."),
-                     xy=(pf, fut), xytext=(-15, 14), textcoords="offset points", ha="center",
+                     xy=(pf, fut), xytext=(-10, 12), textcoords="offset points", ha="center",
                      fontsize=8.8, fontweight="bold", color=TONE_HERO,
-                     bbox=dict(boxstyle="square,pad=0.3", facecolor=TONE_CARD_BG, edgecolor=TONE_BORDER, linewidth=0.8))
+                     path_effects=WHITE_HALO_THICK)
 
     ax2.set_xticks(plazos_fut)
     ax2.set_xticklabels(["30 Días", "90 Días", "180 Días"], fontsize=9.5, color=TONE_SLATE)
@@ -905,7 +921,7 @@ def render_chart_equity(equity: Optional[Dict[str, Any]] = None) -> str:
     # Rótulo de cuadrante posicionado limpiamente en la base del cuadrante sin colisión
     ax.text(30.5, 3.35, "CUADRANTE DE LIDERAZGO ENERGÉTICO (Margen >30% · Múltiplo <5,5x)",
             fontsize=8.0, fontweight="bold", color=TONE_PRIMARY, va="bottom", ha="left",
-            bbox=dict(boxstyle="square,pad=0.25", facecolor="#FFFFFF", edgecolor=TONE_BORDER, linewidth=0.8), zorder=3)
+            path_effects=WHITE_HALO_THICK, zorder=3)
 
     for emp in lideres:
         tck = emp.get("ticker", "")
@@ -919,7 +935,7 @@ def render_chart_equity(equity: Optional[Dict[str, Any]] = None) -> str:
         ax.annotate(f"{tck}\n{ev:.1f}x · {mg:.1f}%".replace(".", ","),
                     xy=(mg, ev), xytext=(ox, oy), textcoords="offset points",
                     fontsize=8.8, fontweight="bold", color=col, va="center",
-                    bbox=dict(boxstyle="square,pad=0.25", facecolor=TONE_CARD_BG, edgecolor=TONE_BORDER, linewidth=0.8),
+                    path_effects=WHITE_HALO_THICK,
                     zorder=6)
 
     ax.set_xlabel("Margen Operativo EBITDA (%)", fontsize=11.0, fontweight="bold", color=TONE_SLATE, labelpad=10)
@@ -990,7 +1006,7 @@ def render_chart_tcr() -> str:
     ax.annotate(f"Pico ({meses[idx_pico]})\n{valores[idx_pico]:.1f} pts".replace(".", ","),
                 xy=(idx_pico, valores[idx_pico]), xytext=(15, -12), textcoords="offset points",
                 fontsize=8.8, fontweight="bold", color=TONE_PRIMARY,
-                bbox=dict(boxstyle="square,pad=0.25", facecolor="#FFFFFF", edgecolor=TONE_BORDER, linewidth=0.8))
+                path_effects=WHITE_HALO_THICK)
 
     ultimo = tcr_data["ultimo"]
     u_val = ultimo["tcr_indice"]
@@ -998,18 +1014,18 @@ def render_chart_tcr() -> str:
     ax.scatter([x_idx[-1]], [u_val], marker="o", s=75, color=TONE_HERO, edgecolor="#FFFFFF", linewidth=2.0, zorder=5)
 
     lectura = "Atraso Relativo s/ Base 100" if u_val < 100 else "Ganancia de Competitividad"
-    ax.annotate(f"Nivel Actual ({ultimo['mes']})\n{u_val:.1f} pts  ({lectura})".replace(".", ","),
-                xy=(x_idx[-1], u_val), xytext=(-130, 22), textcoords="offset points",
+    ax.annotate(f"Nivel Actual ({ultimo['mes']})\n{u_val:.1f} pts ({lectura})".replace(".", ","),
+                xy=(x_idx[-1], u_val), xytext=(-125, 20), textcoords="offset points",
                 fontsize=9.2, fontweight="bold", color=TONE_HERO,
-                bbox=dict(boxstyle="square,pad=0.3", facecolor=TONE_CARD_BG, edgecolor=TONE_HERO, linewidth=1.0),
-                arrowprops=dict(arrowstyle="->", color=TONE_HERO, lw=1.1), zorder=6)
+                path_effects=WHITE_HALO_THICK,
+                arrowprops=dict(arrowstyle="->", color=TONE_HERO, lw=1.0), zorder=6)
 
     tick_pos = sanitize_date_ticks(len(meses), target_ticks=8)
     ax.set_xticks(tick_pos)
     ax.set_xticklabels([meses[i] for i in tick_pos], fontsize=9.0, color=TONE_SLATE)
     ax.set_ylabel(f"Índice TCR Bilateral (Base {tcr_data['base_mes']} = 100)", fontsize=11.0, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax.set_ylim(65, 175)
-    ax.legend(loc="upper right", fontsize=8.8, frameon=True, facecolor="#FFFFFF", edgecolor=TONE_BORDER)
+    ax.legend(loc="upper right", fontsize=8.8, frameon=False)
 
     # Encabezado, Banner Superior de KPIs y Pie
     draw_figure_header(fig, "COMPETITIVIDAD CAMBIARIA EXTERNA · BCRA / INDEC / U.S. BLS",

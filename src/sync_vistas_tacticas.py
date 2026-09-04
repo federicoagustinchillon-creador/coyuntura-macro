@@ -39,9 +39,15 @@ def cargar_json(ruta):
 
 
 def guardar_json(ruta, data):
-    with open(ruta, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    """Guarda JSON de forma 100% atómica mediante archivo temporal y reemplazo seguro (NTFS/POSIX)."""
+    directorio = os.path.dirname(ruta)
+    os.makedirs(directorio, exist_ok=True)
+    import tempfile
+    with tempfile.NamedTemporaryFile('w', dir=directorio, delete=False, encoding='utf-8') as tf:
+        json.dump(data, tf, ensure_ascii=False, indent=2)
+        tf.write("\n")
+        temp_name = tf.name
+    os.replace(temp_name, ruta)
 
 
 def validar_contra_schema(data, schema):
