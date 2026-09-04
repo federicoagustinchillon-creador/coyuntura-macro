@@ -161,6 +161,140 @@ def _fmt_num(v, dec=2):
     except:
         return str(v)
 
+
+# =============================================================================
+# COMPONENTES EDITORIALES SUPERIORES (ESTÁNDAR GOLDMAN SACHS / BIS / IMF)
+# =============================================================================
+
+def crear_bloque_dos_columnas(flowables_izq, flowables_der, width=532, gutter=12, col_ratio=(1, 1)):
+    w_izq = (width - gutter) * col_ratio[0] / sum(col_ratio)
+    w_der = (width - gutter) * col_ratio[1] / sum(col_ratio)
+    t = Table([[flowables_izq, flowables_der]], colWidths=[w_izq, w_der])
+    t.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (0,0), gutter/2),
+        ('LEFTPADDING', (1,0), (1,0), gutter/2),
+    ]))
+    return t
+
+def crear_bloque_tesis_factores(items, width=532):
+    filas = []
+    p_desc = ParagraphStyle('Desc_Tesis', fontName='Georgia', fontSize=7.2, leading=9.6, alignment=TA_JUSTIFY, textColor=DARK_TEXT)
+    for lead, desc in items:
+        p = Paragraph(f"<b>{lead}:</b> {desc}", p_desc)
+        filas.append([p])
+    t = Table(filas, colWidths=[width])
+    t.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+        ('TOPPADDING', (0,0), (-1,-1), 2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('LINELEFT', (0,0), (0,-1), 1.5, PRIMARY),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+    ]))
+    return t
+
+def crear_bloque_escenarios_condicionales(escenarios, width=532):
+    n = len(escenarios)
+    gutter = 6
+    w_card = (width - (n - 1) * gutter) / n
+    celdas = []
+    col_widths = []
+    for i, esc in enumerate(escenarios):
+        titulo, prob, desc, tactica, color_top = esc
+        p_tit = Paragraph(f"<b>{titulo.upper()}</b> <font color='#64748B' size=6.5>({prob})</font>", ParagraphStyle('EscTit', fontName='Georgia-Bold', fontSize=6.8, leading=8.8, textColor=PRIMARY))
+        p_desc = Paragraph(desc, ParagraphStyle('EscDesc', fontName='Georgia', fontSize=6.6, leading=8.4, textColor=DARK_TEXT))
+        p_tac = Paragraph(f"<b>Directriz:</b> <i>{tactica}</i>", ParagraphStyle('EscTac', fontName='Georgia-Italic', fontSize=6.6, leading=8.4, textColor=color_top))
+        
+        card_content = [p_tit, Spacer(1, 1.5), p_desc, Spacer(1, 1.5), p_tac]
+        card_t = Table([[card_content]], colWidths=[w_card])
+        card_t.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#FFFFFF")),
+            ('LINEBEFORE', (0,0), (-1,-1), 0.4, colors.HexColor("#E2E8F0")),
+            ('LINEAFTER', (0,0), (-1,-1), 0.4, colors.HexColor("#E2E8F0")),
+            ('LINEBELOW', (0,0), (-1,-1), 0.4, colors.HexColor("#E2E8F0")),
+            ('LINETOP', (0,0), (-1,-1), 1.5, color_top),
+            ('TOPPADDING', (0,0), (-1,-1), 2.5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+            ('LEFTPADDING', (0,0), (-1,-1), 4),
+            ('RIGHTPADDING', (0,0), (-1,-1), 4),
+        ]))
+        celdas.append(card_t)
+        col_widths.append(w_card)
+        if i < n - 1:
+            celdas.append(Spacer(gutter, 1))
+            col_widths.append(gutter)
+    
+    t_row = Table([celdas], colWidths=col_widths)
+    t_row.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+    ]))
+    return t_row
+
+def crear_bloque_formula_matematica(formula_latex, params_list, interpretacion, titulo="FORMULACIÓN MATEMÁTICA & PRIMEROS PRINCIPIOS", width=532):
+    p_tit = Paragraph(f"<b>{titulo}</b>", ParagraphStyle('FormTit', fontName='Georgia-Bold', fontSize=6.8, leading=8.8, textColor=PRIMARY))
+    p_form = Paragraph(f"<font size=8.0 face='Georgia-Italic' color='#0B2545'><b>{formula_latex}</b></font>", ParagraphStyle('FormMain', fontName='Georgia-Italic', fontSize=8.0, leading=10.5, alignment=TA_CENTER))
+    
+    col_izq = []
+    col_der = []
+    mid = (len(params_list) + 1) // 2
+    for i, (sym, val, meaning) in enumerate(params_list):
+        p_param = Paragraph(f"<b>{sym}</b> = <font color='#0B2545'><b>{val}</b></font>: {meaning}", ParagraphStyle('ParamP', fontName='Georgia', fontSize=6.5, leading=8.4, textColor=DARK_TEXT))
+        if i < mid:
+            col_izq.append(p_param)
+        else:
+            col_der.append(p_param)
+    
+    t_params = Table([[col_izq, col_der]], colWidths=[(width-16)/2, (width-16)/2])
+    t_params.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 2),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2),
+        ('TOPPADDING', (0,0), (-1,-1), 0.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0.5),
+    ]))
+    
+    p_interp = Paragraph(f"<b>Diagnóstico de Transmisión:</b> {interpretacion}", ParagraphStyle('InterpP', fontName='Georgia', fontSize=6.6, leading=8.8, alignment=TA_JUSTIFY, textColor=DARK_TEXT))
+    
+    box_content = [p_tit, Spacer(1, 1.5), p_form, Spacer(1, 2), t_params, Spacer(1, 2), p_interp]
+    t_main = Table([[box_content]], colWidths=[width])
+    t_main.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+        ('BOX', (0,0), (-1,-1), 0.4, colors.HexColor("#CBD5E1")),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+    ]))
+    return t_main
+
+def crear_pull_quote_editorial(cita_texto, autor_texto="División de Estrategia Macroeconómica · FCE UNCUYO · OERU", width=532):
+    p_cita = Paragraph(f"<i>«{cita_texto}»</i>", ParagraphStyle('PQuote', fontName='Georgia-Italic', fontSize=7.6, leading=10.2, alignment=TA_JUSTIFY, textColor=PRIMARY))
+    p_aut = Paragraph(f"<b>— {autor_texto}</b>", ParagraphStyle('PQuoteAut', fontName='Sans-Bold', fontSize=6.2, leading=8.0, alignment=TA_RIGHT, textColor=colors.HexColor("#64748B")))
+    
+    t = Table([[p_cita], [p_aut]], colWidths=[width])
+    t.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LINETOP', (0,0), (-1,0), 0.6, PRIMARY),
+        ('LINEBELOW', (0,-1), (-1,-1), 0.6, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+    ]))
+    return t
+
 def generar_monitor_diario_reportlab(ctx=None):
     if ctx is None:
         from src.contexto_informe import cargar_contexto
@@ -288,53 +422,35 @@ def generar_monitor_diario_reportlab(ctx=None):
         ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     story.append(t_fx_t)
-    story.append(Spacer(1, 2.5))
+    story.append(Spacer(1, 4))
 
-    story.append(Paragraph("<b>Condiciones de Liquidez Monetaria y Tasas del Sistema Financiero:</b>", h2_style))
-    tab_liq_data = [
-        [Paragraph("<b>Instrumento / Variable BCRA</b>", cell_header_style), Paragraph("<b>Tasa Nominal (TNA)</b>", cell_header_style), Paragraph("<b>Tasa Efectiva (TEA/TEM)</b>", cell_header_style), Paragraph("<b>Estatus &amp; Transmisión de Liquidez</b>", cell_header_style)],
-        [Paragraph("Tasa de Pases Pasivos BCRA (1 día)", cell_style_left), Paragraph("40,00% TNA", cell_style_center), Paragraph("49,15% TEA (3,33% TEM)", cell_style_center), Paragraph("Tasa de referencia para operaciones de esterilización bancaria diaria.", cell_style_left)],
-        [Paragraph("Tasa BADLAR Privada (bancos)", cell_style_left), Paragraph("37,25% TNA", cell_style_center), Paragraph("44,30% TEA (3,10% TEM)", cell_style_center), Paragraph("Rendimiento de depósitos mayoristas a plazo fijo en moneda nacional.", cell_style_left)],
-        [Paragraph("Caución Bursátil ByMA (1 día)", cell_style_left), Paragraph("34,50% TNA", cell_style_center), Paragraph("41,12% TEA (2,88% TEM)", cell_style_center), Paragraph("Tasa de corte interbancario y fondeo colateralizado de tesorerías.", cell_style_left)],
-        [Paragraph("Base Monetaria Promedio (BCRA)", cell_style_left), Paragraph("$28,5 B", cell_style_center), Paragraph("Variación nula m/m", cell_style_center), Paragraph("Ancla cuantitativa de emisión cero y saneamiento de pasivos cuasifiscales.", cell_style_left)],
+    # Reemplazo de tabla de liquidez y callout: Doble Columna Cambiaria (Tecnica 1)
+    col_izq_dia = [
+        Paragraph("<b>Dinámica Cambiaria & Arbitraje Spot:</b>", h2_style),
+        Paragraph(
+            f"El Dólar CCL operó con estabilidad en ${_fmt_num(ccl, 2)}, manteniendo la brecha cambiaria en {brecha}% "
+            "frente al oficial. La oferta del blend 80/20 y la absorción de liquidez esterilizan la presión financiera, "
+            "incentivando el carry trade en títulos a tasa fija corta.",
+            body_style
+        )
     ]
-    t_liq_t = Table(tab_liq_data, colWidths=[140, 85, 95, 212])
-    t_liq_t.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,2), (-1,2), colors.white),
-        ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,4), (-1,4), colors.white),
-        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
-        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 1.6),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 1.6),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-    ]))
-    story.append(t_liq_t)
-    story.append(Spacer(1, 2.5))
+    col_der_dia = [
+        Paragraph("<b>Derivados Financieros & Cobertura CIP:</b>", h2_style),
+        Paragraph(
+            "La curva de futuros Rofex convalidó tasas implícitas del 35,4% TNA en el tramo a 30 días, inferiores "
+            "al rendimiento de letras capitalizables. Se sugiere mantener cobertura comercial solo para compromisos "
+            "rígidos de importación a plazos superiores a 90 días.",
+            body_style
+        )
+    ]
+    story.append(crear_bloque_dos_columnas(col_izq_dia, col_der_dia, gutter=14))
+    story.append(Spacer(1, 3))
 
-    callout_fx = Table([
-        [Paragraph(
-            "<b>DICTAMEN DE MESA CAMBIARIA:</b> <i>La estabilidad del diferencial CCL/oficial por debajo del 5% y la absorción de liquidez "
-            f"mediante Lecaps ratifican el incentivo al carry trade en pesos. Se sugiere a tesorerías mantener cobertura en Rofex/CIP solo para "
-            "vencimientos comerciales rígidos de importación a más de 90 días, aprovechando tasas implícitas inferiores al costo de financiamiento en ARS.</i>",
-            ParagraphStyle('Call_FX_D', fontName='Georgia', fontSize=7.2, leading=9.8, textColor=NAVY_INST)
-        )]
-    ], colWidths=[532])
-    callout_fx.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
-        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
-        ('LINELEFT', (0,0), (0,-1), 2.8, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-        ('LEFTPADDING', (0,0), (-1,-1), 6),
-        ('RIGHTPADDING', (0,0), (-1,-1), 6),
-    ]))
-    story.append(callout_fx)
-
+    # Pull-Quote de Mesa Cambiaria (Tecnica 5)
+    story.append(crear_pull_quote_editorial(
+        "La estabilidad de la brecha y la compresión del basis cambiario consolidan el ancla nominal y descartan presiones de salto en el horizonte inmediato.",
+        "Mesa de Dinero & Estrategia Financiera · FCE UNCUYO · OERU"
+    ))
     story.append(PageBreak())
 
     # =========================================================================
@@ -381,52 +497,43 @@ def generar_monitor_diario_reportlab(ctx=None):
         ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     story.append(t_rec)
-    story.append(Spacer(1, 2.5))
+    story.append(Spacer(1, 4))
 
-    story.append(Paragraph("<b>Estructura Temporal de Curva en Pesos (Lecaps y Boncer):</b>", h2_style))
-    tab_curva_data = [
-        [Paragraph("<b>Instrumento / Especie</b>", cell_header_style), Paragraph("<b>Vencimiento / Plazo</b>", cell_header_style), Paragraph("<b>TEM / TIR %</b>", cell_header_style), Paragraph("<b>Tasa Real Ex-Ante Mensual</b>", cell_header_style), Paragraph("<b>Evaluación de Convexidad y Posición</b>", cell_header_style)],
-        [Paragraph("Lecap S31O6 (Tramo Corto)", cell_style_left), Paragraph("Octubre 2026 (60d)", cell_style_center), Paragraph(f"TEM {_fmt_num(lecap_tem, 2)}%", cell_style_center), Paragraph("+0,95% real m/m", cell_style_center), Paragraph("Pilar del carry trade; menor volatilidad de precio ante subas de tasa.", cell_style_left)],
-        [Paragraph("Lecap S28N6 (Tramo Medio)", cell_style_left), Paragraph("Noviembre 2026 (90d)", cell_style_center), Paragraph("TEM 3,10%", cell_style_center), Paragraph("+1,10% real m/m", cell_style_center), Paragraph("Captura de pendiente positiva en la curva de letras capitalizables.", cell_style_left)],
-        [Paragraph("Lecap S31E7 (Tramo Largo)", cell_style_left), Paragraph("Enero 2027 (150d)", cell_style_center), Paragraph("TEM 3,25%", cell_style_center), Paragraph("+1,25% real m/m", cell_style_center), Paragraph("Extensión de duration en pesos con prima atractiva sobre inflación REM.", cell_style_left)],
-        [Paragraph("Boncer TZX27 (CER)", cell_style_left), Paragraph("Junio 2027 (300d)", cell_style_center), Paragraph("CER + 7,80%", cell_style_center), Paragraph("Spread real positivo", cell_style_center), Paragraph("Hedge directo ante eventuales shocks tarifarios en precios regulados.", cell_style_left)],
+    # Reemplazo de tablas de relleno: Tesis Tactica de Asignacion de Cartera (Tecnica 2)
+    items_strat_dia = [
+        ("Lecaps Cortas S31O6 (50% de Cartera)", f"Captura de tasa real positiva de +0,95% mensual (TEM {_fmt_num(lecap_tem, 2)}%), constituyendo el eje del carry trade con mínimo riesgo de duración."),
+        ("Soberanos Hard Dollar GD35/GD38 (30% de Cartera)", "Apalancamiento de convexidad (TIR 9,65% - 9,70%) ante la compresión de riesgo país hacia los 500 pb."),
+        ("Boncer TZX27 (10% de Cartera)", "Seguro directo ante eventuales reajustes estacionales en precios regulados y tarifas."),
+        ("Bopreal Serie 3 (10% de Cartera)", "Cobertura en moneda extranjera y diversificación corporativa para compromisos comerciales."),
     ]
-    t_curv_t = Table(tab_curva_data, colWidths=[110, 85, 75, 85, 177])
-    t_curv_t.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F0FDF4")),
-        ('BACKGROUND', (0,2), (-1,2), colors.white),
-        ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,4), (-1,4), colors.white),
-        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
-        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 1.6),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 1.6),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-    ]))
-    story.append(t_curv_t)
-    story.append(Spacer(1, 2.5))
+    story.append(crear_bloque_tesis_factores(items_strat_dia))
+    story.append(Spacer(1, 4))
 
-    callout_strat = Table([
+    # Pull-Quote de Asignacion Tactica (Tecnica 5)
+    story.append(crear_pull_quote_editorial(
+        "Para horizontes de 30 a 90 dias, la estrategia optima prioriza la captura de tasa real en letras cortas y convexidad soberana en bonos globales GD35.",
+        "Comite de Estrategia de Cartera · FCE UNCUYO · OERU"
+    ))
+    story.append(Spacer(1, 3))
+
+    imprint_diario = Table([
         [Paragraph(
-            "<b>CONCLUSIÓN Y ALLOCATION RECOMENDADO:</b> <i>Para horizontes de 30 a 90 días, se sugiere una cartera conformada por "
-            "<b>50% en Lecaps del tramo corto</b> (captura de tasa real de +0,95% mensual), <b>30% en Globales USD (GD35/GD38)</b> para exposición soberana, "
-            "<b>10% en Boncer TZX27</b> como seguro inflacionario y <b>10% en Bopreal Serie 3</b> para cobertura corporativa en moneda dura.</i>",
-            ParagraphStyle('Call_Strat_D', fontName='Georgia', fontSize=7.2, leading=9.8, textColor=NAVY_INST)
+            "<font color='#0B2545' size=6.8><b>RESPONSABILIDAD INSTITUCIONAL:</b></font> "
+            "<font color='#64748B' size=6.0>Documento elaborado por Federico Agustín Chillón para el Observatorio Económico Regional Urbano (OERU) "
+            "y el Instituto de Investigaciones Económicas de la Facultad de Ciencias Económicas, UNCUYO. "
+            "Mendoza, Argentina, 2026.</font>",
+            ParagraphStyle('ImpDia', fontName='Georgia', leading=7.8)
         )]
     ], colWidths=[532])
-    callout_strat.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F0FDF4")),
-        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#16A34A")),
-        ('LINELEFT', (0,0), (0,-1), 2.8, colors.HexColor("#16A34A")),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-        ('LEFTPADDING', (0,0), (-1,-1), 6),
-        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+    imprint_diario.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
     ]))
-    story.append(callout_strat)
+    story.append(imprint_diario)
 
     doc.build(story, canvasmaker=NumberedCanvasDiario)
     
@@ -437,3 +544,4 @@ def generar_monitor_diario_reportlab(ctx=None):
 
 if __name__ == "__main__":
     generar_monitor_diario_reportlab()
+
