@@ -14,7 +14,7 @@
     "boncer_tzx27_tir_real": 1.1,
     "breakeven_inflacion_tem": 2.86,
     "inflacion_esperada_rem_tem": 2.0,
-    "premio_tasa_fija_pbs": 95
+    "premio_tasa_fija_pbs": 86
   },
   "inflacion": {
     "indec_general_mom": 2.2,
@@ -47,7 +47,7 @@
     }
   },
   "equity": {
-    "merval_ars": 3009028.75,
+    "merval_ars": 3047465.5,
     "merval_usd_ccl": 1976.92,
     "var_semanal_pct": 1.3,
     "lideres": [
