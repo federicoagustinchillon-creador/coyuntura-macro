@@ -293,7 +293,7 @@ def gen_echarts_emae():
                 "symbolSize": 6,
                 "itemStyle": {"color": "#64748B", "borderColor": "#FFFFFF", "borderWidth": 1.5},
                 "label": {
-                    "show": True, "position": "top", "offset": [0, -6],
+                    "show": True, "position": "bottom", "offset": [0, 8],
                     "formatter": f"Inicio: {str(v).replace('.', ',')}",
                     "color": "#475569", "fontSize": 8.5,
                     "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
@@ -364,7 +364,7 @@ def gen_echarts_emae():
                     "silent": True, "symbol": ["none", "none"],
                     "data": [
                         {"yAxis": 147.8, "lineStyle": {"color": "#64748B", "type": [3, 3], "width": 1.1},
-                         "label": {"formatter": "Media Histórica (147,8 pts)", "position": "insideEndTop", "color": "#475569", "fontSize": 8.5, "fontWeight": "600", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}}
+                         "label": {"formatter": "Media Histórica (147,8 pts)", "position": "insideMiddleTop", "offset": [0, -6], "color": "#475569", "fontSize": 8.5, "fontWeight": "600", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}}
                     ]
                 },
                 "type": "line",
@@ -393,41 +393,55 @@ def gen_echarts_emae():
 
     opt2 = {
         "animation": False,
-        "grid": {"top": 10, "right": 55, "bottom": 24, "left": 135},
+        "grid": {"top": 10, "right": 55, "bottom": 24, "left": 165},
         "xAxis": {
             "type": "value", "min": -8, "max": 18, "interval": 6,
             "splitLine": {"lineStyle": {"color": "#F1F5F9", "type": [3, 3]}},
-            "axisLabel": {"formatter": "{value}%", "color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"formatter": "{value}%", "color": "#64748B", "fontSize": 9.0}
         },
         "yAxis": {
             "type": "category",
-            "data": ["Construcción (ISAC)", "Industria (IPI)", "Comercio", "Minería & Petr.", "Agropecuario"],
+            "data": [
+                "Construcción (ISAC)",
+                "Industria Manufacturera (IPI)",
+                "Consumo Público",
+                "Consumo Privado Hogares",
+                "Comercio Mayor./Minor.",
+                "Inversión Fija (FBCF)",
+                "Minería, Petróleo & Gas",
+                "Exportaciones Reales",
+                "Sector Agropecuario"
+            ],
             "axisLine": {"show": True, "lineStyle": {"color": "#94A3B8", "width": 1.2}},
             "axisTick": {"show": False},
-            "axisLabel": {"color": "#1E293B", "fontSize": 9.5, "fontWeight": "600"}
+            "axisLabel": {"color": "#1E293B", "fontSize": 8.5, "fontWeight": "600"}
         },
         "series": [{
             "type": "bar",
             "data": [
-                {"value": -4.2, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "formatter": "-4,2%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.0, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5}},
-                {"value": -1.8, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "formatter": "-1,8%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.0, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5}},
-                {"value": 2.8,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+2,8%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}},
-                {"value": 8.5,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+8,5%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}},
-                {"value": 14.2, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+14,2%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
+                {"value": -4.2, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "offset": [-4, 0], "formatter": "-4,2%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5}},
+                {"value": -1.8, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "offset": [-4, 0], "formatter": "-1,8%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5}},
+                {"value": -0.9, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "offset": [-4, 0], "formatter": "-0,9%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5}},
+                {"value": 2.7,  "itemStyle": {"color": "#0284C7"}, "label": {"show": True, "position": "right", "offset": [4, 0], "formatter": "+2,7%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BAE6FD", "borderWidth": 0.5}},
+                {"value": 2.8,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "offset": [4, 0], "formatter": "+2,8%", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}},
+                {"value": 6.4,  "itemStyle": {"color": "#0284C7"}, "label": {"show": True, "position": "right", "offset": [4, 0], "formatter": "+6,4%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BAE6FD", "borderWidth": 0.5}},
+                {"value": 8.5,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "offset": [4, 0], "formatter": "+8,5%", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}},
+                {"value": 11.4, "itemStyle": {"color": "#0B2545"}, "label": {"show": True, "position": "right", "offset": [4, 0], "formatter": "+11,4%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
+                {"value": 14.2, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "offset": [4, 0], "formatter": "+14,2%", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
             ],
-            "barWidth": 12
+            "barWidth": 8
         }]
     }
 
     return render_dual_echarts(
         "ACTIVIDAD ECONÓMICA & DINÁMICA PRODUCTIVA · INDEC",
-        "Estimador Mensual de Actividad Económica (EMAE) y Contribución Sectorial",
+        "Estimador Mensual de Actividad Económica (EMAE) y Apertura Sectorial & Consumo",
         f"EMAE: {str(ultimo_val).replace('.', ',')} ({val_ia_str} i.a.)",
         "Evolución Mensual: Original, Desestacionalizada & Tendencia (Base 2004=100)",
         "32 meses de serie oficial mostrando volatilidad estacional de cosechas y ciclo",
         json.dumps(opt1),
-        "Variación Interanual por Sector de Actividad (% i.a. · INDEC)",
-        "Tracción sectorial: Minería/Petróleo y Agro lideran la expansión",
+        "Desagregación Sectorial y de Componentes de Demanda (% i.a. · INDEC)",
+        "Tracción sectorial: Agro, Exportaciones, Energía e Inversión compensan industria",
         json.dumps(opt2),
         "chart_editorial_emae.png",
         "Instituto Nacional de Estadística y Censos (INDEC) & FCE UNCUYO."
@@ -481,7 +495,7 @@ def gen_echarts_ipc():
             data_g_chart.append({
                 "value": v, "symbolSize": 6,
                 "label": {
-                    "show": True, "position": "top", "offset": [0, -6],
+                    "show": True, "position": "top", "offset": [12, -4],
                     "formatter": "Pico: 25,5%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5,
                     "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
                 }
@@ -519,8 +533,8 @@ def gen_echarts_ipc():
                 "value": v, "symbolSize": 7,
                 "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
                 "label": {
-                    "show": True, "position": "top", "offset": [-35, -14],
-                    "formatter": f"Gral: {str(v).replace('.', ',')}%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5,
+                    "show": True, "position": "top", "offset": [-44, -18],
+                    "formatter": f"Gral: {str(v).replace('.', ',')}%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.0,
                     "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
                 }
             })
@@ -543,7 +557,7 @@ def gen_echarts_ipc():
             data_n_chart.append({
                 "value": v, "symbolSize": 5,
                 "label": {
-                    "show": True, "position": "bottom", "offset": [0, 5],
+                    "show": True, "position": "top", "offset": [0, -6],
                     "formatter": "1,5%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 8.0,
                     "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1, 3], "borderRadius": 2, "borderColor": "#BAE6FD", "borderWidth": 0.5
                 }
@@ -553,7 +567,7 @@ def gen_echarts_ipc():
                 "value": v, "symbolSize": 7,
                 "itemStyle": {"color": "#0284C7", "borderColor": "#FFFFFF", "borderWidth": 2},
                 "label": {
-                    "show": True, "position": "top", "offset": [25, -14],
+                    "show": True, "position": "top", "offset": [12, -18],
                     "formatter": f"Núcleo: {str(v).replace('.', ',')}%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 9.0,
                     "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#0284C7", "borderWidth": 0.8
                 }
@@ -563,7 +577,7 @@ def gen_echarts_ipc():
 
     opt1 = {
         "animation": False,
-        "grid": {"top": 15, "right": 25, "bottom": 24, "left": 42},
+        "grid": {"top": 15, "right": 52, "bottom": 24, "left": 42},
         "xAxis": {
             "type": "category",
             "data": labels_ipc,
@@ -587,7 +601,7 @@ def gen_echarts_ipc():
                     "silent": True, "symbol": ["none", "none"],
                     "data": [
                         {"yAxis": 2.0, "lineStyle": {"color": "#047857", "type": [3, 3], "width": 1.2},
-                         "label": {"formatter": "Pauta Crawling (2,0% m/m)", "position": "insideEndTop", "offset": [-15, -8], "color": "#047857", "fontSize": 8.5, "fontWeight": "bold", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
+                         "label": {"formatter": "Pauta Crawling (2,0% m/m)", "position": "insideMiddleTop", "offset": [0, -6], "color": "#047857", "fontSize": 8.5, "fontWeight": "bold", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
                     ]
                 },
                 "markArea": {
@@ -724,9 +738,10 @@ def gen_echarts_rates():
             "symbolSize": 6,
             "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 1.5},
             "label": {
-                "show": True, "position": "top", "offset": [0, -3],
+                "show": True, "position": "top", "offset": [0, -8],
                 "formatter": f"{str(v).replace('.', ',')}%",
-                "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5
+                "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5,
+                "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
             }
         })
 
@@ -745,9 +760,10 @@ def gen_echarts_rates():
             "symbolSize": 5,
             "itemStyle": {"color": "#0284C7", "borderColor": "#FFFFFF", "borderWidth": 1.5},
             "label": {
-                "show": True, "position": "bottom", "offset": [0, 3],
+                "show": True, "position": "bottom", "offset": [0, 8],
                 "formatter": f"+{str(v).replace('.', ',')}%",
-                "color": "#0284C7", "fontWeight": "bold", "fontSize": 8.5
+                "color": "#0284C7", "fontWeight": "bold", "fontSize": 8.5,
+                "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BAE6FD", "borderWidth": 0.5
             }
         })
 
@@ -932,11 +948,11 @@ def gen_echarts_sovereign():
                 "name": "Bonos ByMA",
                 "type": "scatter",
                 "data": [
-                    {"value": [2.8, al30_tir], "name": f"AL30 ({str(al30_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [0, 8]}},
-                    {"value": [3.0, gd30_tir], "name": f"GD30 ({str(gd30_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [0, 8]}},
-                    {"value": [6.8, gd35_tir], "name": f"GD35 ({str(gd35_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [0, 8]}},
-                    {"value": [8.4, gd38_tir], "name": f"GD38 ({str(gd38_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [0, 8]}},
-                    {"value": [14.5, gd46_tir], "name": f"GD46 ({str(gd46_tir).replace('.', ',')}%)", "label": {"show": True, "position": "top", "offset": [0, -8]}}
+                    {"value": [2.8, al30_tir], "name": f"AL30 ({str(al30_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [-15, 12]}},
+                    {"value": [3.0, gd30_tir], "name": f"GD30 ({str(gd30_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [15, 12]}},
+                    {"value": [6.8, gd35_tir], "name": f"GD35 ({str(gd35_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [-24, 12]}},
+                    {"value": [8.4, gd38_tir], "name": f"GD38 ({str(gd38_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [24, 12]}},
+                    {"value": [14.5, gd46_tir], "name": f"GD46 ({str(gd46_tir).replace('.', ',')}%)", "label": {"show": True, "position": "top", "offset": [0, -12]}}
                 ],
                 "symbolSize": 8,
                 "itemStyle": {"color": "#0284C7", "borderColor": "#FFFFFF", "borderWidth": 2},
@@ -1089,12 +1105,12 @@ def gen_echarts_fx():
             "name": "Futuros CIP",
             "type": "line", "smooth": False,
             "data": [
-                {"value": round(oficial, 2), "label": {"show": True, "position": "top", "offset": [0, -7], "formatter": f"${int(round(oficial))} (Spot)", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}},
-                {"value": 1576.0, "label": {"show": True, "position": "top", "offset": [0, -7], "formatter": "$1.576 (35,4%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
-                {"value": 1622.0, "label": {"show": True, "position": "top", "offset": [0, -7], "formatter": "$1.622 (36,0%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
-                {"value": 1670.0, "label": {"show": True, "position": "top", "offset": [0, -7], "formatter": "$1.670 (36,5%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
-                {"value": 1819.0, "label": {"show": True, "position": "top", "offset": [0, -9], "formatter": "$1.819 (37,9%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.6}},
-                {"value": 2123.0, "label": {"show": True, "position": "top", "offset": [0, -9], "formatter": "$2.123 (39,2%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.6}}
+                {"value": round(oficial, 2), "label": {"show": True, "position": "top", "offset": [0, -10], "formatter": f"${int(round(oficial))} (Spot)", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}},
+                {"value": 1576.0, "label": {"show": True, "position": "bottom", "offset": [0, 10], "formatter": "$1.576 (35,4%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
+                {"value": 1622.0, "label": {"show": True, "position": "top", "offset": [0, -10], "formatter": "$1.622 (36,0%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
+                {"value": 1670.0, "label": {"show": True, "position": "bottom", "offset": [0, 10], "formatter": "$1.670 (36,5%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
+                {"value": 1819.0, "label": {"show": True, "position": "top", "offset": [0, -10], "formatter": "$1.819 (37,9%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.6}},
+                {"value": 2123.0, "label": {"show": True, "position": "bottom", "offset": [0, 10], "formatter": "$2.123 (39,2%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.6}}
             ],
             "lineStyle": {"width": 2.5, "color": "#0B2545"},
             "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
@@ -1192,6 +1208,7 @@ def gen_echarts_equity():
             },
             "markLine": {
                 "silent": True, "symbol": ["none", "none"],
+                "label": {"show": False},
                 "lineStyle": {"type": [3, 3], "color": "#94A3B8", "width": 1.0},
                 "data": [
                     {"xAxis": "Nov-23"},
@@ -1733,47 +1750,83 @@ def gen_echarts_tcr():
 
     opt2 = {
         "animation": False,
-        "grid": {"top": 20, "right": 65, "bottom": 24, "left": 110},
+        "grid": {"top": 24, "right": 35, "bottom": 24, "left": 55},
         "xAxis": {
-            "type": "value", "min": 75, "max": 120, "interval": 10,
-            "splitLine": {"lineStyle": {"color": "#F1F5F9", "type": [3, 3]}},
-            "axisLabel": {"formatter": "{value}", "color": "#64748B", "fontSize": 9.5}
+            "type": "category",
+            "data": ["1T25", "2T25", "3T25", "4T25", "1T26"],
+            "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
-            "type": "category",
-            "data": ["China", "EE.UU.", "TCRM Multilateral", "Brasil"],
-            "axisLine": {"show": True, "lineStyle": {"color": "#94A3B8", "width": 1.2}},
-            "axisTick": {"show": False},
-            "axisLabel": {"color": "#1E293B", "fontSize": 9.5, "fontWeight": "600"}
+            "type": "value", "min": 0, "max": 8000, "interval": 2000,
+            "splitLine": {"lineStyle": {"color": "#F1F5F9", "type": [3, 3]}},
+            "axisLabel": {"formatter": "${value}M", "color": "#64748B", "fontSize": 9.0}
         },
-        "series": [{
-            "type": "bar",
-            "data": [
-                {"value": 91.2,  "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "right", "formatter": "91,2 pts", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5}},
-                {"value": 94.5,  "itemStyle": {"color": "#0B2545"}, "label": {"show": True, "position": "right", "formatter": "94,5 pts", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
-                {"value": 94.5,  "itemStyle": {"color": "#64748B"}, "label": {"show": True, "position": "right", "formatter": "94,5 pts", "color": "#475569", "fontWeight": "bold", "fontSize": 9.0, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
-                {"value": 102.4, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "102,4 pts", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
-            ],
-            "barWidth": 14,
-            "markLine": {
-                "silent": True, "symbol": ["none", "none"],
-                "data": [{"xAxis": 100, "lineStyle": {"color": "#94A3B8", "type": [3, 3], "width": 1.2}, "label": {"formatter": "Paridad (100)", "position": "end", "offset": [0, -8], "color": "#475569", "fontSize": 8.5, "fontWeight": "600", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}}]
+        "legend": {
+            "top": 0, "right": 10, "itemWidth": 12, "itemHeight": 6,
+            "textStyle": {"fontSize": 8.0, "color": "#64748B"},
+            "data": ["Exportaciones FOB", "Importaciones CIF", "Saldo Comercial", "Cuenta Corriente"]
+        },
+        "series": [
+            {
+                "name": "Exportaciones FOB",
+                "type": "bar",
+                "barWidth": 10,
+                "data": [
+                    6250, 6850, 6950, 7050,
+                    {"value": 7120, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "top", "offset": [0, -6], "formatter": "$7.120M", "color": "#047857", "fontWeight": "bold", "fontSize": 8.0, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1, 3], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
+                ],
+                "itemStyle": {"color": "#047857"}
+            },
+            {
+                "name": "Importaciones CIF",
+                "type": "bar",
+                "barWidth": 10,
+                "data": [
+                    3400, 3730, 4000, 3950,
+                    {"value": 3870, "itemStyle": {"color": "#64748B"}, "label": {"show": True, "position": "top", "offset": [0, -6], "formatter": "$3.870M", "color": "#64748B", "fontWeight": "bold", "fontSize": 8.0, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1, 3], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}}
+                ],
+                "itemStyle": {"color": "#94A3B8"}
+            },
+            {
+                "name": "Saldo Comercial",
+                "type": "line",
+                "smooth": False,
+                "data": [
+                    2850, 3120, 2950, 3100,
+                    {"value": 3250, "symbolSize": 6, "itemStyle": {"color": "#0B2545"}, "label": {"show": True, "position": [-82, -10], "formatter": "Saldo: +$3.250M", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8}}
+                ],
+                "lineStyle": {"width": 2.2, "color": "#0B2545"},
+                "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 1.5},
+                "symbolSize": 4
+            },
+            {
+                "name": "Cuenta Corriente",
+                "type": "line",
+                "smooth": False,
+                "data": [
+                    650, 980, 1240, 1520,
+                    {"value": 1840, "symbolSize": 6, "itemStyle": {"color": "#0284C7"}, "label": {"show": True, "position": "bottom", "offset": [0, 8], "formatter": "CC: +$1.840M", "color": "#0284C7", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 5], "borderRadius": 2, "borderColor": "#0284C7", "borderWidth": 0.8}}
+                ],
+                "lineStyle": {"width": 1.8, "color": "#0284C7", "type": "dashed"},
+                "itemStyle": {"color": "#0284C7", "borderColor": "#FFFFFF", "borderWidth": 1.5},
+                "symbolSize": 4
             }
-        }]
+        ]
     }
 
     return render_dual_echarts(
         "COMPETITIVIDAD CAMBIARIA REAL & PRECIOS RELATIVOS · BCRA & INDEC",
-        "Índice de Tipo de Cambio Real Multilateral (TCRM) y Bilateral",
-        "TCRM: 94,5 pts · BRASIL: 102,4 pts",
+        "Índice de Tipo de Cambio Real Multilateral (TCRM) y Balanza Comercial",
+        "TCRM: 94,5 pts · SUPERÁVIT COMERCIAL: +USD 3.250M",
         "Evolución Histórica del TCRM Multilateral (Base Dic-2015 = 100)",
         "115 meses de serie continua ponderada por comercio exterior del BCRA",
         json.dumps(opt1),
-        "Tipo de Cambio Real Bilateral por Socio Comercial (Ago-26)",
-        "Competitividad relativa con Brasil, Estados Unidos y China (Base 100)",
+        "Balanza Comercial de Bienes FOB/CIF & Cuenta Corriente (USD Millones)",
+        "Superávit comercial sostenido (+USD 3.250M) y saldo en cuenta corriente (+USD 1.840M)",
         json.dumps(opt2),
         "chart_editorial_tcr.png",
-        "BCRA v4.0, INDEC (IPC Nacional) y bancos centrales socios comerciales."
+        "BCRA v4.0, INDEC (ICA y Balanza de Pagos) y FCE UNCUYO."
     )
 
 
@@ -1804,7 +1857,17 @@ def gen_echarts_canastas():
             "value": cba,
             "itemStyle": {"color": "#0284C7"},
             "label": {
-                "show": True, "position": "inside", "formatter": "$433k", "color": "#FFFFFF", "fontWeight": "bold", "fontSize": 9.0
+                "show": True,
+                "position": "inside",
+                "align": "center",
+                "verticalAlign": "middle",
+                "formatter": "CBA: $433k",
+                "color": "#FFFFFF",
+                "fontWeight": "bold",
+                "fontSize": 9.0,
+                "backgroundColor": "rgba(2, 132, 199, 0.90)",
+                "padding": [2, 5],
+                "borderRadius": 2
             }
         }
     ]
@@ -1813,7 +1876,7 @@ def gen_echarts_canastas():
         {
             "value": 390,
             "label": {
-                "show": True, "position": "top", "offset": [0, -5], "formatter": "Inicio: $710k", "color": "#475569", "fontSize": 8.0,
+                "show": True, "position": "top", "offset": [0, -6], "formatter": "Inicio: $710k", "color": "#475569", "fontSize": 8.0,
                 "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
             }
         },
@@ -1822,7 +1885,7 @@ def gen_echarts_canastas():
             "value": cbt - cba,
             "itemStyle": {"color": "#0B2545"},
             "label": {
-                "show": True, "position": "top", "offset": [0, -6], "formatter": "$963.000 CBT", "color": "#0B2545", "fontWeight": "bold", "fontSize": 10.0,
+                "show": True, "position": "top", "offset": [0, -10], "formatter": "CBT: $963.000", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5,
                 "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 6], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
             }
         }
@@ -1830,7 +1893,7 @@ def gen_echarts_canastas():
 
     opt1 = {
         "animation": False,
-        "grid": {"top": 18, "right": 25, "bottom": 24, "left": 55},
+        "grid": {"top": 24, "right": 40, "bottom": 24, "left": 55},
         "xAxis": {
             "type": "category",
             "data": ["Ago-25", "Oct-25", "Dic-25", "Feb-26", "Abr-26", "Jun-26", "Ago-26"],
@@ -1838,7 +1901,7 @@ def gen_echarts_canastas():
             "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
-            "type": "value", "min": 0, "max": 1150, "interval": 250,
+            "type": "value", "min": 0, "max": 1200, "interval": 300,
             "splitLine": {"lineStyle": {"color": "#F1F5F9", "type": [3, 3]}},
             "axisLabel": {"formatter": "${value}k", "color": "#64748B", "fontSize": 9.5}
         },
