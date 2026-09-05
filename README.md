@@ -112,9 +112,16 @@ Para garantizar un estándar visual y analítico a la altura de Goldman Sachs GI
 1. **Portada Wall Street Tear-Sheet en 2 Columnas Asimétricas:** Mástil institucional formal, titular hero cuantitativo, diagnóstico ejecutivo macroeconómico denso a la izquierda (330 pt) contrapuesto con la matriz de asignación táctica y el scorecard de mercado a la derecha (192 pt).
 2. **Tablas Estructuradas de Indicadores de 10-12 Filas:** Cabecera azul marino Oxford (`#0B2545`), filas alternadas (`#F8FAFC` y blanco), columna de proyecciones diferenciada y variaciones porcentuales coloreadas en verde/rojo según el impacto macroeconómico.
 3. **Prosa Analítica Justificada con Viñeta Institucional:** Párrafos densos en tipografía Georgia (8.0 pt / leading 11.4 pt) con viñetas en azul cielo (`#0284C7`), conceptos clave en negrita y sin cajas cerradas.
-4. **Figuras Editoriales Dual-Panel Compactas:** 11 figuras de panel dual calibradas a 165 pt de altura y 532 pt de ancho con borde capilar `#CBD5E1`, sin callouts de texto flotante ni franjas de colores de IA.
-5. **Presupuesto Vertical Estricto (Page Budget):** Cobertura del 100% de cada página, eliminando huecos muertos al pie. Conteos inmutables:
-   - **Informe Mensual:** 15 páginas exactas (Portada Tear-Sheet, Índice, Resumen Ejecutivo, 11 Capítulos temáticos con panel dual y Flash Normativo/Metodología).
+4. **Figuras Editoriales ECharts 5 de Alta Densidad:** 11 figuras de panel dual calibradas a 205-210 pt de altura y 532 pt de ancho con borde capilar `#CBD5E1`, etiquetas numéricas directas en todos los nodos y barras, sin callouts flotantes ni cajas opacas.
+5. **Arquitectura de 4 Arquetipos Editoriales Rítmicos (Páginas 4 a 14):**
+   - **Arquetipo Scorecard (Págs. 4 y 8):** Pestaña temática de bloque, tabla comparativa con micro-barras de variación y bloques analíticos temáticos precedidos por viñetas triangulares (`▸`).
+   - **Arquetipo Desglose Multicontable (Págs. 5, 7, 9 y 13):** Lead-in con filetes horizontales finos, gran matriz contable agrupada y 3 párrafos de alta densidad.
+   - **Arquetipo Monitor Social (Pág. 6):** Doble tarjeta ejecutiva superior de canastas (CBA Indigencia vs. CBT Pobreza) y matriz salarial RIPTE.
+   - **Arquetipo Asimétrico Wall Street (Págs. 10 y 12):** 2 columnas (60% narrativa analítica / 40% scorecard táctico vertical y catalizadores) con figura al pie.
+   - **Arquetipo TopChart Inversor (Págs. 11 y 14):** Ruptura de monotonía con figura analítica en el tercio superior, seguida de matriz de valuación activo por activo y conclusiones de cartera.
+   - **Pestañas Marginales Laterales (Lateral Thumb Tabs):** Marcadores visuales en el margen izquierdo según el bloque macroeconómico (Bloque I Verde `#047857`, Bloque II Azul `#0284C7`, Bloque III Marrón `#9A3412`, Bloque IV Gris `#475569`).
+6. **Presupuesto Vertical Estricto (Page Budget):** Cobertura entre 80% y 91% en cada página, eliminando huecos muertos al pie. Conteos inmutables:
+   - **Informe Mensual:** 15 páginas exactas (Portada Tear-Sheet, Índice, Resumen Ejecutivo, 11 Capítulos temáticos con arquetipos dinámicos y Flash Normativo/Metodología).
    - **Paper Semanal APA 7:** 4 páginas exactas (Portada académica y resumen, Arbitraje de Tasas, Nelson-Siegel y Microestructura FX con referencias bibliográficas).
    - **Monitor Diario:** 2 páginas exactas (Diagnóstico y Microestructura Cambiaria spot/Rofex + Curvas Soberanas, Tasas y Asignación Táctica).
 

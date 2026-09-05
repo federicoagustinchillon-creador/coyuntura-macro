@@ -6,7 +6,7 @@ COMPILADOR MAESTRO DE INFORME MENSUAL REPORTLAB (15 PÁGINAS EDITORIALES)
 Autor: Federico Agustín Chillón
 Facultad de Ciencias Económicas — Universidad Nacional de Cuyo (UNCUYO)
 Estándar: Institutional Research (Management Solutions / Wall Street Standard)
-Arquitectura: 15 Páginas Exactas / Cobertura Vertical 100% / Cero Ruido Visual
+Arquitectura: 15 Páginas Exactas / 4 Arquetipos Modulares / Cero Ruido Visual
 ================================================================================
 """
 
@@ -14,6 +14,7 @@ import os
 import shutil
 from datetime import datetime
 import sys
+import re
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -51,7 +52,10 @@ font_mappings = [
     ('Georgia-BoldItalic', ['C:/Windows/Fonts/georgiaz.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSerif-BoldItalic.ttf']),
     ('Sans', ['C:/Windows/Fonts/arial.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf']),
     ('Sans-Bold', ['C:/Windows/Fonts/arialbd.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf']),
+    ('SymFont', ['C:/Windows/Fonts/seguisym.ttf', 'C:/Windows/Fonts/l_10646.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 'C:/Windows/Fonts/arial.ttf']),
 ]
+BULLET_TRIANGLE = "<font name='SymFont' color='#0284C7'><b>▸</b></font>"
+
 
 for font_name, paths in font_mappings:
     for p in paths:
@@ -97,100 +101,171 @@ BG_CURR    = colors.HexColor("#F1F5F9")
 POS_COLOR  = "#059669"
 NEG_COLOR  = "#DC2626"
 
+# Colores de Bloque para Pestañas Marginales
+COLOR_BLOQUE_1 = colors.HexColor("#047857")  # Bloque I: Actividad Real & Regional
+COLOR_BLOQUE_2 = colors.HexColor("#0284C7")  # Bloque II: Moneda, Tasas & Deuda
+COLOR_BLOQUE_3 = colors.HexColor("#9A3412")  # Bloque III: Renta Variable & Allocation
+COLOR_BLOQUE_4 = colors.HexColor("#475569")  # Bloque IV: Metodología & Gobernanza
+
 styles = getSampleStyleSheet()
 
 # Tipografías Editoriales
 title_style = ParagraphStyle(
     'SecTitle_M', parent=styles['Normal'],
-    fontName='Georgia-Bold', fontSize=13.5, leading=16.5,
-    textColor=PRIMARY, spaceBefore=0, spaceAfter=4, keepWithNext=True
+    fontName='Georgia-Bold', fontSize=13.0, leading=16.0,
+    textColor=PRIMARY, spaceBefore=0, spaceAfter=3, keepWithNext=True
 )
 
 leadin_style = ParagraphStyle(
     'LeadIn_M', parent=styles['Normal'],
-    fontName='Georgia-Italic', fontSize=8.2, leading=11.2,
+    fontName='Georgia-Italic', fontSize=8.0, leading=11.0,
     textColor=PRIMARY
 )
 
 body_bullet_style = ParagraphStyle(
     'BodyBullet_M', parent=styles['Normal'],
-    fontName='Georgia', fontSize=8.3, leading=11.8,
+    fontName='Georgia', fontSize=7.9, leading=11.2,
     textColor=DARK_TEXT, alignment=TA_JUSTIFY,
-    leftIndent=12, firstLineIndent=-12, spaceAfter=6
+    leftIndent=11, firstLineIndent=-11, spaceAfter=4
 )
 
 table_title_style = ParagraphStyle(
     'TblTitle_M', parent=styles['Normal'],
-    fontName='Sans-Bold', fontSize=7.5, leading=9.0,
+    fontName='Sans-Bold', fontSize=7.4, leading=8.8,
     alignment=TA_CENTER, textColor=BLUE_INST
 )
 
 table_header_style = ParagraphStyle(
     'TH_M', parent=styles['Normal'],
-    fontName='Sans-Bold', fontSize=7.4, leading=8.8,
+    fontName='Sans-Bold', fontSize=7.2, leading=8.6,
     alignment=TA_CENTER, textColor=BLUE_INST
 )
 
 table_cell_left = ParagraphStyle(
     'TCL_M', parent=styles['Normal'],
-    fontName='Sans', fontSize=7.1, leading=8.5,
+    fontName='Sans', fontSize=7.0, leading=8.4,
     alignment=TA_LEFT, textColor=DARK_TEXT
 )
 
 table_cell_bold = ParagraphStyle(
     'TCB_M', parent=styles['Normal'],
-    fontName='Sans-Bold', fontSize=7.1, leading=8.5,
+    fontName='Sans-Bold', fontSize=7.0, leading=8.4,
     alignment=TA_LEFT, textColor=DARK_TEXT
 )
 
 table_cell_subhdr = ParagraphStyle(
     'TCSH_M', parent=styles['Normal'],
-    fontName='Sans-Bold', fontSize=7.2, leading=8.6,
+    fontName='Sans-Bold', fontSize=7.1, leading=8.5,
     alignment=TA_LEFT, textColor=BLUE_INST
 )
 
 table_cell_center = ParagraphStyle(
     'TCC_M', parent=styles['Normal'],
-    fontName='Sans', fontSize=7.1, leading=8.5,
+    fontName='Sans', fontSize=7.0, leading=8.4,
     alignment=TA_CENTER, textColor=DARK_TEXT
 )
 
 table_cell_center_bold = ParagraphStyle(
     'TCCB_M', parent=styles['Normal'],
-    fontName='Sans-Bold', fontSize=7.1, leading=8.5,
+    fontName='Sans-Bold', fontSize=7.0, leading=8.4,
     alignment=TA_CENTER, textColor=DARK_TEXT
 )
 
 footnote_table_style = ParagraphStyle(
     'FtnTbl_M', parent=styles['Normal'],
-    fontName='Georgia', fontSize=6.5, leading=8.0,
-    textColor=MUTED, spaceBefore=2, spaceAfter=3
+    fontName='Georgia', fontSize=6.4, leading=7.8,
+    textColor=MUTED, spaceBefore=2, spaceAfter=2
 )
 
 footnote_chart_style = ParagraphStyle(
     'FtnChart_M', parent=styles['Normal'],
-    fontName='Georgia', fontSize=6.5, leading=8.0,
+    fontName='Georgia', fontSize=6.4, leading=7.8,
     textColor=MUTED, spaceBefore=2, spaceAfter=0
 )
 
 h1_style = title_style
 h2_style = ParagraphStyle(
     'H2_M', parent=styles['Normal'],
-    fontName='Georgia-Bold', fontSize=8.5, leading=11.0,
+    fontName='Georgia-Bold', fontSize=8.3, leading=10.8,
     textColor=PRIMARY, spaceBefore=3, spaceAfter=2, keepWithNext=True
 )
 body_style = ParagraphStyle(
     'Body_M', parent=styles['Normal'],
-    fontName='Georgia', fontSize=8.4, leading=12.0,
+    fontName='Georgia', fontSize=8.2, leading=11.6,
     alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=4
 )
 cell_style_left = table_cell_left
 cell_style_center = table_cell_center
 cell_header_style = ParagraphStyle(
     'CellH_M', parent=styles['Normal'],
-    fontName='Sans-Bold', fontSize=7.0, leading=8.5,
+    fontName='Sans-Bold', fontSize=6.9, leading=8.3,
     alignment=TA_CENTER, textColor=colors.white
 )
+
+# =============================================================================
+# HELPERS INSTITUCIONALES EDITORIALES: BADGES DE VARIACIÓN Y MARCOS
+# =============================================================================
+
+def _badge_var_html(val, is_pct=False, decimales=2):
+    """Retorna cadena HTML institucional para formato de variaciones (+ en verde, - en rojo)."""
+    if val is None:
+        return "<font color='#64748B'>-</font>"
+    if isinstance(val, (int, float)):
+        num = float(val)
+        signo = "+" if num > 0 else ""
+        sufijo = "%" if is_pct else ""
+        col = POS_COLOR if num > 0 else (NEG_COLOR if num < 0 else "#64748B")
+        txt = f"{signo}{num:.{decimales}f}".replace(".", ",") + sufijo
+        return f"<font color='{col}'><b>{txt}</b></font>"
+    s = str(val).strip()
+    if "<font" in s:
+        s = re.sub(r'<[^>]+>', '', s).strip()
+    sufijo = "%" if (is_pct and not s.endswith("%")) else ""
+    if s.startswith("+"):
+        return f"<font color='{POS_COLOR}'><b>{s}{sufijo}</b></font>"
+    elif s.startswith("-"):
+        return f"<font color='{NEG_COLOR}'><b>{s}{sufijo}</b></font>"
+    elif s in ("0", "0,0", "0,00", "0,00%", "0.0", "0.00"):
+        return f"<font color='#64748B'><b>{s}{sufijo}</b></font>"
+    else:
+        try:
+            num = float(s.replace(",", ".").replace("%", ""))
+            signo = "+" if num > 0 else ""
+            col = POS_COLOR if num > 0 else (NEG_COLOR if num < 0 else "#64748B")
+            txt = f"{signo}{num:.{decimales}f}".replace(".", ",") + sufijo
+            return f"<font color='{col}'><b>{txt}</b></font>"
+        except ValueError:
+            return s
+
+def _badge_var(val, is_pct=False, decimales=2):
+    """Retorna un Paragraph formateado con el badge de variación institucional."""
+    return Paragraph(_badge_var_html(val, is_pct=is_pct, decimales=decimales), table_cell_center)
+
+def _wrap_chart_boxed(chart_filename, chart_footnote="", width=532, height=170):
+    """Enmarca la figura institucional con un borde capilar #CBD5E1 y nota al pie."""
+    flowables = []
+    img_path = _find_image(chart_filename)
+    if os.path.exists(img_path):
+        img = Image(img_path, width=width, height=height)
+        t_img = Table([[img]], colWidths=[width])
+        t_img.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (-1,-1), 0),
+            ('TOPPADDING', (0,0), (-1,-1), 0),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+            ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+        ]))
+        flowables.append(t_img)
+    if chart_footnote:
+        flowables.append(Spacer(1, 2))
+        flowables.append(Paragraph(chart_footnote, footnote_chart_style))
+    return flowables
+
+# =============================================================================
+# CANVAS EDITORIAL CON PESTAÑAS MARGINALES (THUMB INDEX & CABECERA)
+# =============================================================================
 
 class EditorialCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
@@ -239,16 +314,68 @@ class EditorialCanvas(canvas.Canvas):
 
         if self._pageNumber > 1:
             header_y = 762
-            self.setFont("Georgia", 7.2)
-            self.setFillColor(MUTED)
-            self.drawString(left, header_y, f"INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · {_INFORME_PERIODO['header']}")
-            self.drawRightString(right, header_y, "FEDERICO AGUSTÍN CHILLÓN")
+            p = self._pageNumber
             
+            # Pestaña Marginal de Bloque:
+            # Páginas 4 a 8: Bloque I: 'ACTIVIDAD REAL & REGIONAL' (#047857)
+            # Páginas 9 a 13: Bloque II: 'MONEDA, TASAS & DEUDA' (#0284C7)
+            # Página 14: Bloque III: 'RENTA VARIABLE & ALLOCATION' (#9A3412)
+            # Página 15: Bloque IV: 'METODOLOGÍA & GOBERNANZA' (#475569)
+            if 4 <= p <= 8:
+                block_label = "BLOQUE I · ACTIVIDAD REAL & REGIONAL"
+                block_color = COLOR_BLOQUE_1
+                thumb_y = 675
+            elif 9 <= p <= 13:
+                block_label = "BLOQUE II · MONEDA, TASAS & DEUDA"
+                block_color = COLOR_BLOQUE_2
+                thumb_y = 605
+            elif p == 14:
+                block_label = "BLOQUE III · RENTA VARIABLE & ALLOCATION"
+                block_color = COLOR_BLOQUE_3
+                thumb_y = 535
+            elif p == 15:
+                block_label = "BLOQUE IV · METODOLOGÍA & GOBERNANZA"
+                block_color = COLOR_BLOQUE_4
+                thumb_y = 465
+            else:
+                block_label = None
+                block_color = None
+                thumb_y = None
+
+            if block_label:
+                # 1. Pestaña Marginal en Borde Izquierdo (Thumb Tab limpio, fuera de márgenes)
+                self.setFillColor(block_color)
+                self.roundRect(16, thumb_y, 4.5, 52, 2.0, fill=True, stroke=False)
+                
+                # 2. Etiqueta / Banda de Bloque en Cabecera
+                tab_w = 172
+                tab_h = 12.5
+                tab_y = header_y - 2.5
+                self.setFillColor(block_color)
+                self.roundRect(left, tab_y, tab_w, tab_h, 2.5, fill=True, stroke=False)
+                
+                self.setFont("Sans-Bold", 6.2)
+                self.setFillColor(colors.white)
+                self.drawCentredString(left + tab_w / 2, tab_y + 3.2, block_label)
+                
+                # Subtítulo institucional a la derecha de la pestaña
+                self.setFont("Georgia", 6.8)
+                self.setFillColor(MUTED)
+                self.drawString(left + tab_w + 8, header_y + 0.5, f"INFORME MENSUAL · {_INFORME_PERIODO['header']}")
+                self.drawRightString(right, header_y + 0.5, "FEDERICO AGUSTÍN CHILLÓN")
+            else:
+                # Páginas 2 y 3 (Preliminares)
+                self.setFont("Georgia", 7.2)
+                self.setFillColor(MUTED)
+                self.drawString(left, header_y, f"INFORME DE COYUNTURA MACROECONÓMICA & MERCADO DE CAPITALES · {_INFORME_PERIODO['header']}")
+                self.drawRightString(right, header_y, "FEDERICO AGUSTÍN CHILLÓN")
+
+            # Filete capilar bajo la cabecera
             self.setStrokeColor(BORDER)
             self.setLineWidth(0.5)
-            self.line(left, header_y - 4, right, header_y - 4)
+            self.line(left, header_y - 5.5, right, header_y - 5.5)
 
-            # Footer con píldora de página (estilo Management Solutions)
+            # Footer institucional con píldora de página
             cx = 306
             cy = 18
             self.setFillColor(BLUE_INST)
@@ -266,45 +393,56 @@ class EditorialCanvas(canvas.Canvas):
 
 ZeroWhitespaceCanvas = EditorialCanvas
 
-def crear_pagina_editorial_ms(
+# =============================================================================
+# ARQUETIPOS MODULARES DE MAQUETACIÓN (MANAGEMENT SOLUTIONS & WALL STREET)
+# =============================================================================
+
+def crear_pagina_arquetipo_scorecard(
+    kicker_txt,
     titulo,
     leadin_txt,
     tabla_titulo,
     tabla_data,
     tabla_col_widths,
     tabla_footnote,
-    bullets_txt_list,
+    bloques_tematicos,
     chart_filename,
     chart_footnote,
-    chart_height=180,
-    chart_width=532
+    chart_height=205,
+    kicker_color="#047857"
 ):
-    """Genera una página analítica con arquitectura de 5 capas de Management Solutions."""
+    """
+    Arquetipo A: Scorecard Comparativo de Actividad (Página 4 EMAE y Página 8 ISARC Cuyo).
+    - Kicker temático superior.
+    - Título y Lead-in con barra azul izquierda institucional.
+    - Tabla comparativa de actividad con formato visual de variación.
+    - Prosa analítica estructurada en 2-3 bloques temáticos con viñeta ▸.
+    - Gráfico al pie con marco capilar institucional (#CBD5E1), altura 205 pt.
+    """
     flowables = []
     
-    # 1. Título
+    flowables.append(Paragraph(
+        f"<font color='{kicker_color}' size=7.2><b>{kicker_txt.upper()}</b></font>",
+        ParagraphStyle('Kicker_SC', parent=styles['Normal'], fontName='Georgia-Bold', leading=9.0, spaceAfter=2)
+    ))
     flowables.append(Paragraph(titulo, title_style))
     
-    # 2. Lead-in con barra vertical izquierda
-    t_lead = Table([[Paragraph(leadin_txt, leadin_style)]], colWidths=[chart_width])
+    t_lead = Table([[Paragraph(leadin_txt, leadin_style)]], colWidths=[532])
     t_lead.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('LEFTPADDING', (0,0), (-1,-1), 10),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
         ('RIGHTPADDING', (0,0), (-1,-1), 6),
-        ('TOPPADDING', (0,0), (-1,-1), 4),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('TOPPADDING', (0,0), (-1,-1), 3.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
         ('LINELEFT', (0,0), (0,-1), 2.5, PRIMARY),
     ]))
     flowables.append(t_lead)
     flowables.append(Spacer(1, 4))
     
-    # 3. Título Centrado de Tabla
     flowables.append(Paragraph(f"<b>{tabla_titulo}</b>", table_title_style))
-    flowables.append(Spacer(1, 2))
+    flowables.append(Spacer(1, 3))
     
-    # 4. Tabla de Indicadores (Padding adaptativo según cantidad de filas)
-    tbl_pad = 2.1 if len(tabla_data) > 10 else 2.8
-    actual_chart_height = 180 if len(tabla_data) > 10 else 188
+    tbl_pad = 2.4 if len(tabla_data) > 10 else 3.0
     t_ind = Table(tabla_data, colWidths=tabla_col_widths)
     t_ind.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -324,22 +462,423 @@ def crear_pagina_editorial_ms(
     flowables.append(Paragraph(tabla_footnote, footnote_table_style))
     flowables.append(Spacer(1, 4))
     
-    # 5. Tres Párrafos Analíticos Densos
-    for b_lead, b_body in bullets_txt_list:
-        p_html = f"<font color='#0284C7'><b>&bull;</b></font> <b>{b_lead}:</b> {b_body}"
+    for b_title, b_text in bloques_tematicos:
+        p_html = f"{BULLET_TRIANGLE} <b>{b_title.upper()}:</b> {b_text}"
         flowables.append(Paragraph(p_html, body_bullet_style))
         
     flowables.append(Spacer(1, 4))
+    flowables.extend(_wrap_chart_boxed(chart_filename, chart_footnote, width=532, height=chart_height))
+    flowables.append(PageBreak())
+    return flowables
+
+def crear_pagina_arquetipo_desglose(
+    kicker_txt,
+    titulo,
+    leadin_txt,
+    tabla_titulo,
+    tabla_data,
+    tabla_col_widths,
+    tabla_footnote,
+    bullets_txt_list,
+    chart_filename,
+    chart_footnote,
+    chart_height=210,
+    kicker_color="#047857"
+):
+    """
+    Arquetipo B: Desglose Multicontable (Página 5 Precios, Pág 7 Sectores Cuyo, Pág 9 BCRA, Pág 13 TCR).
+    - Estilo Pág. 13 de Management Solutions: Kicker, título, lead-in itálico con filetes horizontales finos.
+    - Tabla multicontable agrupada con fondos sutiles en período actual (#F1F5F9) y proyección (#EBF3FA).
+    - 3 párrafos densos analíticos con viñeta institucional ▸.
+    - Gráfico al pie con marco en caja, altura 210 pt.
+    """
+    flowables = []
     
-    # 6. Panel Dual de Gráficos al Pie
-    img_path = _find_image(chart_filename)
-    if os.path.exists(img_path):
-        flowables.append(Image(img_path, width=chart_width, height=actual_chart_height))
-    flowables.append(Spacer(1, 2))
-    flowables.append(Paragraph(chart_footnote, footnote_chart_style))
+    flowables.append(Paragraph(
+        f"<font color='{kicker_color}' size=7.2><b>{kicker_txt.upper()}</b></font>",
+        ParagraphStyle('Kicker_Desg', parent=styles['Normal'], fontName='Georgia-Bold', leading=9.0, spaceAfter=2)
+    ))
+    flowables.append(Paragraph(titulo, title_style))
+    
+    t_lead = Table([[Paragraph(leadin_txt, leadin_style)]], colWidths=[532])
+    t_lead.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 3.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+        ('LINETOP', (0,0), (-1,0), 0.6, PRIMARY),
+        ('LINEBELOW', (0,-1), (-1,-1), 0.6, PRIMARY),
+    ]))
+    flowables.append(t_lead)
+    flowables.append(Spacer(1, 4))
+    
+    flowables.append(Paragraph(f"<b>{tabla_titulo}</b>", table_title_style))
+    flowables.append(Spacer(1, 3))
+    
+    tbl_pad = 2.4 if len(tabla_data) > 10 else 2.9
+    t_ind = Table(tabla_data, colWidths=tabla_col_widths)
+    t_ind.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), tbl_pad),
+        ('BOTTOMPADDING', (0,0), (-1,-1), tbl_pad),
+        ('LEFTPADDING', (0,0), (-1,-1), 2.5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2.5),
+        ('BACKGROUND', (0,0), (-1,0), colors.white),
+        ('BACKGROUND', (5,1), (5,-1), BG_CURR),
+        ('BACKGROUND', (8,1), (9,-1), BG_PROJ),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, BLUE_INST),
+        ('LINEBELOW', (0,-1), (-1,-1), 0.5, BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.3, colors.HexColor("#F1F5F9")),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+    ]))
+    flowables.append(t_ind)
+    flowables.append(Paragraph(tabla_footnote, footnote_table_style))
+    flowables.append(Spacer(1, 4))
+    
+    for b_lead, b_body in bullets_txt_list:
+        p_html = f"{BULLET_TRIANGLE} <b>{b_lead}:</b> {b_body}"
+        flowables.append(Paragraph(p_html, body_bullet_style))
+        
+    flowables.append(Spacer(1, 4))
+    flowables.extend(_wrap_chart_boxed(chart_filename, chart_footnote, width=532, height=chart_height))
+    flowables.append(PageBreak())
+    return flowables
+
+def crear_pagina_arquetipo_social(
+    kicker_txt,
+    titulo,
+    card1_data,
+    card2_data,
+    tabla_titulo,
+    tabla_data,
+    tabla_col_widths,
+    tabla_footnote,
+    bullets_txt_list,
+    chart_filename,
+    chart_footnote,
+    chart_height=210
+):
+    """
+    Arquetipo C: Monitor Social & Canastas Básicas (Página 6 Cuadro 1).
+    - Doble tarjeta destacada superior: CBA Indigencia vs CBT Pobreza con cifras de 15.0 pt.
+    - Tabla de umbrales de pobreza y relación RIPTE/CBT con padding vertical holgado.
+    - 3 párrafos analíticos de coyuntura social con viñeta institucional ▸.
+    - Gráfico al pie con marco en caja, altura 210 pt.
+    """
+    flowables = []
+    
+    flowables.append(Paragraph(
+        f"<font color='#047857' size=7.2><b>{kicker_txt.upper()}</b></font>",
+        ParagraphStyle('Kicker_Soc', parent=styles['Normal'], fontName='Georgia-Bold', leading=9.0, spaceAfter=2)
+    ))
+    flowables.append(Paragraph(titulo, title_style))
+    flowables.append(Spacer(1, 3))
+    
+    def _render_social_card(c):
+        p_hdr = Paragraph(f"<font color='white' size=7.2><b>{c['title'].upper()}</b></font>", ParagraphStyle('CardSH', fontName='Sans-Bold', alignment=TA_CENTER, leading=9.0))
+        p_vals = Paragraph(
+            f"<font color='{PRIMARY.hexval()}' size=15.0><b>{c['val_nac']}</b></font>&nbsp;<font color='#64748B' size=7.5>Nac.</font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color='{PRIMARY.hexval()}' size=15.0><b>{c['val_reg']}</b></font>&nbsp;<font color='#64748B' size=7.5>Cuyo</font>",
+            ParagraphStyle('CardVals', fontName='Georgia-Bold', alignment=TA_CENTER, leading=16.0)
+        )
+        p_sub = Paragraph(f"<font color='#334155' size=6.8>{c['sub']}</font>", ParagraphStyle('CardSub', fontName='Georgia', alignment=TA_CENTER, leading=8.8))
+        
+        t_card = Table([[p_hdr], [p_vals], [p_sub]], colWidths=[258])
+        t_card.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor(c['color'])),
+            ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#F8FAFC")),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('TOPPADDING', (0,0), (-1,0), 3.5),
+            ('BOTTOMPADDING', (0,0), (-1,0), 3.5),
+            ('TOPPADDING', (0,1), (-1,1), 4.5),
+            ('BOTTOMPADDING', (0,1), (-1,1), 2.5),
+            ('TOPPADDING', (0,2), (-1,2), 2.0),
+            ('BOTTOMPADDING', (0,2), (-1,2), 4.5),
+            ('LEFTPADDING', (0,0), (-1,-1), 5),
+            ('RIGHTPADDING', (0,0), (-1,-1), 5),
+            ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+        ]))
+        return t_card
+
+    t_pair_cards = Table([[_render_social_card(card1_data), "", _render_social_card(card2_data)]], colWidths=[258, 16, 258])
+    t_pair_cards.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+    ]))
+    flowables.append(t_pair_cards)
+    flowables.append(Spacer(1, 4))
+    
+    flowables.append(Paragraph(f"<b>{tabla_titulo}</b>", table_title_style))
+    flowables.append(Spacer(1, 3))
+    
+    t_ind = Table(tabla_data, colWidths=tabla_col_widths)
+    t_ind.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 2.7),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.7),
+        ('LEFTPADDING', (0,0), (-1,-1), 2.5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2.5),
+        ('BACKGROUND', (0,0), (-1,0), colors.white),
+        ('BACKGROUND', (5,1), (5,-1), BG_CURR),
+        ('BACKGROUND', (8,1), (9,-1), BG_PROJ),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, BLUE_INST),
+        ('LINEBELOW', (0,-1), (-1,-1), 0.5, BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.3, colors.HexColor("#F1F5F9")),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+    ]))
+    flowables.append(t_ind)
+    flowables.append(Paragraph(tabla_footnote, footnote_table_style))
+    flowables.append(Spacer(1, 4))
+    
+    for b_lead, b_body in bullets_txt_list:
+        p_html = f"{BULLET_TRIANGLE} <b>{b_lead}:</b> {b_body}"
+        flowables.append(Paragraph(p_html, body_bullet_style))
+        
+    flowables.append(Spacer(1, 4))
+    flowables.extend(_wrap_chart_boxed(chart_filename, chart_footnote, width=532, height=chart_height))
+    flowables.append(PageBreak())
+    return flowables
+
+def crear_pagina_arquetipo_asimetrico(
+    kicker_txt,
+    titulo,
+    leadin_txt,
+    col_izq_titulo,
+    col_izq_bullets,
+    mini_tabla_titulo,
+    mini_tabla_data,
+    card_der_titulo,
+    card_der_table_data,
+    catalizador_txt,
+    chart_filename,
+    chart_footnote,
+    chart_height=210,
+    kicker_color="#0284C7"
+):
+    """
+    Arquetipo D: Asimétrico Wall Street (Página 10 Arbitraje Tasas y Página 12 Microestructura FX).
+    - Columna Izquierda (326 pt): Discusión analítica profunda + mini-tabla comparativa calibrada.
+    - Columna Derecha (194 pt): Scorecard Táctico & Monitor con postura OW/N/UW y catalizadores clave.
+    - Gráfico al pie de ancho completo (532 pt) con altura 210 pt.
+    """
+    flowables = []
+    
+    flowables.append(Paragraph(
+        f"<font color='{kicker_color}' size=7.2><b>{kicker_txt.upper()}</b></font>",
+        ParagraphStyle('Kicker_Asym', parent=styles['Normal'], fontName='Georgia-Bold', leading=9.0, spaceAfter=2)
+    ))
+    flowables.append(Paragraph(titulo, title_style))
+    
+    t_lead = Table([[Paragraph(leadin_txt, leadin_style)]], colWidths=[532])
+    t_lead.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+        ('TOPPADDING', (0,0), (-1,-1), 3.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
+        ('LINELEFT', (0,0), (0,-1), 2.5, PRIMARY),
+    ]))
+    flowables.append(t_lead)
+    flowables.append(Spacer(1, 4))
+    
+    # Cuerpo asimétrico
+    col_izq = []
+    col_izq.append(Paragraph(f"<font color='{PRIMARY.hexval()}' size=8.0><b>{col_izq_titulo.upper()}</b></font>", ParagraphStyle('AsyLT', fontName='Georgia-Bold', leading=10.0, spaceAfter=2)))
+    col_izq.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=1, spaceAfter=3))
+    
+    for b_lead, b_body in col_izq_bullets:
+        p_html = f"{BULLET_TRIANGLE} <b>{b_lead}:</b> {b_body}"
+        col_izq.append(Paragraph(p_html, ParagraphStyle('AsyBL', parent=body_bullet_style, fontSize=7.8, leading=10.8, spaceAfter=3.5)))
+        
+    if mini_tabla_data:
+        col_izq.append(Spacer(1, 2))
+        col_izq.append(Paragraph(f"<b>{mini_tabla_titulo}</b>", ParagraphStyle('MTH', fontName='Sans-Bold', fontSize=7.0, leading=8.5, textColor=BLUE_INST)))
+        t_mini = Table(mini_tabla_data, colWidths=[126, 100, 100])
+        t_mini.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), PRIMARY),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('TOPPADDING', (0,0), (-1,-1), 2.6),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2.6),
+            ('LEFTPADDING', (0,0), (-1,-1), 3.5),
+            ('RIGHTPADDING', (0,0), (-1,-1), 3.5),
+            ('LINEBELOW', (0,1), (-1,-1), 0.3, HAIRLINE),
+            ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+        ]))
+        col_izq.append(t_mini)
+        
+    col_der = []
+    p_card_hdr = Paragraph(f"<font color='white' size=7.0><b>{card_der_titulo.upper()}</b></font>", ParagraphStyle('CRDH', fontName='Sans-Bold', alignment=TA_CENTER, leading=9.0))
+    
+    t_tact_body = Table(card_der_table_data, colWidths=[64, 46, 40, 44])
+    t_tact_body.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 3.2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.2),
+        ('LEFTPADDING', (0,0), (-1,-1), 2.0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2.0),
+        ('LINEBELOW', (0,1), (-1,-1), 0.3, HAIRLINE),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+    ]))
+    
+    t_cat = Table([
+        [Paragraph(f"<font color='{PRIMARY.hexval()}' size=6.8><b>CATALIZADORES CLAVE (30–60D)</b></font>", ParagraphStyle('CatTH', fontName='Georgia-Bold', leading=8.6))],
+        [Paragraph(f"<font color='#1E293B' size=6.5>{catalizador_txt}</font>", ParagraphStyle('CatTB', fontName='Georgia', leading=9.0))]
+    ], colWidths=[194])
+    t_cat.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F1F5F9")),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+        ('LINELEFT', (0,0), (0,-1), 2.0, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 4.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+    ]))
+    
+    t_full_card = Table([[p_card_hdr], [t_tact_body], [t_cat]], colWidths=[194])
+    t_full_card.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+        ('TOPPADDING', (0,0), (-1,0), 3.2),
+        ('BOTTOMPADDING', (0,0), (-1,0), 3.2),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+    ]))
+    col_der.append(t_full_card)
+    
+    t_middle = Table([[col_izq, "", col_der]], colWidths=[326, 12, 194])
+    t_middle.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+        ('LINEBEFORE', (2,0), (2,0), 0.5, HAIRLINE),
+    ]))
+    flowables.append(t_middle)
+    flowables.append(Spacer(1, 5))
+    
+    flowables.extend(_wrap_chart_boxed(chart_filename, chart_footnote, width=532, height=chart_height))
+    flowables.append(PageBreak())
+    return flowables
+
+def crear_pagina_arquetipo_topchart(
+    kicker_txt,
+    titulo,
+    leadin_txt,
+    chart_filename,
+    chart_footnote,
+    tabla_titulo,
+    tabla_data,
+    tabla_col_widths,
+    tabla_footnote,
+    caja_titulo,
+    conclusiones_tacticas,
+    chart_height=205,
+    kicker_color="#0284C7"
+):
+    """
+    Arquetipo E: TopChart Inversor (Página 11 Deuda Soberana y Página 14 Renta Variable).
+    - RUPTURA RADICAL DE MONOTONÍA: Figura analítica principal en el tercio superior (altura 205 pt).
+    - Mitad inferior: Tabla analítica de valuación con padding calibrado.
+    - Caja institucional de 'Conclusiones Tácticas para el Inversor' con 3 viñetas bien explicadas.
+    """
+    flowables = []
+    
+    flowables.append(Paragraph(
+        f"<font color='{kicker_color}' size=7.2><b>{kicker_txt.upper()}</b></font>",
+        ParagraphStyle('Kicker_TC', parent=styles['Normal'], fontName='Georgia-Bold', leading=9.0, spaceAfter=2)
+    ))
+    flowables.append(Paragraph(titulo, title_style))
+    
+    t_lead = Table([[Paragraph(leadin_txt, leadin_style)]], colWidths=[532])
+    t_lead.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('LEFTPADDING', (0,0), (-1,-1), 7),
+        ('RIGHTPADDING', (0,0), (-1,-1), 7),
+        ('TOPPADDING', (0,0), (-1,-1), 3.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.0),
+        ('LINETOP', (0,0), (-1,0), 0.5, BORDER),
+        ('LINEBELOW', (0,-1), (-1,-1), 0.5, BORDER),
+    ]))
+    flowables.append(t_lead)
+    flowables.append(Spacer(1, 4))
+    
+    # 1. FIGURA EN TERCIO SUPERIOR
+    flowables.extend(_wrap_chart_boxed(chart_filename, chart_footnote, width=532, height=chart_height))
+    flowables.append(Spacer(1, 4))
+    
+    # 2. TABLA EN MITAD INFERIOR
+    flowables.append(Paragraph(f"<b>{tabla_titulo}</b>", table_title_style))
+    flowables.append(Spacer(1, 3))
+    
+    tbl_pad = 2.6 if len(tabla_data) > 9 else 3.0
+    t_ind = Table(tabla_data, colWidths=tabla_col_widths)
+    t_ind.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), tbl_pad),
+        ('BOTTOMPADDING', (0,0), (-1,-1), tbl_pad),
+        ('LEFTPADDING', (0,0), (-1,-1), 2.5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2.5),
+        ('BACKGROUND', (0,0), (-1,0), colors.white),
+        ('BACKGROUND', (5,1), (5,-1), BG_CURR),
+        ('BACKGROUND', (8,1), (9,-1), BG_PROJ),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, BLUE_INST),
+        ('LINEBELOW', (0,-1), (-1,-1), 0.5, BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.3, colors.HexColor("#F1F5F9")),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+    ]))
+    flowables.append(t_ind)
+    flowables.append(Paragraph(tabla_footnote, footnote_table_style))
+    flowables.append(Spacer(1, 4))
+    
+    # 3. CAJA DE CONCLUSIONES TÁCTICAS
+    caja_content = []
+    caja_content.append(Paragraph(f"<font color='{PRIMARY.hexval()}' size=7.2><b>{caja_titulo.upper()}</b></font>", ParagraphStyle('CTH', fontName='Georgia-Bold', leading=9.0)))
+    for c_lead, c_body in conclusiones_tacticas:
+        p_html = f"{BULLET_TRIANGLE} <b>{c_lead}:</b> {c_body}"
+        caja_content.append(Paragraph(p_html, ParagraphStyle('CTB', parent=body_bullet_style, fontSize=7.6, leading=10.6, spaceAfter=2.5)))
+        
+    t_caja = Table([[caja_content]], colWidths=[532])
+    t_caja.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+        ('LINELEFT', (0,0), (0,-1), 2.5, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 4.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 7),
+        ('RIGHTPADDING', (0,0), (-1,-1), 7),
+    ]))
+    flowables.append(t_caja)
     
     flowables.append(PageBreak())
     return flowables
+
+# Compatibilidad hacia atrás si es invocado por otros módulos
+def crear_pagina_editorial_ms(
+    titulo, leadin_txt, tabla_titulo, tabla_data, tabla_col_widths, tabla_footnote,
+    bullets_txt_list, chart_filename, chart_footnote, chart_height=180, chart_width=532
+):
+    return crear_pagina_arquetipo_desglose(
+        kicker_txt="RESEARCH INSTITUCIONAL · COYUNTURA",
+        titulo=titulo,
+        leadin_txt=leadin_txt,
+        tabla_titulo=tabla_titulo,
+        tabla_data=tabla_data,
+        tabla_col_widths=tabla_col_widths,
+        tabla_footnote=tabla_footnote,
+        bullets_txt_list=bullets_txt_list,
+        chart_filename=chart_filename,
+        chart_footnote=chart_footnote,
+        chart_height=chart_height
+    )
 
 def generar_informe_mensual_reportlab(ctx=None):
     if ctx is None:
@@ -482,9 +1021,9 @@ def generar_informe_mensual_reportlab(ctx=None):
         [Paragraph("<font color='#0B2545' size=7.5><b>CATALIZADORES & FACTORES DE RIESGO TÁCTICO (30–60 DÍAS)</b></font>", ParagraphStyle('CatT', fontName='Georgia', leading=9.4))],
         [Paragraph(
             "<font color='#1E293B' size=6.7>"
-            "• <b>Transición Cambiaria & Reservas:</b> Sostenibilidad de la acumulación de divisas y calibración del crawling peg.<br/>"
-            "• <b>Roll-over de Deuda en Pesos:</b> Capacidad del Tesoro para refinanciar más del 100% en Lecaps sin convalidar tasas elevadas.<br/>"
-            "• <b>Compresión Soberana:</b> Ruptura del piso de 500 pb en EMBI+ como condición para retornar al crédito internacional."
+            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Transición Cambiaria & Reservas:</b> Sostenibilidad de la acumulación de divisas y calibración del crawling peg.<br/>"
+            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Roll-over de Deuda en Pesos:</b> Capacidad del Tesoro para refinanciar más del 100% en Lecaps sin convalidar tasas elevadas.<br/>"
+            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Compresión Soberana:</b> Ruptura del piso de 500 pb en EMBI+ como condición para retornar al crédito internacional."
             "</font>",
             ParagraphStyle('CatB', fontName='Georgia', leading=9.0)
         )]
@@ -685,9 +1224,9 @@ def generar_informe_mensual_reportlab(ctx=None):
     t_met = Table([
         [Paragraph("<b>CRITERIOS METODOLÓGICOS, MODELOS ECONOMÉTRICOS Y FUENTES OFICIALES</b>", ParagraphStyle('MH', fontName='Georgia-Bold', fontSize=7.6, textColor=PRIMARY))],
         [Paragraph(
-            "• <b>Jerarquía por Importancia Relativa:</b> Priorización de componentes macroeconómicos determinantes (precios regulados sobre estacionales, transables sobre no transables, y deuda soberana sobre derivados).<br/>"
-            "• <b>Fuentes Primarias Consolidadas:</b> Series provistas por INDEC, DEIE Mendoza, Banco Central de la República Argentina (BCRA), Instituto Nacional de Vitivinicultura (INV), Secretaría de Energía y ByMA.<br/>"
-            "• <b>Modelos Econométricos Aplicados:</b> Calibración paramétrica de Nelson-Siegel (1987) para curvas de deuda en USD, regla de Taylor con tasa real ex-ante (1993), paridad de tasas cubierta (CIP) y descomposición factorial multivariada (PCA Absorption Ratio y Turbulencia de Mahalanobis).",
+            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Jerarquía por Importancia Relativa:</b> Priorización de componentes macroeconómicos determinantes (precios regulados sobre estacionales, transables sobre no transables, y deuda soberana sobre derivados).<br/>"
+            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Fuentes Primarias Consolidadas:</b> Series provistas por INDEC, DEIE Mendoza, Banco Central de la República Argentina (BCRA), Instituto Nacional de Vitivinicultura (INV), Secretaría de Energía y ByMA.<br/>"
+            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Modelos Econométricos Aplicados:</b> Calibración paramétrica de Nelson-Siegel (1987) para curvas de deuda en USD, regla de Taylor con tasa real ex-ante (1993), paridad de tasas cubierta (CIP) y descomposición factorial multivariada (PCA Absorption Ratio y Turbulencia de Mahalanobis).",
             ParagraphStyle('MB', fontName='Georgia', fontSize=7.0, leading=9.4, textColor=DARK_TEXT)
         )]
     ], colWidths=[532])
@@ -838,15 +1377,15 @@ def generar_informe_mensual_reportlab(ctx=None):
     # Dos columnas asimétricas de asignación y vulnerabilidad
     col_izq_p3 = [
         Paragraph("<b>Guía de Asignación Táctica por Perfil de Cartera:</b>", h2_style),
-        Paragraph("• <b>Conservador (Treasury):</b> 70% Lecap corta (TEM 2,95%) + 30% Boncer TZX27. Captura de tasa real de +95 pb mensual con mínimo riesgo de volatilidad de precio.", body_style),
-        Paragraph("• <b>Moderado (Institucional):</b> 40% Lecap tramo medio + 20% Boncer + 25% GD35/GD38 + 15% Bopreal Serie 3. Balance de carry real y compresión soberana.", body_style),
-        Paragraph("• <b>Agresivo (Total Return):</b> 20% Lecaps + 45% Globales GD35/GD38 + 35% Equity ByMA (YPF, Pampa, TGS). Maximización de convexidad ante el régimen RIGI.", body_style),
+        Paragraph("<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Conservador (Treasury):</b> 70% Lecap corta (TEM 2,95%) + 30% Boncer TZX27. Captura de tasa real de +95 pb mensual con mínimo riesgo de volatilidad de precio.", body_style),
+        Paragraph("<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Moderado (Institucional):</b> 40% Lecap tramo medio + 20% Boncer + 25% GD35/GD38 + 15% Bopreal Serie 3. Balance de carry real y compresión soberana.", body_style),
+        Paragraph("<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Agresivo (Total Return):</b> 20% Lecaps + 45% Globales GD35/GD38 + 35% Equity ByMA (YPF, Pampa, TGS). Maximización de convexidad ante el régimen RIGI.", body_style),
     ]
     col_der_p3 = [
         Paragraph("<b>Termómetro de Vulnerabilidad & Señales de Mercado:</b>", h2_style),
-        Paragraph("• <b>Brecha Cambiaria CCL (4,5%):</b> El esquema blend 80/20 y la absorción de liquidez contienen la cotización financiera por debajo del umbral de alerta del 10%.", body_style),
-        Paragraph("• <b>Curva de Futuros CIP:</b> Las tasas implícitas en derivados (35,4% TNA a 30d) descartan presiones de devaluación en el horizonte de corto plazo.", body_style),
-        Paragraph(f"• <b>Riesgo País EMBI+ ({fmt_num(embi_val, 0)} pb):</b> La compresión de spreads consolida el acceso al financiamiento y la normalización de paridades.", body_style),
+        Paragraph("<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Brecha Cambiaria CCL (4,5%):</b> El esquema blend 80/20 y la absorción de liquidez contienen la cotización financiera por debajo del umbral de alerta del 10%.", body_style),
+        Paragraph("<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Curva de Futuros CIP:</b> Las tasas implícitas en derivados (35,4% TNA a 30d) descartan presiones de devaluación en el horizonte de corto plazo.", body_style),
+        Paragraph(f"<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Riesgo País EMBI+ ({fmt_num(embi_val, 0)} pb):</b> La compresión de spreads consolida el acceso al financiamiento y la normalización de paridades.", body_style),
     ]
     t_2col_p3 = Table([[col_izq_p3, col_der_p3]], colWidths=[260, 260])
     t_2col_p3.setStyle(TableStyle([
@@ -915,8 +1454,9 @@ def generar_informe_mensual_reportlab(ctx=None):
     elements.append(t_radar_p3)
     elements.append(PageBreak())
 
+    
     # =========================================================================
-    # PÁGINA 4: 1. NIVEL DE ACTIVIDAD GENERAL (EMAE)
+    # PÁGINA 4: 1. NIVEL DE ACTIVIDAD GENERAL (EMAE) — ARQUETIPO SCORECARD
     # =========================================================================
     p4_lead = (
         "El crecimiento económico de Argentina consolidó su sendero de recuperación positiva en el segundo trimestre de 2026 (+3,1% i.a.), "
@@ -926,48 +1466,41 @@ def generar_informe_mensual_reportlab(ctx=None):
     p4_tabla_data = [
         [Paragraph("<b>ACTIVIDAD / SECTOR</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
         [Paragraph("<b>PIB REAL Y DEMANDA AGREGADA</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>EMAE / PIB Total (% i.a.)</b>", table_cell_bold), Paragraph("1,20", table_cell_center_bold), Paragraph("1,80", table_cell_center_bold), Paragraph("2,40", table_cell_center_bold), Paragraph("2,80", table_cell_center_bold), Paragraph("3,10", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>+0,30</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1,90</font>", table_cell_center), Paragraph("3,50", table_cell_center_bold), Paragraph("4,20", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;Consumo Privado Hogares", table_cell_left), Paragraph("-1,80", table_cell_center), Paragraph("0,50", table_cell_center), Paragraph("1,80", table_cell_center), Paragraph("2,40", table_cell_center), Paragraph("2,70", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,30</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+4,50</font>", table_cell_center), Paragraph("3,10", table_cell_center), Paragraph("3,80", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Consumo Público Nacional", table_cell_left), Paragraph("-8,40", table_cell_center), Paragraph("-5,20", table_cell_center), Paragraph("-3,10", table_cell_center), Paragraph("-1,50", table_cell_center), Paragraph("-0,90", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,60</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+7,50</font>", table_cell_center), Paragraph("-0,50", table_cell_center), Paragraph("0,80", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Formación Bruta Capital Fijo", table_cell_left), Paragraph("-12,50", table_cell_center), Paragraph("-6,80", table_cell_center), Paragraph("2,40", table_cell_center), Paragraph("5,80", table_cell_center), Paragraph("6,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,60</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+18,90</font>", table_cell_center), Paragraph("7,20", table_cell_center), Paragraph("8,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Exportaciones Reales de Bienes", table_cell_left), Paragraph("6,20", table_cell_center), Paragraph("8,40", table_cell_center), Paragraph("9,50", table_cell_center), Paragraph("10,20", table_cell_center), Paragraph("11,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1,20</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+5,20</font>", table_cell_center), Paragraph("10,80", table_cell_center), Paragraph("7,50", table_cell_center)],
+        [Paragraph("<b>EMAE / PIB Total (% i.a.)</b>", table_cell_bold), Paragraph("1,20", table_cell_center_bold), Paragraph("1,80", table_cell_center_bold), Paragraph("2,40", table_cell_center_bold), Paragraph("2,80", table_cell_center_bold), Paragraph("3,10", table_cell_center_bold), _badge_var("+0,30"), _badge_var("+1,90"), Paragraph("3,50", table_cell_center_bold), Paragraph("4,20", table_cell_center_bold)],
+        [Paragraph("&nbsp;&nbsp;Consumo Privado Hogares", table_cell_left), Paragraph("-1,80", table_cell_center), Paragraph("0,50", table_cell_center), Paragraph("1,80", table_cell_center), Paragraph("2,40", table_cell_center), Paragraph("2,70", table_cell_center), _badge_var("+0,30"), _badge_var("+4,50"), Paragraph("3,10", table_cell_center), Paragraph("3,80", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Consumo Público Nacional", table_cell_left), Paragraph("-8,40", table_cell_center), Paragraph("-5,20", table_cell_center), Paragraph("-3,10", table_cell_center), Paragraph("-1,50", table_cell_center), Paragraph("-0,90", table_cell_center), _badge_var("+0,60"), _badge_var("+7,50"), Paragraph("-0,50", table_cell_center), Paragraph("0,80", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Formación Bruta Capital Fijo", table_cell_left), Paragraph("-12,50", table_cell_center), Paragraph("-6,80", table_cell_center), Paragraph("2,40", table_cell_center), Paragraph("5,80", table_cell_center), Paragraph("6,40", table_cell_center), _badge_var("+0,60"), _badge_var("+18,90"), Paragraph("7,20", table_cell_center), Paragraph("8,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Exportaciones Reales de Bienes", table_cell_left), Paragraph("6,20", table_cell_center), Paragraph("8,40", table_cell_center), Paragraph("9,50", table_cell_center), Paragraph("10,20", table_cell_center), Paragraph("11,40", table_cell_center), _badge_var("+1,20"), _badge_var("+5,20"), Paragraph("10,80", table_cell_center), Paragraph("7,50", table_cell_center)],
         [Paragraph("<b>TRACCIÓN SECTORIAL PRIMARIA & INDUSTRIAL</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Minería, Petróleo & Gas", table_cell_left), Paragraph("6,50", table_cell_center), Paragraph("7,20", table_cell_center), Paragraph("8,10", table_cell_center), Paragraph("8,40", table_cell_center), Paragraph("8,50", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+2,00</font>", table_cell_center), Paragraph("9,20", table_cell_center), Paragraph("11,00", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Sector Agropecuario", table_cell_left), Paragraph("8,40", table_cell_center), Paragraph("10,50", table_cell_center), Paragraph("12,10", table_cell_center), Paragraph("13,40", table_cell_center), Paragraph("14,20", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,80</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+5,80</font>", table_cell_center), Paragraph("12,50", table_cell_center), Paragraph("6,00", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Comercio Mayorista / Minorista", table_cell_left), Paragraph("-3,20", table_cell_center), Paragraph("-1,50", table_cell_center), Paragraph("0,40", table_cell_center), Paragraph("1,80", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1,00</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+6,00</font>", table_cell_center), Paragraph("3,20", table_cell_center), Paragraph("4,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Industria Manufacturera", table_cell_left), Paragraph("-7,80", table_cell_center), Paragraph("-5,20", table_cell_center), Paragraph("-3,40", table_cell_center), Paragraph("-2,10", table_cell_center), Paragraph("-1,80", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,30</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+6,00</font>", table_cell_center), Paragraph("0,50", table_cell_center), Paragraph("3,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Construcción & Cemento", table_cell_left), Paragraph("-14,20", table_cell_center), Paragraph("-10,50", table_cell_center), Paragraph("-7,20", table_cell_center), Paragraph("-5,10", table_cell_center), Paragraph("-4,20", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,90</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+10,00</font>", table_cell_center), Paragraph("-1,00", table_cell_center), Paragraph("5,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Minería, Petróleo & Gas", table_cell_left), Paragraph("6,50", table_cell_center), Paragraph("7,20", table_cell_center), Paragraph("8,10", table_cell_center), Paragraph("8,40", table_cell_center), Paragraph("8,50", table_cell_center), _badge_var("+0,10"), _badge_var("+2,00"), Paragraph("9,20", table_cell_center), Paragraph("11,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Sector Agropecuario", table_cell_left), Paragraph("8,40", table_cell_center), Paragraph("10,50", table_cell_center), Paragraph("12,10", table_cell_center), Paragraph("13,40", table_cell_center), Paragraph("14,20", table_cell_center), _badge_var("+0,80"), _badge_var("+5,80"), Paragraph("12,50", table_cell_center), Paragraph("6,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Comercio Mayorista / Minorista", table_cell_left), Paragraph("-3,20", table_cell_center), Paragraph("-1,50", table_cell_center), Paragraph("0,40", table_cell_center), Paragraph("1,80", table_cell_center), Paragraph("2,80", table_cell_center), _badge_var("+1,00"), _badge_var("+6,00"), Paragraph("3,20", table_cell_center), Paragraph("4,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Industria Manufacturera", table_cell_left), Paragraph("-7,80", table_cell_center), Paragraph("-5,20", table_cell_center), Paragraph("-3,40", table_cell_center), Paragraph("-2,10", table_cell_center), Paragraph("-1,80", table_cell_center), _badge_var("+0,30"), _badge_var("+6,00"), Paragraph("0,50", table_cell_center), Paragraph("3,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Construcción & Cemento", table_cell_left), Paragraph("-14,20", table_cell_center), Paragraph("-10,50", table_cell_center), Paragraph("-7,20", table_cell_center), Paragraph("-5,10", table_cell_center), Paragraph("-4,20", table_cell_center), _badge_var("+0,90"), _badge_var("+10,00"), Paragraph("-1,00", table_cell_center), Paragraph("5,00", table_cell_center)],
     ]
-    p4_bullets = [
-        ("El Estimador Mensual de Actividad Económica (EMAE) registró en junio de 2026 una expansión interanual del +3,1%",
-         "acumulando siete meses consecutivos de variación positiva en la serie desestacionalizada (+0,4% m/m, alcanzando 153,4 puntos base 2004=100). "
-         "Este dinamismo responde a la eliminación de distorsiones de precios relativos, la consolidación del ancla fiscal en base caja sin emisión monetaria al Tesoro "
-         "y la consiguiente desinflación, factores que han permitido una incipiente recomposición del salario real en el sector formal privado (+1,8% trimestral) "
-         "y un despegue en el volumen de crédito bancario comercial, que avanzó a un ritmo del 14,5% real interanual."),
-        ("A nivel sectorial, la recuperación presenta una marcada asimetría liderada por los sectores transables e intensivos en capital",
-         "La extracción de hidrocarburos (+8,5% i.a.) y la producción agropecuaria (+14,2% i.a.) operan como los motores centrales de la tracción agregada, "
-         "compensando la debilidad relativa de los segmentos no transables. En particular, la industria manufacturera (-1,8% i.a.) y la construcción (-4,2% i.a.) "
-         "continúan transitando un proceso de depuración de inventarios tras el cese de obra pública financiada con emisión, exhibiendo no obstante una desaceleración "
-         "progresiva en su ritmo de contracción frente al piso registrado en 2024 (-14,2%)."),
-        ("Las perspectivas para el segundo semestre de 2026 y 2027 anticipan una consolidación del crecimiento hacia el +3,5% y +4,2% anual",
-         "sustentadas en la maduración de los proyectos estratégicos adheridos al Régimen de Incentivo para Grandes Inversiones (RIGI) en minería de cobre y litio, "
-         "junto a la ampliación de capacidad de transporte de crudo y gas natural en Vaca Muerta (oleoducto Vaca Muerta Sur y reversión del Gasoducto Norte). "
-         "La estabilidad de la brecha cambiaria en torno al 4,5% constituye la precondición operativa para convalidar la inversión privada fija sin presiones de salto devaluatorio.")
+    p4_bloques = [
+        ("Tracción Sectorial & Heterogeneidad Productiva",
+         "El Estimador Mensual de Actividad Económica (EMAE) registró una expansión interanual del +3,1%, acumulando siete meses consecutivos de variación positiva en la serie desestacionalizada (+0,4% m/m, alcanzando 153,4 puntos base 2004=100). La recuperación presenta una asimetría liderada por los sectores transables e intensivos en capital: la extracción de hidrocarburos (+8,5% i.a.) y la producción agropecuaria (+14,2% i.a.) operan como los motores centrales, compensando la transición en la industria manufacturera (-1,8% i.a.) y la construcción (-4,2% i.a.), las cuales moderan sustancialmente su ritmo de caída frente al piso de 2024."),
+        ("Perspectivas Cíclicas & Proyecciones RIGI",
+         "Las perspectivas para el segundo semestre de 2026 y 2027 anticipan una consolidación del crecimiento hacia el +3,5% y +4,2% anual, sustentadas en la maduración de proyectos mineros y energéticos enmarcados en el Régimen de Incentivo para Grandes Inversiones (RIGI) y la ampliación de capacidad de transporte en Vaca Muerta (oleoducto VM Sur y reversión del Gasoducto Norte). La estabilidad de la brecha cambiaria en torno al 4,5% y la recuperación del crédito comercial (+14,5% real i.a.) convalidan la inversión fija.")
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    elements.extend(crear_pagina_arquetipo_scorecard(
+        kicker_txt="ACTIVIDAD REAL & SECTORIAL · ESTIMADOR MENSUAL DE ACTIVIDAD ECONÓMICA",
         titulo="1. Estimador Mensual de Actividad Económica (EMAE)",
         leadin_txt=p4_lead,
         tabla_titulo="Principales indicadores de actividad económica agregada y sectorial (%)",
         tabla_data=p4_tabla_data,
         tabla_col_widths=[140, 44, 44, 44, 44, 44, 45, 45, 45, 45],
         tabla_footnote="(1) Datos trimestrales y mensuales basados en series desestacionalizadas del INDEC. Variaciones interanuales y proyecciones basadas en modelo macroeconométrico FCE UNCUYO y consenso REM BCRA.",
-        bullets_txt_list=p4_bullets,
+        bloques_tematicos=p4_bloques,
         chart_filename="chart_editorial_emae.png",
-        chart_footnote="Nota: Estimador Mensual de Actividad Económica (base 2004=100) provisto por INDEC. Tracción sectorial estimada por la FCE UNCUYO."
+        chart_footnote="Nota: Estimador Mensual de Actividad Económica (base 2004=100) provisto por INDEC. Tracción sectorial estimada por la FCE UNCUYO.",
+        chart_height=205,
+        kicker_color="#047857"
     ))
 
     # =========================================================================
-    # PÁGINA 5: 2. PRECIOS Y SALARIOS (INDEC)
+    # PÁGINA 5: 2. PRECIOS Y SALARIOS (INDEC) — ARQUETIPO DESGLOSE
     # =========================================================================
     p5_lead = (
         "La inflación de Argentina profundizó su sendero de desaceleración en el segundo trimestre de 2026 (IPC general en 2,2% m/m y núcleo en 1,9% m/m), "
@@ -977,31 +1510,26 @@ def generar_informe_mensual_reportlab(ctx=None):
     p5_tabla_data = [
         [Paragraph("<b>INDICADOR DE PRECIOS & INGRESOS</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
         [Paragraph("<b>NIVEL GENERAL & APERTURAS INDEC</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>IPC General Nacional (% m/m)</b>", table_cell_bold), Paragraph("3,80", table_cell_center_bold), Paragraph("3,20", table_cell_center_bold), Paragraph("2,60", table_cell_center_bold), Paragraph("2,40", table_cell_center_bold), Paragraph("2,20", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>-0,20</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,60</font>", table_cell_center), Paragraph("29,50", table_cell_center_bold), Paragraph("15,80", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;IPC Núcleo (Core Inflation)", table_cell_left), Paragraph("3,40", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph("2,20", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("1,90", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,50</font>", table_cell_center), Paragraph("24,80", table_cell_center), Paragraph("12,40", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Precios Regulados (Tarifas)", table_cell_left), Paragraph("5,20", table_cell_center), Paragraph("4,50", table_cell_center), Paragraph("3,80", table_cell_center), Paragraph("3,40", table_cell_center), Paragraph("3,00", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,40</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-2,20</font>", table_cell_center), Paragraph("38,20", table_cell_center), Paragraph("18,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Precios Estacionales", table_cell_left), Paragraph("2,90", table_cell_center), Paragraph("2,10", table_cell_center), Paragraph("1,80", table_cell_center), Paragraph("1,60", table_cell_center), Paragraph("1,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,20</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,50</font>", table_cell_center), Paragraph("20,50", table_cell_center), Paragraph("14,00", table_cell_center)],
+        [Paragraph("<b>IPC General Nacional (% m/m)</b>", table_cell_bold), Paragraph("3,80", table_cell_center_bold), Paragraph("3,20", table_cell_center_bold), Paragraph("2,60", table_cell_center_bold), Paragraph("2,40", table_cell_center_bold), Paragraph("2,20", table_cell_center_bold), _badge_var("-0,20"), _badge_var("-1,60"), Paragraph("29,50", table_cell_center_bold), Paragraph("15,80", table_cell_center_bold)],
+        [Paragraph("&nbsp;&nbsp;IPC Núcleo (Core Inflation)", table_cell_left), Paragraph("3,40", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph("2,20", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("1,90", table_cell_center), _badge_var("-0,10"), _badge_var("-1,50"), Paragraph("24,80", table_cell_center), Paragraph("12,40", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Precios Regulados (Tarifas)", table_cell_left), Paragraph("5,20", table_cell_center), Paragraph("4,50", table_cell_center), Paragraph("3,80", table_cell_center), Paragraph("3,40", table_cell_center), Paragraph("3,00", table_cell_center), _badge_var("-0,40"), _badge_var("-2,20"), Paragraph("38,20", table_cell_center), Paragraph("18,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Precios Estacionales", table_cell_left), Paragraph("2,90", table_cell_center), Paragraph("2,10", table_cell_center), Paragraph("1,80", table_cell_center), Paragraph("1,60", table_cell_center), Paragraph("1,40", table_cell_center), _badge_var("-0,20"), _badge_var("-1,50"), Paragraph("20,50", table_cell_center), Paragraph("14,00", table_cell_center)],
         [Paragraph("<b>MEDICIÓN REGIONAL & SALARIOS</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;IPC DEIE Mendoza (% m/m)", table_cell_left), Paragraph("3,90", table_cell_center), Paragraph("3,30", table_cell_center), Paragraph("2,70", table_cell_center), Paragraph("2,50", table_cell_center), Paragraph("2,30", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,20</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,60</font>", table_cell_center), Paragraph("30,20", table_cell_center), Paragraph("16,20", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Salario Formal RIPTE (% i.a. nom.)", table_cell_left), Paragraph("145,2", table_cell_center), Paragraph("112,4", table_cell_center), Paragraph("85,2", table_cell_center), Paragraph("62,4", table_cell_center), Paragraph("48,5", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-13,9</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-96,7</font>", table_cell_center), Paragraph("34,20", table_cell_center), Paragraph("18,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Variación Salario Real (% trim.)", table_cell_left), Paragraph("-4,20", table_cell_center), Paragraph("-1,50", table_cell_center), Paragraph("0,80", table_cell_center), Paragraph("1,40", table_cell_center), Paragraph("1,80", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,40</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+6,00</font>", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph("3,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Tasa Real Ex-Ante Contractual", table_cell_left), Paragraph("0,25", table_cell_center), Paragraph("0,45", table_cell_center), Paragraph("0,65", table_cell_center), Paragraph("0,85", table_cell_center), Paragraph("0,95", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,70</font>", table_cell_center), Paragraph("1,05", table_cell_center), Paragraph("0,80", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;IPC DEIE Mendoza (% m/m)", table_cell_left), Paragraph("3,90", table_cell_center), Paragraph("3,30", table_cell_center), Paragraph("2,70", table_cell_center), Paragraph("2,50", table_cell_center), Paragraph("2,30", table_cell_center), _badge_var("-0,20"), _badge_var("-1,60"), Paragraph("30,20", table_cell_center), Paragraph("16,20", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Salario Formal RIPTE (% i.a. nom.)", table_cell_left), Paragraph("145,2", table_cell_center), Paragraph("112,4", table_cell_center), Paragraph("85,2", table_cell_center), Paragraph("62,4", table_cell_center), Paragraph("48,5", table_cell_center), _badge_var("-13,9"), _badge_var("-96,7"), Paragraph("34,20", table_cell_center), Paragraph("18,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Variación Salario Real (% trim.)", table_cell_left), Paragraph("-4,20", table_cell_center), Paragraph("-1,50", table_cell_center), Paragraph("0,80", table_cell_center), Paragraph("1,40", table_cell_center), Paragraph("1,80", table_cell_center), _badge_var("+0,40"), _badge_var("+6,00"), Paragraph("2,80", table_cell_center), Paragraph("3,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Tasa Real Ex-Ante Contractual", table_cell_left), Paragraph("0,25", table_cell_center), Paragraph("0,45", table_cell_center), Paragraph("0,65", table_cell_center), Paragraph("0,85", table_cell_center), Paragraph("0,95", table_cell_center), _badge_var("+0,10"), _badge_var("+0,70"), Paragraph("1,05", table_cell_center), Paragraph("0,80", table_cell_center)],
     ]
     p5_bullets = [
-        ("La dinámica de precios de agosto confirmó la consolidación del sendero desinflacionario nacional (2,2% m/m)",
-         "y provincial (Mendoza: 2,3% m/m), quebrando la inercia histórica de tres dígitos anuales. Por orden de incidencia relativa, los aumentos estuvieron "
-         "encabezados por los precios regulados (3,0% m/m) y servicios públicos, derivados de la actualización de cuadros tarifarios de gas y energía eléctrica en "
-         "búsqueda del equilibrio de subsidios, mientras que los bienes transables operaron con incrementos alineados a la pauta cambiaria oficial."),
-        ("La inflación núcleo se ubicó en 1,9% m/m, marcando el nivel más bajo en los últimos seis trimestres",
-         "Este registro confirma que las presiones inflacionarias no provienen de desequilibrios monetarios primarios ni de una espiralización de costos, "
-         "sino de ajustes puntuales de precios relativos. La tasa de interés real en pesos (Lecaps cortas en 2,95% TEM frente a expectativas REM de 2,00%) "
-         "proporciona una barrera de absorción que esteriliza saldos transaccionales y consolida la convergencia hacia el crawling peg del 2%."),
-        ("En el plano salarial, el RIPTE registró un avance mensual nominal que permite verificar ganancias reales marginales",
-         "El salario formal del sector privado acumula tres trimestres de recomposición en términos de capacidad de compra de alimentos básicos. No obstante, "
-         "el sector informal continúa rezagado, evidenciando una marcada heterogeneidad distributiva que mantiene tensiones en los segmentos de ingresos bajos "
-         "frente al costo de la Canasta Básica Total en los grandes conglomerados urbanos.")
+        ("La dinámica de precios confirmó la consolidación del sendero desinflacionario nacional (2,2% m/m)",
+         "y provincial (Mendoza: 2,3% m/m), quebrando la inercia histórica de tres dígitos anuales. Por orden de incidencia relativa, los aumentos estuvieron encabezados por precios regulados (3,0% m/m) y servicios públicos, derivados de la actualización de cuadros tarifarios de gas y energía eléctrica en búsqueda del equilibrio de subsidios, mientras que los transables operaron alineados a la pauta cambiaria."),
+        ("La inflación núcleo se ubicó en 1,9% m/m, marcando el nivel más bajo en seis trimestres",
+         "Este registro confirma que las presiones no provienen de desequilibrios monetarios primarios ni de una espiralización de costos, sino de ajustes puntuales de precios relativos. La tasa de interés real en pesos (Lecaps en 2,95% TEM frente a expectativas REM de 2,00%) proporciona un dique de contención que esteriliza saldos transaccionales y consolida la convergencia hacia el crawling peg del 2%."),
+        ("En el plano salarial, el RIPTE verificó ganancias reales marginales por tercer trimestre consecutivo",
+         "El salario formal privado acumula tres trimestres de recomposición en capacidad de compra de alimentos básicos. No obstante, el sector informal continúa rezagado, evidenciando una heterogeneidad distributiva que mantiene tensiones en los segmentos de ingresos bajos frente al costo de la Canasta Básica Total.")
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    elements.extend(crear_pagina_arquetipo_desglose(
+        kicker_txt="PRECIOS & SALARIOS · TRAYECTORIA DESINFLACIONARIA Y SALARIO REAL",
         titulo="2. Precios, Canastas Básicas y Salario Real",
         leadin_txt=p5_lead,
         tabla_titulo="Evolución del Índice de Precios al Consumidor y variables laborales (%)",
@@ -1010,56 +1538,68 @@ def generar_informe_mensual_reportlab(ctx=None):
         tabla_footnote="(1) Datos provistos por INDEC (IPC Nacional), DEIE Mendoza y Secretaría de Trabajo (RIPTE). Proyecciones de inflación y salario real por FCE UNCUYO.",
         bullets_txt_list=p5_bullets,
         chart_filename="chart_editorial_ipc.png",
-        chart_footnote="Nota: Aperturas del IPC INDEC y serie de trayectoria desinflacionaria mensual 2025-2026."
+        chart_footnote="Nota: Aperturas del IPC INDEC y serie de trayectoria desinflacionaria mensual 2025-2026.",
+        chart_height=210,
+        kicker_color="#047857"
     ))
 
     # =========================================================================
-    # PÁGINA 6: CUADRO 1. APERTURAS IPC Y CANASTAS BÁSICAS
+    # PÁGINA 6: CUADRO 1. APERTURAS IPC Y CANASTAS — ARQUETIPO SOCIAL
     # =========================================================================
     p6_lead = (
-        "El análisis desagregado de las canastas básicas refleja una moderación en la línea de indigencia (CBA en $532.000 nacional y $424.000 Mendoza), "
+        "El análisis desagregado de las canastas básicas refleja una moderación en la línea de indigencia (CBA en $532.000 nacional y $485.000 Mendoza), "
         "mientras que la Canasta Básica Total ($1.175.000 nacional) mantiene una brecha exigente frente a los ingresos de los deciles no registrados. "
         "La dispersión regional confirma presiones más acotadas en Cuyo frente al Gran Buenos Aires y la Patagonia."
     )
     p6_tabla_data = [
         [Paragraph("<b>CANASTA / UMBRAL DE POBREZA</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
         [Paragraph("<b>VALORIZACIÓN DE CANASTAS (MILES ARS)</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>CBT Nacional (Línea Pobreza)</b>", table_cell_bold), Paragraph("820,4", table_cell_center_bold), Paragraph("910,2", table_cell_center_bold), Paragraph("980,5", table_cell_center_bold), Paragraph("1.045", table_cell_center_bold), Paragraph("1.175", table_cell_center_bold), Paragraph(f"<font color='{NEG_COLOR}'>+130</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+354</font>", table_cell_center), Paragraph("1.250", table_cell_center_bold), Paragraph("1.420", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;CBA Nacional (Línea Indigencia)", table_cell_left), Paragraph("370,5", table_cell_center), Paragraph("412,0", table_cell_center), Paragraph("445,2", table_cell_center), Paragraph("478,0", table_cell_center), Paragraph("532,0", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+54,0</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+161</font>", table_cell_center), Paragraph("565,0", table_cell_center), Paragraph("640,0", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;CBT Mendoza (DEIE Cuyo)", table_cell_left), Paragraph("765,0", table_cell_center), Paragraph("845,0", table_cell_center), Paragraph("912,0", table_cell_center), Paragraph("963,0", table_cell_center), Paragraph("1.085", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+122</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+320</font>", table_cell_center), Paragraph("1.160", table_cell_center), Paragraph("1.310", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;CBA Mendoza (DEIE Cuyo)", table_cell_left), Paragraph("345,0", table_cell_center), Paragraph("380,0", table_cell_center), Paragraph("410,0", table_cell_center), Paragraph("435,0", table_cell_center), Paragraph("485,0", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+50,0</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+140</font>", table_cell_center), Paragraph("515,0", table_cell_center), Paragraph("585,0", table_cell_center)],
+        [Paragraph("<b>CBT Nacional (Línea Pobreza)</b>", table_cell_bold), Paragraph("820,4", table_cell_center_bold), Paragraph("910,2", table_cell_center_bold), Paragraph("980,5", table_cell_center_bold), Paragraph("1.045", table_cell_center_bold), Paragraph("1.175", table_cell_center_bold), _badge_var("+130"), _badge_var("+354"), Paragraph("1.250", table_cell_center_bold), Paragraph("1.420", table_cell_center_bold)],
+        [Paragraph("&nbsp;&nbsp;CBA Nacional (Línea Indigencia)", table_cell_left), Paragraph("370,5", table_cell_center), Paragraph("412,0", table_cell_center), Paragraph("445,2", table_cell_center), Paragraph("478,0", table_cell_center), Paragraph("532,0", table_cell_center), _badge_var("+54,0"), _badge_var("+161"), Paragraph("565,0", table_cell_center), Paragraph("640,0", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;CBT Mendoza (DEIE Cuyo)", table_cell_left), Paragraph("765,0", table_cell_center), Paragraph("845,0", table_cell_center), Paragraph("912,0", table_cell_center), Paragraph("963,0", table_cell_center), Paragraph("1.085", table_cell_center), _badge_var("+122"), _badge_var("+320"), Paragraph("1.160", table_cell_center), Paragraph("1.310", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;CBA Mendoza (DEIE Cuyo)", table_cell_left), Paragraph("345,0", table_cell_center), Paragraph("380,0", table_cell_center), Paragraph("410,0", table_cell_center), Paragraph("435,0", table_cell_center), Paragraph("485,0", table_cell_center), _badge_var("+50,0"), _badge_var("+140"), Paragraph("515,0", table_cell_center), Paragraph("585,0", table_cell_center)],
         [Paragraph("<b>INDICADORES SOCIALES & COBERTURA</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Brecha Salario RIPTE / CBT (%)", table_cell_left), Paragraph("105,4", table_cell_center), Paragraph("108,2", table_cell_center), Paragraph("112,0", table_cell_center), Paragraph("115,4", table_cell_center), Paragraph("118,5", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+3,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+13,1</font>", table_cell_center), Paragraph("122,0", table_cell_center), Paragraph("128,0", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Tasa de Pobreza Urbana (% est.)", table_cell_left), Paragraph("54,20", table_cell_center), Paragraph("51,80", table_cell_center), Paragraph("48,50", table_cell_center), Paragraph("46,20", table_cell_center), Paragraph("44,10", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-2,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-10,1</font>", table_cell_center), Paragraph("41,50", table_cell_center), Paragraph("36,00", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Tasa de Indigencia (% est.)", table_cell_left), Paragraph("18,50", table_cell_center), Paragraph("16,20", table_cell_center), Paragraph("14,10", table_cell_center), Paragraph("12,80", table_cell_center), Paragraph("11,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,40</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-7,10</font>", table_cell_center), Paragraph("10,00", table_cell_center), Paragraph("8,20", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Brecha Salario RIPTE / CBT (%)", table_cell_left), Paragraph("105,4", table_cell_center), Paragraph("108,2", table_cell_center), Paragraph("112,0", table_cell_center), Paragraph("115,4", table_cell_center), Paragraph("118,5", table_cell_center), _badge_var("+3,10"), _badge_var("+13,1"), Paragraph("122,0", table_cell_center), Paragraph("128,0", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Tasa de Pobreza Urbana (% est.)", table_cell_left), Paragraph("54,20", table_cell_center), Paragraph("51,80", table_cell_center), Paragraph("48,50", table_cell_center), Paragraph("46,20", table_cell_center), Paragraph("44,10", table_cell_center), _badge_var("-2,10"), _badge_var("-10,1"), Paragraph("41,50", table_cell_center), Paragraph("36,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Tasa de Indigencia (% est.)", table_cell_left), Paragraph("18,50", table_cell_center), Paragraph("16,20", table_cell_center), Paragraph("14,10", table_cell_center), Paragraph("12,80", table_cell_center), Paragraph("11,40", table_cell_center), _badge_var("-1,40"), _badge_var("-7,10"), Paragraph("10,00", table_cell_center), Paragraph("8,20", table_cell_center)],
     ]
     p6_bullets = [
-        ("La Canasta Básica Total (CBT) en el ámbito nacional alcanzó los $1.175.000 para un hogar tipo 2 (cuatro integrantes)",
-         "exhibiendo un incremento mensual del 2,2% que acompaña la tasa general de inflación. La estabilidad en los precios de alimentos básicos de consumo masivo "
-         "permitió contener la aceleración de la Canasta Alimentaria (CBA: $532.000), frenando el deterioro en los umbrales de indigencia extrema en los centros urbanos."),
-        ("En la Provincia de Mendoza, la medición de la DEIE sitúa la Canasta Básica Total en $1.085.000",
-         "mostrando una brecha favorable de aproximadamente 7,6% respecto a la media del Gran Buenos Aires, explicada por menores costos relativos en transporte "
-         "y servicios comerciales. La Canasta Básica Alimentaria mendocina cerró en $485.000, reflejando la tracción de los programas locales de abastecimiento "
-         "y la moderación en la carne vacuna y derivados lácteos."),
-        ("La relación entre el salario registrado (RIPTE) y la CBT experimentó una mejora paulatina, alcanzando el 118,5%",
-         "Este indicador ratifica que los trabajadores formales han recuperado un margen operativo sobre la línea de pobreza estadística, tras haber tocado "
-         "niveles críticos cercanos al 100% en 2024. La disminución estimada de la tasa de pobreza hacia el 44,1% confirma el impacto directo de la desaceleración "
-         "del IPC sobre los estratos medios asalariados.")
+        ("La Canasta Básica Total (CBT) nacional alcanzó los $1.175.000 para un hogar tipo 2",
+         "exhibiendo un incremento mensual del 2,2% que acompaña la tasa general de inflación. La estabilidad en los precios de alimentos básicos contuvo la aceleración de la Canasta Alimentaria (CBA: $532.000 nacional y $485.000 en Mendoza), frenando el deterioro en los umbrales de indigencia extrema en los centros urbanos."),
+        ("En la Provincia de Mendoza, la medición DEIE sitúa la Canasta Básica Total en $1.085.000",
+         "mostrando una brecha favorable de aproximadamente 7,6% respecto a la media nacional, explicada por menores costos relativos en transporte y servicios comerciales. La Canasta Alimentaria mendocina cerró en $485.000, reflejando la tracción de programas locales de abastecimiento y la estabilidad de productos frescos."),
+        ("La relación entre el salario registrado (RIPTE) y la CBT alcanzó el 118,5%",
+         "Este indicador ratifica que los trabajadores formales han recuperado un margen operativo sobre la línea de pobreza estadística, tras haber tocado niveles críticos cercanos al 100% en 2024. La disminución estimada de la tasa de pobreza hacia el 44,1% confirma el impacto directo de la desaceleración del IPC sobre los estratos medios asalariados.")
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    c1_data = {
+        "title": "Canasta Básica Alimentaria (CBA) · Línea Indigencia",
+        "val_nac": "$532.000", "val_reg": "$485.000",
+        "sub": "Variación mensual: +2,1% m/m · Hogar Tipo 2 (4 miembros) · Cobertura RIPTE: 0,45 salarios.",
+        "color": "#0284C7"
+    }
+    c2_data = {
+        "title": "Canasta Básica Total (CBT) · Línea de Pobreza",
+        "val_nac": "$1.175.000", "val_reg": "$1.085.000",
+        "sub": "Cobertura Salario RIPTE / CBT: 118,5% · Tasa pobreza urbana estimada: 44,1% (-2,1 pp).",
+        "color": "#0B2545"
+    }
+    elements.extend(crear_pagina_arquetipo_social(
+        kicker_txt="ESTADÍSTICAS SOCIALES · DISTRIBUCIÓN DEL INGRESO Y LÍNEAS DE POBREZA",
         titulo="Cuadro 1. Aperturas IPC, Canastas Básicas y Líneas de Pobreza",
-        leadin_txt=p6_lead,
+        card1_data=c1_data,
+        card2_data=c2_data,
         tabla_titulo="Valorización de Canastas Básicas e Indicadores de Pobreza e Indigencia (Miles ARS / %)",
         tabla_data=p6_tabla_data,
         tabla_col_widths=[140, 44, 44, 44, 44, 44, 45, 45, 45, 45],
         tabla_footnote="(1) Datos de canastas valorizadas por INDEC y DEIE Mendoza para Hogar Tipo 2. Estimaciones de pobreza e indigencia basadas en microdatos EPH y modelo FCE UNCUYO.",
         bullets_txt_list=p6_bullets,
         chart_filename="chart_editorial_canastas.png",
-        chart_footnote="Nota: Comparativa nacional y regional de canastas básicas CBT y CBA en miles de pesos."
+        chart_footnote="Nota: Comparativa nacional y regional de canastas básicas CBT y CBA en miles de pesos.",
+        chart_height=210
     ))
 
     # =========================================================================
-    # PÁGINA 7: 3. SECTORES CUYO (VITIVINICULTURA & PETRÓLEO)
+    # PÁGINA 7: 3. SECTORES CUYO — ARQUETIPO DESGLOSE SECTORIAL
     # =========================================================================
     p7_lead = (
         "La producción sectorial en Mendoza y Cuyo consolidó una dinámica heterogénea durante el segundo trimestre de 2026: "
@@ -1069,30 +1609,25 @@ def generar_informe_mensual_reportlab(ctx=None):
     p7_tabla_data = [
         [Paragraph("<b>CADENA PRODUCTIVA / SECTOR</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
         [Paragraph("<b>VITIVINICULTURA & AGROINDUSTRIA</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>Vino Fraccionado (Miles hl)</b>", table_cell_bold), Paragraph("6.200", table_cell_center_bold), Paragraph("6.850", table_cell_center_bold), Paragraph("7.120", table_cell_center_bold), Paragraph("7.250", table_cell_center_bold), Paragraph("7.340", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>+90</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1.140</font>", table_cell_center), Paragraph("7.500", table_cell_center_bold), Paragraph("7.850", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;Despacho Mercado Interno (%)", table_cell_left), Paragraph("-4,20", table_cell_center), Paragraph("-1,80", table_cell_center), Paragraph("0,50", table_cell_center), Paragraph("1,80", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1,00</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+7,00</font>", table_cell_center), Paragraph("3,20", table_cell_center), Paragraph("4,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Exportaciones Vino Fraccionado (%)", table_cell_left), Paragraph("1,50", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph("3,40", table_cell_center), Paragraph("4,10", table_cell_center), Paragraph("4,80", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,70</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+3,30</font>", table_cell_center), Paragraph("5,50", table_cell_center), Paragraph("6,80", table_cell_center)],
+        [Paragraph("<b>Vino Fraccionado (Miles hl)</b>", table_cell_bold), Paragraph("6.200", table_cell_center_bold), Paragraph("6.850", table_cell_center_bold), Paragraph("7.120", table_cell_center_bold), Paragraph("7.250", table_cell_center_bold), Paragraph("7.340", table_cell_center_bold), _badge_var("+90"), _badge_var("+1.140"), Paragraph("7.500", table_cell_center_bold), Paragraph("7.850", table_cell_center_bold)],
+        [Paragraph("&nbsp;&nbsp;Despacho Mercado Interno (%)", table_cell_left), Paragraph("-4,20", table_cell_center), Paragraph("-1,80", table_cell_center), Paragraph("0,50", table_cell_center), Paragraph("1,80", table_cell_center), Paragraph("2,80", table_cell_center), _badge_var("+1,00"), _badge_var("+7,00"), Paragraph("3,20", table_cell_center), Paragraph("4,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Exportaciones Vino Fraccionado (%)", table_cell_left), Paragraph("1,50", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph("3,40", table_cell_center), Paragraph("4,10", table_cell_center), Paragraph("4,80", table_cell_center), _badge_var("+0,70"), _badge_var("+3,30"), Paragraph("5,50", table_cell_center), Paragraph("6,80", table_cell_center)],
         [Paragraph("<b>HIDROCARBUROS & CEMENTO PORTLAND</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Petróleo Total Mendoza (Miles m³)", table_cell_left), Paragraph("205,0", table_cell_center), Paragraph("208,5", table_cell_center), Paragraph("210,4", table_cell_center), Paragraph("211,8", table_cell_center), Paragraph("212,0", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,20</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+7,00</font>", table_cell_center), Paragraph("215,0", table_cell_center), Paragraph("224,0", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Vaca Muerta Sur Mendoza (Shale)", table_cell_left), Paragraph("18,50", table_cell_center), Paragraph("22,00", table_cell_center), Paragraph("25,40", table_cell_center), Paragraph("28,10", table_cell_center), Paragraph("30,00", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1,90</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+11,5</font>", table_cell_center), Paragraph("34,00", table_cell_center), Paragraph("45,00", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Cuenca Cuyana Convencional (%)", table_cell_left), Paragraph("-3,20", table_cell_center), Paragraph("-2,40", table_cell_center), Paragraph("-1,80", table_cell_center), Paragraph("-1,20", table_cell_center), Paragraph("-0,80", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,40</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+2,40</font>", table_cell_center), Paragraph("-0,50", table_cell_center), Paragraph("0,00", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Despacho Cemento Cuyo (AFCP %)", table_cell_left), Paragraph("-12,4", table_cell_center), Paragraph("-8,50", table_cell_center), Paragraph("-4,20", table_cell_center), Paragraph("-1,50", table_cell_center), Paragraph("1,20", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+2,70</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+13,6</font>", table_cell_center), Paragraph("3,50", table_cell_center), Paragraph("7,80", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Petróleo Total Mendoza (Miles m³)", table_cell_left), Paragraph("205,0", table_cell_center), Paragraph("208,5", table_cell_center), Paragraph("210,4", table_cell_center), Paragraph("211,8", table_cell_center), Paragraph("212,0", table_cell_center), _badge_var("+0,20"), _badge_var("+7,00"), Paragraph("215,0", table_cell_center), Paragraph("224,0", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Vaca Muerta Sur Mendoza (Shale)", table_cell_left), Paragraph("18,50", table_cell_center), Paragraph("22,00", table_cell_center), Paragraph("25,40", table_cell_center), Paragraph("28,10", table_cell_center), Paragraph("30,00", table_cell_center), _badge_var("+1,90"), _badge_var("+11,5"), Paragraph("34,00", table_cell_center), Paragraph("45,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Cuenca Cuyana Convencional (%)", table_cell_left), Paragraph("-3,20", table_cell_center), Paragraph("-2,40", table_cell_center), Paragraph("-1,80", table_cell_center), Paragraph("-1,20", table_cell_center), Paragraph("-0,80", table_cell_center), _badge_var("+0,40"), _badge_var("+2,40"), Paragraph("-0,50", table_cell_center), Paragraph("0,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Despacho Cemento Cuyo (AFCP %)", table_cell_left), Paragraph("-12,4", table_cell_center), Paragraph("-8,50", table_cell_center), Paragraph("-4,20", table_cell_center), Paragraph("-1,50", table_cell_center), Paragraph("1,20", table_cell_center), _badge_var("+2,70"), _badge_var("+13,6"), Paragraph("3,50", table_cell_center), Paragraph("7,80", table_cell_center)],
     ]
     p7_bullets = [
-        ("El sector vitivinícola registró un incremento interanual del +2,8% en el despacho de vinos fraccionados al mercado doméstico",
-         "alcanzando las 7.340 miles de hectolitros acumuladas en los últimos doce meses según datos del INV. Este repunte convalida la estabilización "
-         "del consumo en el canal minorista y la moderación en los costos de insumos secos (botellas, corchos y etiquetas). En el plano exportador, los envíos "
-         "crecieron un +4,8% i.a. impulsados por varietales Malbec de alta gama en los mercados de Estados Unidos, Brasil y Reino Unido."),
-        ("En la cuenca hidrocarburífera de Mendoza, la producción no convencional en la lengua norte de Vaca Muerta superó los 30.000 m³/mes",
-         "con un crecimiento interanual del +12,5% que compensa la declinación natural de los yacimientos maduros de la Cuenca Cuyana (-0,8% i.a.). "
-         "Las inversiones canalizadas a través del RIGI en los bloques CN-VII A y Paso Bardas Norte anticipan una aceleración hacia los 45.000 m³/mes para 2027, "
-         "transformando el perfil fiscal provincial mediante el incremento en regalías hidrocarburíferas."),
-        ("El despacho de cemento portland en la región Cuyo anotó su primera variación interanual positiva (+1,2% i.a.) tras dieciocho meses de contracción",
-         "Este indicador, provisto por la AFCP, refleja la reactivación de obras de infraestructura privada, desarrollos inmobiliarios y ampliaciones mineras "
-         "en el sur provincial. La normalización del financiamiento comercial en pesos y la estabilidad cambiaria han reducido los sobrecostos de acopio "
-         "en los corralones de materiales de construcción.")
+        ("El sector vitivinícola registró un incremento interanual del +2,8% en despacho doméstico",
+         "alcanzando las 7.340 miles de hectolitros acumuladas según datos del INV, convalidando la estabilización del consumo en el canal minorista y la moderación en insumos secos. En el plano exportador, los envíos crecieron +4,8% i.a. impulsados por varietales Malbec de alta gama en EE.UU., Brasil y Reino Unido."),
+        ("En la cuenca hidrocarburífera de Mendoza, el shale en Vaca Muerta superó los 30.000 m³/mes",
+         "con un crecimiento interanual del +12,5% que compensa la declinación de los yacimientos maduros de la Cuenca Cuyana (-0,8% i.a.). Las inversiones vía RIGI en bloques CN-VII A y Paso Bardas Norte anticipan una aceleración hacia 45.000 m³/mes para 2027, dinamizando las regalías provinciales."),
+        ("El despacho de cemento portland en Cuyo anotó su primera variación positiva (+1,2% i.a.) en 18 meses",
+         "Este indicador de la AFCP refleja la reactivación de obras de infraestructura privada, desarrollos inmobiliarios y ampliaciones mineras. La normalización del financiamiento comercial en pesos y la estabilidad cambiaria han reducido los sobrecostos de acopio en corralones.")
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    elements.extend(crear_pagina_arquetipo_desglose(
+        kicker_txt="ECONOMÍA REGIONAL · DESAGREGACIÓN SECTORIAL Y PRODUCCIÓN EN CUYO",
         titulo="3. Desagregación Sectorial y Producción en Mendoza y Cuyo",
         leadin_txt=p7_lead,
         tabla_titulo="Principales indicadores de producción sectorial en Mendoza y Cuyo (Miles hl / m³ / %)",
@@ -1101,11 +1636,13 @@ def generar_informe_mensual_reportlab(ctx=None):
         tabla_footnote="(1) Fuentes: Instituto Nacional de Vitivinicultura (INV), Secretaría de Energía de la Nación y AFCP. Cálculos y proyecciones por FCE UNCUYO.",
         bullets_txt_list=p7_bullets,
         chart_filename="chart_editorial_cuyo.png",
-        chart_footnote="Nota: Despacho de vino fraccionado (INV) y variación interanual del ISARC provincial en Cuyo."
+        chart_footnote="Nota: Despacho de vino fraccionado (INV) y variación interanual del ISARC provincial en Cuyo.",
+        chart_height=210,
+        kicker_color="#047857"
     ))
 
     # =========================================================================
-    # PÁGINA 8: 3.1 COMPARATIVO REGIONAL CUYO (ISARC)
+    # PÁGINA 8: 3.1 COMPARATIVO REGIONAL CUYO (ISARC) — ARQUETIPO SCORECARD
     # =========================================================================
     p8_lead = (
         "El Índice Sintético de Actividad Regional de Cuyo (ISARC) ratifica la recuperación sincronizada de las economías provinciales (+3,1% i.a. regional), "
@@ -1115,41 +1652,40 @@ def generar_informe_mensual_reportlab(ctx=None):
     p8_tabla_data = [
         [Paragraph("<b>JURISDICCIÓN / INDICADOR ISARC</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
         [Paragraph("<b>ÍNDICE REGIONAL CUYO & PROVINCIAS</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>ISARC Región Cuyo (% i.a.)</b>", table_cell_bold), Paragraph("1,50", table_cell_center_bold), Paragraph("2,10", table_cell_center_bold), Paragraph("2,60", table_cell_center_bold), Paragraph("2,80", table_cell_center_bold), Paragraph("3,10", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>+0,30</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1,60</font>", table_cell_center), Paragraph("3,40", table_cell_center_bold), Paragraph("4,50", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;Mendoza (Petróleo / Vitivinicultura)", table_cell_left), Paragraph("1,80", table_cell_center), Paragraph("2,20", table_cell_center), Paragraph("2,50", table_cell_center), Paragraph("3,10", table_cell_center), Paragraph("3,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,30</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1,60</font>", table_cell_center), Paragraph("3,60", table_cell_center), Paragraph("4,60", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;San Luis (Manufacturas / Alimentos)", table_cell_left), Paragraph("3,20", table_cell_center), Paragraph("4,00", table_cell_center), Paragraph("4,80", table_cell_center), Paragraph("5,20", table_cell_center), Paragraph("5,80", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,60</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+2,60</font>", table_cell_center), Paragraph("6,20", table_cell_center), Paragraph("5,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;San Juan (Minería / Agroindustria)", table_cell_left), Paragraph("1,20", table_cell_center), Paragraph("1,50", table_cell_center), Paragraph("1,90", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("2,10", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,90</font>", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph("5,20", table_cell_center)],
+        [Paragraph("<b>ISARC Región Cuyo (% i.a.)</b>", table_cell_bold), Paragraph("1,50", table_cell_center_bold), Paragraph("2,10", table_cell_center_bold), Paragraph("2,60", table_cell_center_bold), Paragraph("2,80", table_cell_center_bold), Paragraph("3,10", table_cell_center_bold), _badge_var("+0,30"), _badge_var("+1,60"), Paragraph("3,40", table_cell_center_bold), Paragraph("4,50", table_cell_center_bold)],
+        [Paragraph("&nbsp;&nbsp;Mendoza (Petróleo / Vitivinicultura)", table_cell_left), Paragraph("1,80", table_cell_center), Paragraph("2,20", table_cell_center), Paragraph("2,50", table_cell_center), Paragraph("3,10", table_cell_center), Paragraph("3,40", table_cell_center), _badge_var("+0,30"), _badge_var("+1,60"), Paragraph("3,60", table_cell_center), Paragraph("4,60", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;San Luis (Manufacturas / Alimentos)", table_cell_left), Paragraph("3,20", table_cell_center), Paragraph("4,00", table_cell_center), Paragraph("4,80", table_cell_center), Paragraph("5,20", table_cell_center), Paragraph("5,80", table_cell_center), _badge_var("+0,60"), _badge_var("+2,60"), Paragraph("6,20", table_cell_center), Paragraph("5,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;San Juan (Minería / Agroindustria)", table_cell_left), Paragraph("1,20", table_cell_center), Paragraph("1,50", table_cell_center), Paragraph("1,90", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("2,10", table_cell_center), _badge_var("+0,10"), _badge_var("+0,90"), Paragraph("2,80", table_cell_center), Paragraph("5,20", table_cell_center)],
         [Paragraph("<b>TRACCIÓN SECTORIAL REGIONAL</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Minería Metalífera & Hidrocarburos", table_cell_left), Paragraph("5,40", table_cell_center), Paragraph("6,50", table_cell_center), Paragraph("7,20", table_cell_center), Paragraph("8,10", table_cell_center), Paragraph("8,50", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,40</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+3,10</font>", table_cell_center), Paragraph("9,50", table_cell_center), Paragraph("12,00", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Agroindustria Alimentaria Cuyo", table_cell_left), Paragraph("2,10", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph("3,40", table_cell_center), Paragraph("3,60", table_cell_center), Paragraph("3,80", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,20</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1,70</font>", table_cell_center), Paragraph("4,20", table_cell_center), Paragraph("4,80", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Comercio & Servicios Cuyanos", table_cell_left), Paragraph("-1,80", table_cell_center), Paragraph("0,20", table_cell_center), Paragraph("1,50", table_cell_center), Paragraph("2,10", table_cell_center), Paragraph("2,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,30</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+4,20</font>", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph("3,60", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Minería Metalífera & Hidrocarburos", table_cell_left), Paragraph("5,40", table_cell_center), Paragraph("6,50", table_cell_center), Paragraph("7,20", table_cell_center), Paragraph("8,10", table_cell_center), Paragraph("8,50", table_cell_center), _badge_var("+0,40"), _badge_var("+3,10"), Paragraph("9,50", table_cell_center), Paragraph("12,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Agroindustria Alimentaria Cuyo", table_cell_left), Paragraph("2,10", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph("3,40", table_cell_center), Paragraph("3,60", table_cell_center), Paragraph("3,80", table_cell_center), _badge_var("+0,20"), _badge_var("+1,70"), Paragraph("4,20", table_cell_center), Paragraph("4,80", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Comercio & Servicios Cuyanos", table_cell_left), Paragraph("-1,80", table_cell_center), Paragraph("0,20", table_cell_center), Paragraph("1,50", table_cell_center), Paragraph("2,10", table_cell_center), Paragraph("2,40", table_cell_center), _badge_var("+0,30"), _badge_var("+4,20"), Paragraph("2,80", table_cell_center), Paragraph("3,60", table_cell_center)],
     ]
-    p8_bullets = [
-        ("San Luis encabeza la tasa de reactivación regional con una expansión del +5,8% interanual en el ISARC",
-         "apuntalada por la alta densidad de su parque industrial químico, farmacéutico y de alimentos procesados. La disponibilidad de capacidad ociosa "
-         "y la rápida normalización del crédito bancario en pesos permitieron a las plantas fabriles responder con agilidad a la demanda doméstica en recuperación."),
-        ("Mendoza consolidó una tasa de crecimiento del +3,4% i.a., sustentada en el polo energético y la estabilidad del turismo receptivo",
-         "El incremento en la producción de crudo no convencional en Malargüe y la maduración del Distrito Minero Occidental han revitalizado la cadena "
-         "de proveedores metalmecánicos y de servicios petroleros. La afluencia turística internacional, traccionada por la conectividad aérea directa "
-         "con San Pablo y Santiago de Chile, compensó la moderación del turismo interno."),
-        ("San Juan se expandió al +2,1% i.a., marcando una fase de preparación e inversión preliminar en minería de cobre de gran escala",
-         "Los proyectos Josemaría y Los Azules, enmarcados en el régimen RIGI, concentran desembolsos en estudios de factibilidad, caminos de acceso y campamentos, "
-         "anticipando un fuerte salto en el valor agregado bruto provincial hacia 2027 cuando comience la fase de construcción de las plantas concentradoras.")
+    p8_bloques = [
+        ("Polos de Tracción Regional & Dinámica Provincial",
+         "San Luis encabeza la reactivación regional con una expansión del +5,8% interanual en el ISARC, apuntalada por la alta densidad de su parque industrial químico, farmacéutico y de alimentos. La disponibilidad de capacidad ociosa y la normalización del crédito bancario permitieron a las plantas fabriles responder con agilidad a la demanda interna. Mendoza consolidó una suba del +3,4% i.a., sustentada en el polo energético de Malargüe y la solidez del turismo receptivo internacional."),
+        ("Horizonte Minero Sanjuanino & Sinergias Cuyanas",
+         "San Juan se expandió al +2,1% i.a., marcando una fase de preparación e inversión preliminar en minería de cobre de gran escala (Josemaría, Los Azules) en el marco del régimen RIGI. Los desembolsos en ingeniería y caminos de acceso anticipan un fuerte salto hacia 2027 al iniciarse la construcción de plantas concentradoras, generando encadenamientos de proveedores en todo Cuyo."),
+        ("Integración Logística y Corredor Bioceánico",
+         "La convergencia de inversiones en pasos cordilleranos (Paso Cristo Redentor y Pehuenche) y la reactivación del ferrocarril San Martín Cargas consolidan a la región como nodo estratégico del comercio con el Pacífico. La reducción estimada del 18% en costos de flete fortalece la proyección exportadora agroindustrial y minera hacia mercados asiáticos.")
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    elements.extend(crear_pagina_arquetipo_scorecard(
+        kicker_txt="DESARROLLO REGIONAL · ÍNDICE SINTÉTICO DE ACTIVIDAD DE CUYO (ISARC)",
         titulo="3.1. Comparativo Regional: Índice Sintético de Actividad (ISARC)",
         leadin_txt=p8_lead,
         tabla_titulo="Evolución trimestral del ISARC y tracción sectorial en Cuyo (%)",
         tabla_data=p8_tabla_data,
         tabla_col_widths=[140, 44, 44, 44, 44, 44, 45, 45, 45, 45],
         tabla_footnote="(1) Fuentes: DEIE Mendoza, Dirección Provincial de Estadística de San Juan y San Luis, y OERU FCE UNCUYO. Base 2004=100.",
-        bullets_txt_list=p8_bullets,
+        bloques_tematicos=p8_bloques,
         chart_filename="chart_editorial_regional_cuyo.png",
-        chart_footnote="Nota: Evolución comparada del ISARC provincial y contribución por sectores productivos de Cuyo."
+        chart_footnote="Nota: Evolución comparada del ISARC provincial y contribución por sectores productivos de Cuyo.",
+        chart_height=205,
+        kicker_color="#047857"
     ))
 
     # =========================================================================
-    # PÁGINA 9: 4. BALANCE BCRA Y POSTURA MONETARIA
+    # PÁGINA 9: 4. BALANCE BCRA Y POSTURA MONETARIA — ARQUETIPO DESGLOSE
     # =========================================================================
     p9_lead = (
         "El balance del Banco Central de la República Argentina consolidó su saneamiento estructural en el segundo trimestre de 2026: "
@@ -1159,30 +1695,25 @@ def generar_informe_mensual_reportlab(ctx=None):
     p9_tabla_data = [
         [Paragraph("<b>VARIABLE DE BALANCE BCRA</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
         [Paragraph("<b>AGREGADOS MONETARIOS (BILLONES ARS)</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>Base Monetaria (Promedio)</b>", table_cell_bold), Paragraph("19,80", table_cell_center_bold), Paragraph("21,50", table_cell_center_bold), Paragraph("23,40", table_cell_center_bold), Paragraph("24,80", table_cell_center_bold), Paragraph("26,80", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>+2,00</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+7,00</font>", table_cell_center), Paragraph("28,50", table_cell_center_bold), Paragraph("32,00", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;Circulante en Poder Público", table_cell_left), Paragraph("12,40", table_cell_center), Paragraph("13,80", table_cell_center), Paragraph("14,90", table_cell_center), Paragraph("15,80", table_cell_center), Paragraph("16,90", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+4,50</font>", table_cell_center), Paragraph("18,00", table_cell_center), Paragraph("20,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Encajes Bancarios en BCRA", table_cell_left), Paragraph("7,40", table_cell_center), Paragraph("7,70", table_cell_center), Paragraph("8,50", table_cell_center), Paragraph("9,00", table_cell_center), Paragraph("9,90", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,90</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+2,50</font>", table_cell_center), Paragraph("10,50", table_cell_center), Paragraph("11,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Stock Pases Remunerados", table_cell_left), Paragraph("4,20", table_cell_center), Paragraph("1,50", table_cell_center), Paragraph("0,00", table_cell_center), Paragraph("0,00", table_cell_center), Paragraph("0,00", table_cell_center), Paragraph("0,00", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-4,20</font>", table_cell_center), Paragraph("0,00", table_cell_center), Paragraph("0,00", table_cell_center)],
+        [Paragraph("<b>Base Monetaria (Promedio)</b>", table_cell_bold), Paragraph("19,80", table_cell_center_bold), Paragraph("21,50", table_cell_center_bold), Paragraph("23,40", table_cell_center_bold), Paragraph("24,80", table_cell_center_bold), Paragraph("26,80", table_cell_center_bold), _badge_var("+2,00"), _badge_var("+7,00"), Paragraph("28,50", table_cell_center_bold), Paragraph("32,00", table_cell_center_bold)],
+        [Paragraph("&nbsp;&nbsp;Circulante en Poder Público", table_cell_left), Paragraph("12,40", table_cell_center), Paragraph("13,80", table_cell_center), Paragraph("14,90", table_cell_center), Paragraph("15,80", table_cell_center), Paragraph("16,90", table_cell_center), _badge_var("+1,10"), _badge_var("+4,50"), Paragraph("18,00", table_cell_center), Paragraph("20,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Encajes Bancarios en BCRA", table_cell_left), Paragraph("7,40", table_cell_center), Paragraph("7,70", table_cell_center), Paragraph("8,50", table_cell_center), Paragraph("9,00", table_cell_center), Paragraph("9,90", table_cell_center), _badge_var("+0,90"), _badge_var("+2,50"), Paragraph("10,50", table_cell_center), Paragraph("11,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Stock Pases Remunerados", table_cell_left), Paragraph("4,20", table_cell_center), Paragraph("1,50", table_cell_center), Paragraph("0,00", table_cell_center), Paragraph("0,00", table_cell_center), Paragraph("0,00", table_cell_center), _badge_var("0,00"), _badge_var("-4,20"), Paragraph("0,00", table_cell_center), Paragraph("0,00", table_cell_center)],
         [Paragraph("<b>RESERVAS & TASAS DE INTERÉS</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Reservas Brutas (USD Millones)", table_cell_left), Paragraph("27.120", table_cell_center), Paragraph("29.450", table_cell_center), Paragraph("31.200", table_cell_center), Paragraph("32.800", table_cell_center), Paragraph("34.150", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1.350</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+7.030</font>", table_cell_center), Paragraph("36.000", table_cell_center), Paragraph("41.500", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Reservas Netas (RIN USD MM)", table_cell_left), Paragraph("-3.200", table_cell_center), Paragraph("-1.100", table_cell_center), Paragraph("+850", table_cell_center), Paragraph("+2.400", table_cell_center), Paragraph("+3.650", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1.250</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+6.850</font>", table_cell_center), Paragraph("+5.000", table_cell_center), Paragraph("+8.500", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Tasa Política Monetaria (TNA %)", table_cell_left), Paragraph("45,00", table_cell_center), Paragraph("40,00", table_cell_center), Paragraph("35,00", table_cell_center), Paragraph("35,00", table_cell_center), Paragraph("32,00", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-3,00</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-13,0</font>", table_cell_center), Paragraph("30,00", table_cell_center), Paragraph("25,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Reservas Brutas (USD Millones)", table_cell_left), Paragraph("27.120", table_cell_center), Paragraph("29.450", table_cell_center), Paragraph("31.200", table_cell_center), Paragraph("32.800", table_cell_center), Paragraph("34.150", table_cell_center), _badge_var("+1.350"), _badge_var("+7.030"), Paragraph("36.000", table_cell_center), Paragraph("41.500", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Reservas Netas (RIN USD MM)", table_cell_left), Paragraph("-3.200", table_cell_center), Paragraph("-1.100", table_cell_center), Paragraph("+850", table_cell_center), Paragraph("+2.400", table_cell_center), Paragraph("+3.650", table_cell_center), _badge_var("+1.250"), _badge_var("+6.850"), Paragraph("+5.000", table_cell_center), Paragraph("+8.500", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Tasa Política Monetaria (TNA %)", table_cell_left), Paragraph("45,00", table_cell_center), Paragraph("40,00", table_cell_center), Paragraph("35,00", table_cell_center), Paragraph("35,00", table_cell_center), Paragraph("32,00", table_cell_center), _badge_var("-3,00"), _badge_var("-13,0"), Paragraph("30,00", table_cell_center), Paragraph("25,00", table_cell_center)],
     ]
     p9_bullets = [
-        ("La extinción definitiva de los pasivos remunerados del BCRA clausuró el principal motor de emisión endógena",
-         "El stock de pases pasivos y Letras Fiscales de Liquidez (LeFi) se mantiene en cero desde julio de 2025, trasladando la absorción bancaria hacia Letras "
-         "del Tesoro (Lecaps) financiadas con superávit fiscal genuino. Esta transformación erradicó el déficit cuasifiscal que equivalía a 10 puntos del PIB en 2023, "
-         "recomponiendo el patrimonio neto del Banco Central."),
-        ("Las Reservas Internacionales Netas (RIN) alcanzaron los +USD 3.650 millones, consolidando un giro de USD 14.850 millones",
-         "frente al piso de -USD 11.200 millones registrado a fines de 2023. La compra de divisas en el Mercado Libre de Cambios (MLC) y la recomposición "
-         "de depósitos en dólares del sector privado (+USD 6.500 millones en el bienio) han fortalecido la liquidez sistémica, allanando el camino hacia "
-         "la flexibilización gradual de los controles cruzados de capitales."),
-        ("La Base Monetaria se expande a un ritmo compatible con la demanda genuina de dinero y la remonetización del crédito privado",
-         "Alcanzando los $26,8 billones, el circulante monetario crece por debajo de la inflación interanual, convalidando una contracción en términos reales "
-         "respecto a los promedios históricos. La autoridad monetaria mantiene una postura contractiva mediante tasas reales ex-ante positivas en letras fiscales, "
-         "anclando las expectativas y evitando presiones sobre las cotizaciones financieras del tipo de cambio.")
+        ("La extinción definitiva de los pasivos remunerados clausuró el motor de emisión endógena",
+         "El stock de pases pasivos y LeFis se mantiene en cero desde julio de 2025, trasladando la absorción bancaria hacia Letras del Tesoro (Lecaps) financiadas con superávit primario. Esta transformación erradicó el déficit cuasifiscal que equivalía a 10 puntos del PIB en 2023, recomponiendo el patrimonio neto del Banco Central."),
+        ("Las Reservas Internacionales Netas (RIN) alcanzaron los +USD 3.650 millones, un giro de USD 14.850 M",
+         "frente al piso de -USD 11.200 millones registrado a fines de 2023. La compra neta en el Mercado Libre de Cambios (MLC) y la recomposición de depósitos privados en dólares (+USD 6.500 M) han fortalecido la liquidez sistémica, allanando el camino hacia la remoción gradual de restricciones cruzadas."),
+        ("La Base Monetaria se expande al compás de la remonetización del crédito privado",
+         "Alcanzando los $26,8 billones, el circulante crece por debajo de la inflación interanual, convalidando una contracción real frente a promedios históricos. La autoridad monetaria mantiene una postura contractiva mediante tasas reales ex-ante positivas en letras fiscales, anclando las cotizaciones financieras.")
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    elements.extend(crear_pagina_arquetipo_desglose(
+        kicker_txt="RÉGIMEN MONETARIO · BALANCE PATRIMONIAL Y EXTINCIÓN DE PASIVOS CUASIFISCALES",
         titulo="4. Balance del BCRA, Pasivos Cuasifiscales y Postura Monetaria",
         leadin_txt=p9_lead,
         tabla_titulo="Evolución de los agregados monetarios y balance patrimonial del BCRA",
@@ -1191,151 +1722,160 @@ def generar_informe_mensual_reportlab(ctx=None):
         tabla_footnote="(1) Fuentes: Banco Central de la República Argentina (BCRA v4.0). Base monetaria e instrumentos de absorción en billones de ARS; reservas en millones de USD.",
         bullets_txt_list=p9_bullets,
         chart_filename="chart_editorial_monetary.png",
-        chart_footnote="Nota: Dinámica de base monetaria frente a pasivos remunerados extintos y reservas internacionales netas (RIN)."
+        chart_footnote="Nota: Dinámica de base monetaria frente a pasivos remunerados extintos y reservas internacionales netas (RIN).",
+        chart_height=210,
+        kicker_color="#0284C7"
     ))
 
     # =========================================================================
-    # PÁGINA 10: 5. ARBITRAJE EN PESOS Y BREAKEVEN
+    # PÁGINA 10: 5. ARBITRAJE EN PESOS Y BREAKEVEN — ARQUETIPO ASIMÉTRICO
     # =========================================================================
     p10_lead = (
-        "La estructura temporal de tasas de interés en moneda local convalidó una compresión ordenada del rendimiento efectivo mensual (TEM 2,95% en tramo corto), "
-        "ofreciendo una prima real ex-ante de +95 pb sobre la inflación esperada por el consenso REM (2,00% m/m). "
-        "El spread de breakeven inflacionario frente a títulos indexados (Boncer TZX27 a CER+1,10%) otorga un colchón defensivo para la estrategia de carry trade."
+        "La estructura temporal de tasas en moneda local convalidó una compresión ordenada del rendimiento efectivo mensual (TEM 2,95% en tramo corto), "
+        "ofreciendo una prima real ex-ante de +95 pb sobre la inflación esperada REM (2,00% m/m). "
+        "El spread de breakeven inflacionario frente a bonos indexados otorga un colchón defensivo para la estrategia de carry trade."
     )
-    p10_tabla_data = [
-        [Paragraph("<b>INSTRUMENTO / CURVA EN PESOS</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
-        [Paragraph("<b>LETRAS A TASA FIJA (LECAPS)</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>Lecap Corta (TEM % m/m)</b>", table_cell_bold), Paragraph("4,10", table_cell_center_bold), Paragraph("3,65", table_cell_center_bold), Paragraph("3,25", table_cell_center_bold), Paragraph("3,05", table_cell_center_bold), Paragraph("2,95", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>-0,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,15</font>", table_cell_center), Paragraph("2,75", table_cell_center_bold), Paragraph("2,10", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;Lecap Corta (TNA equivalente %)", table_cell_left), Paragraph("49,20", table_cell_center), Paragraph("43,80", table_cell_center), Paragraph("39,00", table_cell_center), Paragraph("36,60", table_cell_center), Paragraph("35,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,20</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-13,8</font>", table_cell_center), Paragraph("33,00", table_cell_center), Paragraph("25,20", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Lecap Larga (TEM % m/m)", table_cell_left), Paragraph("4,50", table_cell_center), Paragraph("4,10", table_cell_center), Paragraph("3,75", table_cell_center), Paragraph("3,50", table_cell_center), Paragraph("3,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,10</font>", table_cell_center), Paragraph("3,10", table_cell_center), Paragraph("2,40", table_cell_center)],
-        [Paragraph("<b>TÍTULOS INDEXADOS & BREAKEVEN</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Boncer TZX27 (TIR Real CER %)", table_cell_left), Paragraph("2,40", table_cell_center), Paragraph("1,80", table_cell_center), Paragraph("1,50", table_cell_center), Paragraph("1,30", table_cell_center), Paragraph("1,10", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,20</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,30</font>", table_cell_center), Paragraph("1,00", table_cell_center), Paragraph("0,80", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Breakeven Inflacionario (% m/m)", table_cell_left), Paragraph("3,85", table_cell_center), Paragraph("3,45", table_cell_center), Paragraph("3,10", table_cell_center), Paragraph("2,95", table_cell_center), Paragraph("2,86", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,09</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,99</font>", table_cell_center), Paragraph("2,60", table_cell_center), Paragraph("1,95", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Inflación Esperada REM (% m/m)", table_cell_left), Paragraph("3,10", table_cell_center), Paragraph("2,60", table_cell_center), Paragraph("2,20", table_cell_center), Paragraph("2,10", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,10</font>", table_cell_center), Paragraph("1,85", table_cell_center), Paragraph("1,40", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Premio Tasa Fija vs. REM (pb)", table_cell_left), Paragraph("75", table_cell_center), Paragraph("85", table_cell_center), Paragraph("90", table_cell_center), Paragraph("85", table_cell_center), Paragraph("86", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1,0</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+11,0</font>", table_cell_center), Paragraph("75", table_cell_center), Paragraph("55", table_cell_center)],
+    p10_bullets_asym = [
+        ("Pendiente de Curva Lecap & Carry Contractual",
+         "La curva de Letras del Tesoro a tasa fija presenta una pendiente ligeramente ascendente (TEM 2,95% en tramo corto hasta 3,40% a doce meses), convalidando la disciplina fiscal y la capacidad de rollover del Tesoro. Con una inflación REM de 2,00%, el tramo corto ofrece una prima real contractual de +95 pb mensual que incentiva el estacionamiento de liquidez corporativa."),
+        ("Breakeven Inflacionario vs Boncer Indexados",
+         "El breakeven de indiferencia entre la Lecap corta y el Boncer TZX27 (CER+1,10%) se sitúa en 2,86% m/m, un colchón de 86 pb sobre la expectativa del mercado. La tasa fija absorbe holgadamente el riesgo de reacomodamiento tarifario y devenga el carry más eficiente del sistema financiero."),
+        ("Mecanismo de Transmisión & Absorción Bancaria",
+         "La extinción de los pasivos remunerados del BCRA canalizó la liquidez bancaria hacia letras del Tesoro sin convalidar emisión cuasifiscal. Este ordenamiento monetario afianza la estabilidad de la brecha cambiaria y estimula la remonetización del crédito comercial.")
     ]
-    p10_bullets = [
-        ("La curva de Letras del Tesoro a tasa fija (Lecaps) presenta una pendiente ligeramente positiva que incentiva la colocación a corto plazo",
-         "Con rendimientos que oscilan entre 2,95% TEM para vencimientos a 30-45 días y 3,40% TEM a doce meses vista, el mercado convalida la disciplina "
-         "fiscal del Tesoro y la capacidad de rollover sin convalidar saltos de prima. Esta estructura de rendimientos permite a las tesorerías corporativas "
-         "maximizar su retorno de caja esterilizando excedentes de liquidez en títulos soberanos garantizados por superávit primario."),
-        ("El breakeven de inflación implícita entre la Lecap corta y el Boncer TZX27 se ubicó en 2,86% mensual",
-         "Frente a una proyección de inflación del consenso REM del 2,00% para el trimestre venidero, la tasa fija otorga un colchón de seguridad de 86 puntos básicos "
-         "mensuales. Esta brecha confirma que la tasa fija compensa holgadamente el riesgo de reajuste tarifario estacional, convirtiéndose en el activo de mayor "
-         "eficiencia de carry trade en el mercado doméstico de capitales."),
-        ("La recomendación táctica para carteras institucionales consiste en sobreponderar Lecaps del tramo corto (40% de cartera)",
-         "complementadas con una porción indexada preventiva en Boncer TZX27 (15%) para blindar el balance ante eventuales shocks tarifarios exógenos. "
-         "La estabilidad de la brecha cambiaria por debajo del 5% refuerza el atractivo de la estrategia en términos de retorno en moneda dura.")
+    p10_mini_tabla = [
+        [Paragraph("<b>Instrumento</b>", cell_header_style), Paragraph("<b>Tasa / Spread</b>", cell_header_style), Paragraph("<b>Diagnóstico</b>", cell_header_style)],
+        [Paragraph("Lecap Corta (S31G5)", table_cell_bold), Paragraph("TEM 2,95% (TNA 35,4%)", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Carry Real +95 pb</font>", table_cell_center)],
+        [Paragraph("Lecap Larga (S30J6)", table_cell_bold), Paragraph("TEM 3,40% (TNA 40,8%)", table_cell_center), Paragraph("Pendiente Normal", table_cell_center)],
+        [Paragraph("Boncer TZX27", table_cell_bold), Paragraph("CER + 1,10%", table_cell_center), Paragraph("Hedge Tarifario", table_cell_center)],
+        [Paragraph("Breakeven Lecap/CER", table_cell_bold), Paragraph("2,86% mensual", table_cell_center), Paragraph("Colchón +86 pb", table_cell_center)],
+        [Paragraph("Inflación REM BCRA", table_cell_bold), Paragraph("2,00% mensual", table_cell_center), Paragraph("Ancla Sostenida", table_cell_center)],
+        [Paragraph("Caución Bursátil ByMA", table_cell_bold), Paragraph("TNA 32,5% (1d-7d)", table_cell_center), Paragraph("Piso de Fondeo", table_cell_center)],
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    p10_scorecard_data = [
+        [Paragraph("<b>Activo</b>", ParagraphStyle('THC1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white)), Paragraph("<b>Postura</b>", ParagraphStyle('THC2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)), Paragraph("<b>Peso</b>", ParagraphStyle('THC3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)), Paragraph("<b>Target</b>", ParagraphStyle('THC4', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_RIGHT))],
+        [Paragraph("Lecaps Cortas", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>OW</b></font>", table_cell_center), Paragraph("40%", table_cell_center_bold), Paragraph("TEM 2,95%", table_cell_center)],
+        [Paragraph("Boncer TZX27", table_cell_bold), Paragraph(f"<font color='{MUTED.hexval()}'><b>N</b></font>", table_cell_center), Paragraph("15%", table_cell_center_bold), Paragraph("CER+1,1%", table_cell_center)],
+        [Paragraph("Bopreal Serie 3", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>OW</b></font>", table_cell_center), Paragraph("10%", table_cell_center_bold), Paragraph("TIR 10,4%", table_cell_center)],
+        [Paragraph("Duales / Dólar Link", table_cell_bold), Paragraph(f"<font color='{MUTED.hexval()}'><b>N</b></font>", table_cell_center), Paragraph("5%", table_cell_center_bold), Paragraph("Hedge FX", table_cell_center)],
+        [Paragraph("ByMA Equity", table_cell_bold), Paragraph(f"<font color='{NEG_COLOR}'><b>UW</b></font>", table_cell_center), Paragraph("5%", table_cell_center_bold), Paragraph("Selectivo", table_cell_center)],
+    ]
+    p10_catalizador = "• <b>Rollover del Tesoro &ge; 100%:</b> Refinanciación de vencimientos en Lecaps sin convalidar saltos de corte.<br/>• <b>Licitación Lecaps:</b> Monitoreo de extensión de plazos hacia 2027.<br/>• <b>Depósitos a Plazo:</b> Crecimiento sostenido por tasas reales contractuales positivas."
+    elements.extend(crear_pagina_arquetipo_asimetrico(
+        kicker_txt="CURVAS EN PESOS · ARBITRAJE DE TASAS, BREAKEVEN & CARRY TRADE",
         titulo="5. Arbitraje de Tasas en ARS, Breakeven y Recomendaciones de Cartera",
         leadin_txt=p10_lead,
-        tabla_titulo="Curva de rendimientos en pesos, instrumentos CER y breakeven de inflación (%)",
-        tabla_data=p10_tabla_data,
-        tabla_col_widths=[140, 44, 44, 44, 44, 44, 45, 45, 45, 45],
-        tabla_footnote="(1) Fuentes: Secretaría de Finanzas, MAE y Relevamiento de Expectativas de Mercado (REM) del BCRA. Breakeven calculado bajo paridad de Fisher.",
-        bullets_txt_list=p10_bullets,
+        col_izq_titulo="DISCUSIÓN ANALÍTICA DE CURVAS & RENDIMIENTOS REALES",
+        col_izq_bullets=p10_bullets_asym,
+        mini_tabla_titulo="Indicadores Clave de la Curva en Pesos",
+        mini_tabla_data=p10_mini_tabla,
+        card_der_titulo="SCORECARD TÁCTICO & MONITOR DE TASAS",
+        card_der_table_data=p10_scorecard_data,
+        catalizador_txt=p10_catalizador,
         chart_filename="chart_editorial_rates.png",
-        chart_footnote="Nota: Curvas de rendimiento TEM Lecaps vs. Boncer y spread de breakeven inflacionario frente al REM."
+        chart_footnote="Nota: Curvas de rendimiento TEM Lecaps vs. Boncer y spread de breakeven inflacionario frente al REM.",
+        chart_height=210,
+        kicker_color="#0284C7"
     ))
 
     # =========================================================================
-    # PÁGINA 11: 6. DEUDA SOBERANA Y NELSON-SIEGEL
+    # PÁGINA 11: 6. DEUDA SOBERANA Y NELSON-SIEGEL — ARQUETIPO TOPCHART
     # =========================================================================
     p11_lead = (
-        "La curva soberana de deuda en moneda extranjera consolidó una notable compresión de rendimientos en el segundo trimestre de 2026: "
+        "La curva soberana de deuda en moneda extranjera profundizó una notable compresión de rendimientos en el segundo trimestre de 2026: "
         "el riesgo país EMBI+ quebró el umbral de los 510 pb (-174 pb en 30 días), mientras que el ajuste paramétrico de Nelson-Siegel situó la "
-        "tasa asintótica de largo plazo (Beta 0) en 9,40%, con el GD35 rindiendo 9,65% TIR y convalidando una elevada convexidad ante futuras reducciones de spread."
+        "tasa asintótica de largo plazo (Beta 0) en 9,40%, con el GD35 rindiendo 9,65% TIR y convalidando una elevada convexidad."
     )
     p11_tabla_data = [
         [Paragraph("<b>PARÁMETRO / BONO SOBERANO</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
         [Paragraph("<b>PARÁMETROS NELSON-SIEGEL (1987)</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>Nivel Asintótico Largo Plazo (Beta 0 %)</b>", table_cell_bold), Paragraph("14,20", table_cell_center_bold), Paragraph("12,50", table_cell_center_bold), Paragraph("11,20", table_cell_center_bold), Paragraph("10,10", table_cell_center_bold), Paragraph("9,40", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>-0,70</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-4,80</font>", table_cell_center), Paragraph("8,80", table_cell_center_bold), Paragraph("7,50", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;Pendiente Corto-Largo (Beta 1 %)", table_cell_left), Paragraph("12,40", table_cell_center), Paragraph("9,80", table_cell_center), Paragraph("7,50", table_cell_center), Paragraph("6,20", table_cell_center), Paragraph("5,60", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,60</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-6,80</font>", table_cell_center), Paragraph("4,20", table_cell_center), Paragraph("2,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Curvatura Joroba Media (Beta 2 %)", table_cell_left), Paragraph("-8,50", table_cell_center), Paragraph("-6,20", table_cell_center), Paragraph("-4,80", table_cell_center), Paragraph("-3,90", table_cell_center), Paragraph("-3,20", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,70</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+5,30</font>", table_cell_center), Paragraph("-2,40", table_cell_center), Paragraph("-1,20", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Bondad de Ajuste Modelo (R²)", table_cell_left), Paragraph("0,945", table_cell_center), Paragraph("0,962", table_cell_center), Paragraph("0,974", table_cell_center), Paragraph("0,980", table_cell_center), Paragraph("0,984", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,004</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,039</font>", table_cell_center), Paragraph("0,988", table_cell_center), Paragraph("0,992", table_cell_center)],
+        [Paragraph("<b>Nivel Asintótico Largo Plazo (Beta 0 %)</b>", table_cell_bold), Paragraph("14,20", table_cell_center_bold), Paragraph("12,50", table_cell_center_bold), Paragraph("11,20", table_cell_center_bold), Paragraph("10,10", table_cell_center_bold), Paragraph("9,40", table_cell_center_bold), _badge_var("-0,70"), _badge_var("-4,80"), Paragraph("8,80", table_cell_center_bold), Paragraph("7,50", table_cell_center_bold)],
+        [Paragraph("&nbsp;&nbsp;Pendiente Corto-Largo (Beta 1 %)", table_cell_left), Paragraph("12,40", table_cell_center), Paragraph("9,80", table_cell_center), Paragraph("7,50", table_cell_center), Paragraph("6,20", table_cell_center), Paragraph("5,60", table_cell_center), _badge_var("-0,60"), _badge_var("-6,80"), Paragraph("4,20", table_cell_center), Paragraph("2,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Curvatura Joroba Media (Beta 2 %)", table_cell_left), Paragraph("-8,50", table_cell_center), Paragraph("-6,20", table_cell_center), Paragraph("-4,80", table_cell_center), Paragraph("-3,90", table_cell_center), Paragraph("-3,20", table_cell_center), _badge_var("+0,70"), _badge_var("+5,30"), Paragraph("-2,40", table_cell_center), Paragraph("-1,20", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Bondad de Ajuste Modelo (R²)", table_cell_left), Paragraph("0,945", table_cell_center), Paragraph("0,962", table_cell_center), Paragraph("0,974", table_cell_center), Paragraph("0,980", table_cell_center), Paragraph("0,984", table_cell_center), _badge_var("+0,004"), _badge_var("+0,039"), Paragraph("0,988", table_cell_center), Paragraph("0,992", table_cell_center)],
         [Paragraph("<b>RENDIMIENTOS DE MERCADO (TIR %)</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Bonar 2030 (AL30 Ley Local)", table_cell_left), Paragraph("18,50", table_cell_center), Paragraph("15,20", table_cell_center), Paragraph("13,40", table_cell_center), Paragraph("12,10", table_cell_center), Paragraph("11,20", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,90</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-7,30</font>", table_cell_center), Paragraph("10,00", table_cell_center), Paragraph("8,20", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Global 2035 (GD35 Ley NY)", table_cell_left), Paragraph("14,80", table_cell_center), Paragraph("12,90", table_cell_center), Paragraph("11,50", table_cell_center), Paragraph("10,40", table_cell_center), Paragraph("9,65", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,75</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-5,15</font>", table_cell_center), Paragraph("8,90", table_cell_center), Paragraph("7,60", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Global 2038 (GD38 Ley NY)", table_cell_left), Paragraph("15,10", table_cell_center), Paragraph("13,10", table_cell_center), Paragraph("11,70", table_cell_center), Paragraph("10,50", table_cell_center), Paragraph("9,70", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,80</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-5,40</font>", table_cell_center), Paragraph("9,00", table_cell_center), Paragraph("7,80", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Riesgo País EMBI+ (Puntos Básicos)", table_cell_left), Paragraph("1.240", table_cell_center), Paragraph("980", table_cell_center), Paragraph("810", table_cell_center), Paragraph("680", table_cell_center), Paragraph("506", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-174</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-734</font>", table_cell_center), Paragraph("450", table_cell_center), Paragraph("320", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Bonar 2030 (AL30 Ley Local)", table_cell_left), Paragraph("18,50", table_cell_center), Paragraph("15,20", table_cell_center), Paragraph("13,40", table_cell_center), Paragraph("12,10", table_cell_center), Paragraph("11,20", table_cell_center), _badge_var("-0,90"), _badge_var("-7,30"), Paragraph("10,00", table_cell_center), Paragraph("8,20", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Global 2035 (GD35 Ley NY)", table_cell_left), Paragraph("14,80", table_cell_center), Paragraph("12,90", table_cell_center), Paragraph("11,50", table_cell_center), Paragraph("10,40", table_cell_center), Paragraph("9,65", table_cell_center), _badge_var("-0,75"), _badge_var("-5,15"), Paragraph("8,90", table_cell_center), Paragraph("7,60", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Global 2038 (GD38 Ley NY)", table_cell_left), Paragraph("15,10", table_cell_center), Paragraph("13,10", table_cell_center), Paragraph("11,70", table_cell_center), Paragraph("10,50", table_cell_center), Paragraph("9,70", table_cell_center), _badge_var("-0,80"), _badge_var("-5,40"), Paragraph("9,00", table_cell_center), Paragraph("7,80", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Riesgo País EMBI+ (Puntos Básicos)", table_cell_left), Paragraph("1.240", table_cell_center), Paragraph("980", table_cell_center), Paragraph("810", table_cell_center), Paragraph("680", table_cell_center), Paragraph("506", table_cell_center), _badge_var("-174"), _badge_var("-734"), Paragraph("450", table_cell_center), Paragraph("320", table_cell_center)],
     ]
-    p11_bullets = [
-        ("La curva soberana en dólares continuó su proceso de normalización estructural, liderada por la compresión del riesgo país a 506 puntos básicos",
-         "La eliminación del déficit fiscal, la acumulación de reservas netas y la puntualidad en el pago de cupones de amortización e intereses han devuelto "
-         "la confianza de los inversores institucionales globales. El Bonar 2030 (AL30) opera en paridades del 68%, mientras que los Globales bajo legislación "
-         "Nueva York registran un rendimiento homogéneo por debajo del 10% anual."),
-        ("El ajuste econométrico continuo bajo la especificación paramétrica de Nelson-Siegel (1987) arrojó una excelente bondad de ajuste con R² = 0,984",
-         "El parámetro de nivel asintótico Beta 0 se ubica en 9,40%, confirmando el anclaje de largo plazo para la curva argentina. La reducción sostenida del parámetro "
-         "de pendiente Beta 1 (+5,60%) evidencia la desaparición de la inversión de curva que caracterizaba el período de estrés financiero, convergiendo hacia una "
-         "morfología plana-ascendente típica de créditos soberanos en transición hacia investment grade."),
-        ("Desde una perspectiva táctica, el bono Global 2035 (GD35) ofrece el mejor perfil de riesgo/retorno de la curva argentina",
-         "Con una duration modificada de 6,8 años y una convexidad favorable (+0,42), un escenario de compresión adicional de 150 pb en el spread soberano "
-         "generaría una ganancia de capital estimada del +10,2%, permitiendo capturar un retorno total en dólares significativamente superior al de instrumentos "
-         "de deuda corporativa de similar calificación crediticia.")
+    p11_conclusiones = [
+        ("Sobreponderar Tramo Medio-Largo (GD35 / GD38)",
+         "Con modified duration de 6,8 años y convexidad favorable (+0,42), una compresión adicional de 150 pb en el spread EMBI+ convalidaría una ganancia de capital del +10,2% en dólares, superando ampliamente a créditos corporativos comparables."),
+        ("Aplanamiento Estructural de Curva Nelson-Siegel",
+         "La reducción continua de Beta 1 (+5,60%) y el anclaje asintótico de Beta 0 (9,40%, R²=0,984) confirman la transición desde una curva históricamente invertida hacia una morfología ascendente de crédito soberano normalizado."),
+        ("Arbitraje de Legislación Ley Local vs Ley NY",
+         "La compresión de la prima de legislación (spread AL30 vs GD30 en mínimos de 80 pb) habilita la rotación hacia títulos Ley Nueva York para maximizar la liquidez global ante la reapertura del crédito voluntario internacional.")
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    elements.extend(crear_pagina_arquetipo_topchart(
+        kicker_txt="DEUDA SOBERANA · MODELIZACIÓN PARAMÉTRICA DE CURVAS NELSON-SIEGEL",
         titulo="6. Estructura Temporal de la Deuda Soberana y Modelo Nelson-Siegel",
         leadin_txt=p11_lead,
+        chart_filename="chart_editorial_sovereign.png",
+        chart_footnote="Nota: Curva spot de rendimientos soberanos USD calibrada y estructura de tasas forward instantáneas f(t).",
         tabla_titulo="Parámetros econométricos Nelson-Siegel y rendimientos spot de la curva soberana USD",
         tabla_data=p11_tabla_data,
         tabla_col_widths=[140, 44, 44, 44, 44, 44, 45, 45, 45, 45],
-        tabla_footnote="(1) Fuentes: ByMA, MAE y estimación paramétrica Nelson-Siegel (1987) por FCE UNCUYO. Riesgo país EMBI+ elaborado por J.P. Morgan.",
-        bullets_txt_list=p11_bullets,
-        chart_filename="chart_editorial_sovereign.png",
-        chart_footnote="Nota: Curva spot de rendimientos soberanos USD calibrada y estructura de tasas forward instantáneas f(t)."
+        tabla_footnote="(1) Fuentes: ByMA, MAE y estimación paramétrica Nelson-Siegel (1987) por FCE UNCUYO. Riesgo país EMBI+ de J.P. Morgan.",
+        caja_titulo="CONCLUSIONES TÁCTICAS PARA EL INVERSOR INSTITUCIONAL",
+        conclusiones_tacticas=p11_conclusiones,
+        chart_height=205,
+        kicker_color="#0284C7"
     ))
 
     # =========================================================================
-    # PÁGINA 12: 7. MICROESTRUCTURA FX Y ROFEX CIP
+    # PÁGINA 12: 7. MICROESTRUCTURA FX Y ROFEX CIP — ARQUETIPO ASIMÉTRICO
     # =========================================================================
     p12_lead = (
-        "El mercado cambiario cerró el segundo trimestre de 2026 en un entorno de marcada calma financiera: "
-        "el Dólar Contado con Liquidación (CCL) finalizó en $1.600,20 con una brecha cambiaria acotada al 4,5% sobre el mayorista A3500 ($1.511,53). "
-        "La curva teórica de futuros por Paridad de Tasas Cubierta (CIP) descarta presiones de salto devaluatorio, "
-        "mientras que las métricas multivariadas de riesgo sistémico confirman un régimen financiero plenamente normalizado."
+        "El mercado cambiario cerró en un régimen de marcada estabilidad financiera: el Dólar CCL finalizó en $1.600,20 con una brecha cambiaria "
+        "acotada al 4,5% sobre el mayorista ($1.511,53). La curva teórica de futuros por Paridad de Tasas Cubierta (CIP) descarta saltos discretos "
+        "y las métricas multivariadas ratifican baja vulnerabilidad sistémica."
     )
-    p12_tabla_data = [
-        [Paragraph("<b>SEGMENTO CAMBIARIO / DERIVADO</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
-        [Paragraph("<b>COTIZACIONES SPOT (ARS / USD)</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>Dólar CCL GD30 (Financiero)</b>", table_cell_bold), Paragraph("1.250", table_cell_center_bold), Paragraph("1.340", table_cell_center_bold), Paragraph("1.420", table_cell_center_bold), Paragraph("1.520", table_cell_center_bold), Paragraph("1.600", table_cell_center_bold), Paragraph(f"<font color='{NEG_COLOR}'>+80,0</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+350</font>", table_cell_center), Paragraph("1.780", table_cell_center_bold), Paragraph("2.050", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;Dólar MEP AL30 (Bolsa)", table_cell_left), Paragraph("1.210", table_cell_center), Paragraph("1.295", table_cell_center), Paragraph("1.380", table_cell_center), Paragraph("1.470", table_cell_center), Paragraph("1.532", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+62,0</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+322</font>", table_cell_center), Paragraph("1.720", table_cell_center), Paragraph("1.980", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Dólar Mayorista A3500 BCRA", table_cell_left), Paragraph("1.060", table_cell_center), Paragraph("1.150", table_cell_center), Paragraph("1.260", table_cell_center), Paragraph("1.390", table_cell_center), Paragraph("1.511", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+121</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+451</font>", table_cell_center), Paragraph("1.700", table_cell_center), Paragraph("1.950", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Brecha Cambiaria CCL / Oficial (%)", table_cell_left), Paragraph("17,90", table_cell_center), Paragraph("16,50", table_cell_center), Paragraph("12,70", table_cell_center), Paragraph("9,30", table_cell_center), Paragraph("4,52", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-4,78</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-13,4</font>", table_cell_center), Paragraph("4,70", table_cell_center), Paragraph("5,10", table_cell_center)],
-        [Paragraph("<b>FUTUROS CIP & RIESGO SISTÉMICO</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Dólar Futuro CIP 30d (ARS)", table_cell_left), Paragraph("1.095", table_cell_center), Paragraph("1.185", table_cell_center), Paragraph("1.295", table_cell_center), Paragraph("1.428", table_cell_center), Paragraph("1.549", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+121</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+454</font>", table_cell_center), Paragraph("1.740", table_cell_center), Paragraph("1.990", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Tasa Implícita Futuro 30d (TNA %)", table_cell_left), Paragraph("48,50", table_cell_center), Paragraph("42,00", table_cell_center), Paragraph("38,50", table_cell_center), Paragraph("36,20", table_cell_center), Paragraph("35,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,80</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-13,1</font>", table_cell_center), Paragraph("32,50", table_cell_center), Paragraph("25,00", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Ratio de Absorción PCA (%)", table_cell_left), Paragraph("72,40", table_cell_center), Paragraph("68,50", table_cell_center), Paragraph("65,20", table_cell_center), Paragraph("64,50", table_cell_center), Paragraph("64,20", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,30</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-8,20</font>", table_cell_center), Paragraph("62,00", table_cell_center), Paragraph("58,00", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Turbulencia Mahalanobis (dt)", table_cell_left), Paragraph("9,50", table_cell_center), Paragraph("7,20", table_cell_center), Paragraph("6,10", table_cell_center), Paragraph("5,80", table_cell_center), Paragraph("5,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,40</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-4,10</font>", table_cell_center), Paragraph("4,80", table_cell_center), Paragraph("3,50", table_cell_center)],
+    p12_bullets_asym = [
+        ("Compresión de Brecha Cambiaria al 4,52%",
+         "La vigencia del esquema blend 80/20 y la esterilización de excedentes de liquidez contuvieron la demanda de dólares financieros. La cotización del CCL ($1.600,20) converge hacia el oficial mayorista ($1.511,53), desarticulando expectativas de devaluación y reduciendo las primas de riesgo corporativo."),
+        ("Alineación de Futuros CIP & Paridad Cubierta",
+         "Los contratos Matba-Rofex operan a una TNA del 35,4% a 30 días, en perfecta paridad con letras del Tesoro, validando el crawling peg del 2% mensual. La curva de futuros descarta saltos discretos, facilitando la cobertura financiera del sector importador."),
+        ("Métricas de Resiliencia Sistémica & Mahalanobis",
+         "El monitoreo multivariado sitúa la turbulencia en 5,40 dt (muy por debajo del umbral crítico Chi² de 11,07) y el Ratio de Absorción PCA en 64,2%, confirmando la solidez del sistema financiero y la ausencia de correlaciones desestabilizadoras.")
     ]
-    p12_bullets = [
-        ("La brecha cambiaria se comprimió al 4,52%, alcanzando su nivel más bajo desde la reinstauración de los controles en 2019",
-         "La conjunción del régimen de liquidación de exportaciones blend 80/20 (80% MLC / 20% CCL) y la estricta absorción de liquidez en pesos ha contenido "
-         "la demanda de dólares financieros. La convergencia del CCL ($1.600,20) hacia el tipo de cambio oficial mayorista ($1.511,53) desactiva presiones "
-         "de devaluación en contratos comerciales y reduce las primas de riesgo de cobertura en el sector corporativo."),
-        ("La curva teórica de futuros por Paridad de Tasas Cubierta (CIP) refleja un costo de cobertura perfectamente alineado a las tasas de letras",
-         "Con tasas implícitas del 35,4% TNA para el plazo de 30 días y 37,1% TNA a 180 días, los contratos a término descartan expectativas de salto discreto, "
-         "convalidando la pauta de crawling peg administrado del 2% mensual. Este ordenamiento elimina el incentivo al adelantamiento de importaciones y facilita "
-         "la programación financiera de las empresas de comercio exterior."),
-        ("El monitoreo de riesgo sistémico ratifica un régimen financiero de baja vulnerabilidad bajo la métrica de Mahalanobis",
-         "El indicador multivariado de turbulencia se ubicó en 5,40 (frente al umbral crítico de alerta Chi² 95% de 11,07), mientras que el Ratio de Absorción "
-         "por Componentes Principales (PCA) se mantuvo en 64,2%. Estos valores confirman la resiliencia del sistema financiero y la ausencia de correlaciones "
-         "espuntadas o episodios de contagio entre activos bancarios y cambiarios.")
+    p12_mini_tabla = [
+        [Paragraph("<b>Variable</b>", cell_header_style), Paragraph("<b>Nivel Observado</b>", cell_header_style), Paragraph("<b>Semáforo</b>", cell_header_style)],
+        [Paragraph("Dólar CCL / Brecha", table_cell_bold), Paragraph("$1.600,20 / 4,52%", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Normalizado</font>", table_cell_center)],
+        [Paragraph("Dólar MEP AL30", table_cell_bold), Paragraph("$1.532,40 / 1,38%", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Equilibrio</font>", table_cell_center)],
+        [Paragraph("Mayorista A3500", table_cell_bold), Paragraph("$1.511,53 (Crawling 2%)", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Anclado</font>", table_cell_center)],
+        [Paragraph("Futuro CIP 30d", table_cell_bold), Paragraph("$1.549 (TNA 35,4%)", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Alineado</font>", table_cell_center)],
+        [Paragraph("Turbulencia Mahalanobis", table_cell_bold), Paragraph("5,40 dt (Chi²=11,07)", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Sin Estrés</font>", table_cell_center)],
+        [Paragraph("Absorption Ratio PCA", table_cell_bold), Paragraph("64,2% (1-PC)", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Resiliente</font>", table_cell_center)],
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    p12_scorecard_data = [
+        [Paragraph("<b>Pilar FX</b>", ParagraphStyle('THFX1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white)), Paragraph("<b>Estado</b>", ParagraphStyle('THFX2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)), Paragraph("<b>Nivel</b>", ParagraphStyle('THFX3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)), Paragraph("<b>Umbral</b>", ParagraphStyle('THFX4', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_RIGHT))],
+        [Paragraph("Brecha CCL", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>Baja</b></font>", table_cell_center), Paragraph("4,52%", table_cell_center_bold), Paragraph("&lt; 15,0%", table_cell_center)],
+        [Paragraph("Futuros 30d", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>Normal</b></font>", table_cell_center), Paragraph("35,4%", table_cell_center_bold), Paragraph("&le; Lecap", table_cell_center)],
+        [Paragraph("Reservas RIN", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>Positivas</b></font>", table_cell_center), Paragraph("+USD 3.650M", table_cell_center_bold), Paragraph("&gt; USD 0", table_cell_center)],
+        [Paragraph("Depósitos USD", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>Sólido</b></font>", table_cell_center), Paragraph("USD 20.800M", table_cell_center_bold), Paragraph("En Alza", table_cell_center)],
+        [Paragraph("PCA AR", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>Resiliente</b></font>", table_cell_center), Paragraph("64,2%", table_cell_center_bold), Paragraph("&lt; 75,0%", table_cell_center)],
+    ]
+    p12_catalizador = "• <b>Oferta Blend 80/20 & Reservas:</b> Liquidación continua de agroindustria y crudo no convencional.<br/>• <b>Remoción de Restricciones:</b> Desarme secuencial y programado de cepos cambiarios cruzados.<br/>• <b>Balanza de Pagos:</b> Superávit comercial sostenido por balanza energética positiva."
+    elements.extend(crear_pagina_arquetipo_asimetrico(
+        kicker_txt="MERCADO DE CAMBIOS · MICROESTRUCTURA FX, ROFEX CIP & RIESGO SISTÉMICO",
         titulo="7. Microestructura Cambiaria, Derivados Rofex y Fragilidad Sistémica",
         leadin_txt=p12_lead,
-        tabla_titulo="Cotizaciones cambiarias spot, derivados CIP y métricas de riesgo sistémico",
-        tabla_data=p12_tabla_data,
-        tabla_col_widths=[140, 44, 44, 44, 44, 44, 45, 45, 45, 45],
-        tabla_footnote="(1) Fuentes: BCRA (A3500 y tipos spot), DolarApi y modelo multivariado de riesgo sistémico (Kritzman & Li, 2010) de la FCE UNCUYO.",
-        bullets_txt_list=p12_bullets,
+        col_izq_titulo="MICROESTRUCTURA SPOT, PARIDAD CUBIERTA & ESTABILIDAD",
+        col_izq_bullets=p12_bullets_asym,
+        mini_tabla_titulo="Monitor de Variables Cambiarias & Sistémicas",
+        mini_tabla_data=p12_mini_tabla,
+        card_der_titulo="MONITOR FX & SEMÁFORO DE VULNERABILIDAD",
+        card_der_table_data=p12_scorecard_data,
+        catalizador_txt=p12_catalizador,
         chart_filename="chart_editorial_fx.png",
-        chart_footnote="Nota: Cotizaciones spot en ARS y curva teórica de futuros por paridad cubierta de tasas (CIP)."
+        chart_footnote="Nota: Cotizaciones spot en ARS y curva teórica de futuros por paridad cubierta de tasas (CIP).",
+        chart_height=210,
+        kicker_color="#0284C7"
     ))
 
     # =========================================================================
-    # PÁGINA 13: 7.1. TIPO DE CAMBIO REAL BILATERAL (TCR)
+    # PÁGINA 13: 7.1. TIPO DE CAMBIO REAL BILATERAL — ARQUETIPO DESGLOSE
     # =========================================================================
     p13_lead = (
         "El Tipo de Cambio Real Bilateral (TCR) con Estados Unidos finalizó en 78,4 puntos (base dic-2016 = 100), "
@@ -1346,30 +1886,25 @@ def generar_informe_mensual_reportlab(ctx=None):
     p13_tabla_data = [
         [Paragraph("<b>INDICADOR DE PRECIOS RELATIVOS / TCR</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
         [Paragraph("<b>TIPO DE CAMBIO REAL & COMPETITIVIDAD</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>TCR Bilateral ARS/USD (Base 100)</b>", table_cell_bold), Paragraph("84,00", table_cell_center_bold), Paragraph("81,20", table_cell_center_bold), Paragraph("80,50", table_cell_center_bold), Paragraph("79,50", table_cell_center_bold), Paragraph("78,40", table_cell_center_bold), Paragraph(f"<font color='{NEG_COLOR}'>-1,10</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-5,60</font>", table_cell_center), Paragraph("76,50", table_cell_center_bold), Paragraph("75,00", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;TCR Multilateral BCRA (TCRM)", table_cell_left), Paragraph("89,50", table_cell_center), Paragraph("87,40", table_cell_center), Paragraph("86,20", table_cell_center), Paragraph("85,80", table_cell_center), Paragraph("84,50", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-1,30</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-5,00</font>", table_cell_center), Paragraph("83,00", table_cell_center), Paragraph("82,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;TCR Bilateral con Brasil (Real/ARS)", table_cell_left), Paragraph("92,40", table_cell_center), Paragraph("90,10", table_cell_center), Paragraph("88,50", table_cell_center), Paragraph("87,40", table_cell_center), Paragraph("86,20", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-1,20</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-6,20</font>", table_cell_center), Paragraph("85,00", table_cell_center), Paragraph("84,00", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Crawling Peg Mensual BCRA (%)", table_cell_left), Paragraph("2,00", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("0,00", table_cell_center), Paragraph("0,00", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("1,50", table_cell_center)],
+        [Paragraph("<b>TCR Bilateral ARS/USD (Base 100)</b>", table_cell_bold), Paragraph("84,00", table_cell_center_bold), Paragraph("81,20", table_cell_center_bold), Paragraph("80,50", table_cell_center_bold), Paragraph("79,50", table_cell_center_bold), Paragraph("78,40", table_cell_center_bold), _badge_var("-1,10"), _badge_var("-5,60"), Paragraph("76,50", table_cell_center_bold), Paragraph("75,00", table_cell_center_bold)],
+        [Paragraph("&nbsp;&nbsp;TCR Multilateral BCRA (TCRM)", table_cell_left), Paragraph("89,50", table_cell_center), Paragraph("87,40", table_cell_center), Paragraph("86,20", table_cell_center), Paragraph("85,80", table_cell_center), Paragraph("84,50", table_cell_center), _badge_var("-1,30"), _badge_var("-5,00"), Paragraph("83,00", table_cell_center), Paragraph("82,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;TCR Bilateral con Brasil (Real/ARS)", table_cell_left), Paragraph("92,40", table_cell_center), Paragraph("90,10", table_cell_center), Paragraph("88,50", table_cell_center), Paragraph("87,40", table_cell_center), Paragraph("86,20", table_cell_center), _badge_var("-1,20"), _badge_var("-6,20"), Paragraph("85,00", table_cell_center), Paragraph("84,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Crawling Peg Mensual BCRA (%)", table_cell_left), Paragraph("2,00", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("2,00", table_cell_center), Paragraph("2,00", table_cell_center), _badge_var("0,00"), _badge_var("0,00"), Paragraph("2,00", table_cell_center), Paragraph("1,50", table_cell_center)],
         [Paragraph("<b>CUENTAS EXTERNAS & BALANZA COMERCIAL</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Superávit Comercial (USD MM trim.)", table_cell_left), Paragraph("4.120", table_cell_center), Paragraph("4.580", table_cell_center), Paragraph("4.250", table_cell_center), Paragraph("3.950", table_cell_center), Paragraph("3.850", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-100</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-270</font>", table_cell_center), Paragraph("15.200", table_cell_center), Paragraph("18.400", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Exportaciones Totales (USD MM)", table_cell_left), Paragraph("19.450", table_cell_center), Paragraph("21.200", table_cell_center), Paragraph("20.800", table_cell_center), Paragraph("20.100", table_cell_center), Paragraph("20.450", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+350</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+1.000</font>", table_cell_center), Paragraph("84.500", table_cell_center), Paragraph("92.000", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Importaciones Totales (USD MM)", table_cell_left), Paragraph("15.330", table_cell_center), Paragraph("16.620", table_cell_center), Paragraph("16.550", table_cell_center), Paragraph("16.150", table_cell_center), Paragraph("16.600", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+450</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>+1.270</font>", table_cell_center), Paragraph("69.300", table_cell_center), Paragraph("73.600", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Superávit Comercial (USD MM trim.)", table_cell_left), Paragraph("4.120", table_cell_center), Paragraph("4.580", table_cell_center), Paragraph("4.250", table_cell_center), Paragraph("3.950", table_cell_center), Paragraph("3.850", table_cell_center), _badge_var("-100"), _badge_var("-270"), Paragraph("15.200", table_cell_center), Paragraph("18.400", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Exportaciones Totales (USD MM)", table_cell_left), Paragraph("19.450", table_cell_center), Paragraph("21.200", table_cell_center), Paragraph("20.800", table_cell_center), Paragraph("20.100", table_cell_center), Paragraph("20.450", table_cell_center), _badge_var("+350"), _badge_var("+1.000"), Paragraph("84.500", table_cell_center), Paragraph("92.000", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Importaciones Totales (USD MM)", table_cell_left), Paragraph("15.330", table_cell_center), Paragraph("16.620", table_cell_center), Paragraph("16.550", table_cell_center), Paragraph("16.150", table_cell_center), Paragraph("16.600", table_cell_center), _badge_var("+450"), _badge_var("+1.270"), Paragraph("69.300", table_cell_center), Paragraph("73.600", table_cell_center)],
     ]
     p13_bullets = [
-        ("El Tipo de Cambio Real Bilateral se ubicó en 78,4 puntos, reflejando el proceso de apreciación real convalidado por el régimen de estabilización",
-         "La absorción del salto discreto de diciembre de 2023 por la inflación acumulada sitúa el poder de compra del dólar mayorista en niveles comparables "
-         "a los promedios históricos de la post-convertibilidad. La teoría macroeconómica demuestra que los programas de ajuste fiscal de shock convalidan tipos "
-         "de cambio de equilibrio más apreciados, traccionados por el flujo de inversiones y la descompresión del riesgo soberano."),
-        ("El efecto Balassa-Samuelson y las ganancias de productividad en hidrocarburos y minería explican la sostenibilidad del superávit comercial",
-         "A pesar de la apreciación cambiaria nominal y real, la balanza comercial de bienes acumuló un superávit trimestral de USD 3.850 millones, "
-         "apuntalado por la expansión de las ventas externas de petróleo crudo y gas natural desde Vaca Muerta y los embarques récord del complejo oleaginoso. "
-         "El saldo energético positivo (+USD 4.500 M proyectado anual) compensa la reactivación de las importaciones de insumos industriales."),
-        ("La preservación de la competitividad en las economías regionales no depende de correcciones devaluatorias nominales",
-         "sino de la desarticulación de costos tributarios en frontera (reducción del impuesto PAIS, desgravación de retenciones a vinos fraccionados y economías regionales) "
-         "junto a la inversión en logística ferroviaria y vial hacia los puertos del Pacífico y el Atlántico. La estabilidad nominal constituye el principal garante "
-         "de previsibilidad contractual para la suscripción de programas de inversión plurianuales.")
+        ("El Tipo de Cambio Real Bilateral se ubicó en 78,4 puntos en el marco de la desinflación",
+         "La absorción del salto discreto de diciembre de 2023 por la inflación acumulada sitúa el poder de compra del dólar mayorista en niveles comparables a los promedios históricos de la post-convertibilidad. Los programas de consolidación fiscal de shock convalidan tipos de cambio de equilibrio más apreciados gracias a la atracción de inversión fija."),
+        ("El superávit comercial trimestral alcanzó USD 3.850 millones gracias a la energía y el agro",
+         "A pesar de la apreciación cambiaria nominal y real, la balanza de bienes sostiene un elevado saldo positivo traccionado por Vaca Muerta (saldo energético proyectado en +USD 4.500 M) y embarques agrícolas récord, compensando la mayor demanda de bienes de capital importados."),
+        ("La competitividad estructural no depende de saltos devaluatorios nominales",
+         "sino de la reducción de costos tributarios en frontera (baja de aranceles e impuesto PAIS) y mejoras logísticas viales y ferroviarias. La estabilidad cambiaria otorga previsibilidad para estructurar contratos comerciales y financieros de mediano plazo.")
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    elements.extend(crear_pagina_arquetipo_desglose(
+        kicker_txt="SECTOR EXTERNO · TIPO DE CAMBIO REAL BILATERAL & BALANZA COMERCIAL",
         titulo="7.1. Tipo de Cambio Real Bilateral (TCR) y Competitividad Cambiaria",
         leadin_txt=p13_lead,
         tabla_titulo="Evolución del Tipo de Cambio Real Bilateral, Multilateral y Cuentas Externas",
@@ -1378,57 +1913,56 @@ def generar_informe_mensual_reportlab(ctx=None):
         tabla_footnote="(1) Fuentes: BCRA (series TCR y TCRM), INDEC (intercambio comercial argentino ICA) y BLS (Estados Unidos). Base dic-2016=100.",
         bullets_txt_list=p13_bullets,
         chart_filename="chart_editorial_tcr.png",
-        chart_footnote="Nota: Evolución histórica del TCR Bilateral ARS/USD y comparativa frente a hitos macroeconómicos."
+        chart_footnote="Nota: Evolución histórica del TCR Bilateral ARS/USD y comparativa frente a hitos macroeconómicos.",
+        chart_height=205,
+        kicker_color="#0284C7"
     ))
 
     # =========================================================================
-    # PÁGINA 14: 8. RENTA VARIABLE Y BALANCES (MERVAL)
+    # PÁGINA 14: 8. RENTA VARIABLE Y BALANCES (MERVAL) — ARQUETIPO TOPCHART
     # =========================================================================
     p14_lead = (
-        "El mercado accionario argentino (S&P Merval) consolidó su cotización en máximos de la última década al superar los USD 1.900 CCL, "
+        "El mercado accionario argentino (S&P Merval) consolidó su cotización en máximos de la década al superar los USD 1.900 CCL, "
         "traccionado por la solidez de los balances corporativos de los sectores energético y financiero. "
-        "Las compañías líderes presentan múltiplos EV/EBITDA comprimidos (3,8x a 4,5x en energía) y elevados márgenes operativos EBITDA, "
+        "Las compañías líderes presentan múltiplos EV/EBITDA comprimidos (3,8x a 4,1x) y elevados márgenes operativos EBITDA, "
         "convalidando un cambio de régimen desde cobertura inflacionaria hacia flujos genuinos de inversión en capital."
     )
     p14_tabla_data = [
         [Paragraph("<b>EMPRESA LÍDER / RATIO BYMA</b>", table_header_style), Paragraph("<b>1T25</b>", table_header_style), Paragraph("<b>2T25</b>", table_header_style), Paragraph("<b>3T25</b>", table_header_style), Paragraph("<b>4T25</b>", table_header_style), Paragraph("<b>1T26</b>", table_header_style), Paragraph("<b>Var.<br/>4T25</b>", table_header_style), Paragraph("<b>Var.<br/>1T25</b>", table_header_style), Paragraph("<b>2026</b>", table_header_style), Paragraph("<b>2027</b>", table_header_style)],
         [Paragraph("<b>ÍNDICE S&P MERVAL Y RATIOS GENERALES</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("<b>Merval en USD CCL (Puntos)</b>", table_cell_bold), Paragraph("1.420", table_cell_center_bold), Paragraph("1.580", table_cell_center_bold), Paragraph("1.720", table_cell_center_bold), Paragraph("1.820", table_cell_center_bold), Paragraph("1.905", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>+85,0</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+485</font>", table_cell_center), Paragraph("2.100", table_cell_center_bold), Paragraph("2.400", table_cell_center_bold)],
-        [Paragraph("&nbsp;&nbsp;Volumen Operado ByMA (USD MM día)", table_cell_left), Paragraph("35,20", table_cell_center), Paragraph("42,00", table_cell_center), Paragraph("48,50", table_cell_center), Paragraph("52,40", table_cell_center), Paragraph("58,00", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+5,60</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+22,8</font>", table_cell_center), Paragraph("65,00", table_cell_center), Paragraph("85,00", table_cell_center)],
+        [Paragraph("<b>Merval en USD CCL (Puntos)</b>", table_cell_bold), Paragraph("1.420", table_cell_center_bold), Paragraph("1.580", table_cell_center_bold), Paragraph("1.720", table_cell_center_bold), Paragraph("1.820", table_cell_center_bold), Paragraph("1.905", table_cell_center_bold), _badge_var("+85,0"), _badge_var("+485"), Paragraph("2.100", table_cell_center_bold), Paragraph("2.400", table_cell_center_bold)],
+        [Paragraph("&nbsp;&nbsp;Volumen Operado ByMA (USD MM día)", table_cell_left), Paragraph("35,20", table_cell_center), Paragraph("42,00", table_cell_center), Paragraph("48,50", table_cell_center), Paragraph("52,40", table_cell_center), Paragraph("58,00", table_cell_center), _badge_var("+5,60"), _badge_var("+22,8"), Paragraph("65,00", table_cell_center), Paragraph("85,00", table_cell_center)],
         [Paragraph("<b>VALUACIONES DE ACCIONES LÍDERES</b>", table_cell_subhdr), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center), Paragraph("", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;YPF S.A. (EV/EBITDA x)", table_cell_left), Paragraph("4,80", table_cell_center), Paragraph("4,40", table_cell_center), Paragraph("4,10", table_cell_center), Paragraph("3,90", table_cell_center), Paragraph("3,80", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,00</font>", table_cell_center), Paragraph("3,50", table_cell_center), Paragraph("3,20", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;YPF S.A. (Margen EBITDA %)", table_cell_left), Paragraph("28,50", table_cell_center), Paragraph("30,10", table_cell_center), Paragraph("31,40", table_cell_center), Paragraph("32,00", table_cell_center), Paragraph("32,40", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,40</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+3,90</font>", table_cell_center), Paragraph("34,00", table_cell_center), Paragraph("36,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Pampa Energía (EV/EBITDA x)", table_cell_left), Paragraph("5,10", table_cell_center), Paragraph("4,70", table_cell_center), Paragraph("4,40", table_cell_center), Paragraph("4,20", table_cell_center), Paragraph("4,10", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,10</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,00</font>", table_cell_center), Paragraph("3,80", table_cell_center), Paragraph("3,50", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Pampa Energía (Margen EBITDA %)", table_cell_left), Paragraph("34,20", table_cell_center), Paragraph("36,00", table_cell_center), Paragraph("37,50", table_cell_center), Paragraph("38,00", table_cell_center), Paragraph("38,50", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+0,50</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+4,30</font>", table_cell_center), Paragraph("40,00", table_cell_center), Paragraph("42,00", table_cell_center)],
-        [Paragraph("&nbsp;&nbsp;Grupo Financiero Galicia (EV/EBITDA)", table_cell_left), Paragraph("7,80", table_cell_center), Paragraph("7,20", table_cell_center), Paragraph("6,80", table_cell_center), Paragraph("6,40", table_cell_center), Paragraph("6,20", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-0,20</font>", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>-1,60</font>", table_cell_center), Paragraph("5,80", table_cell_center), Paragraph("5,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;YPF S.A. (EV/EBITDA x)", table_cell_left), Paragraph("4,80", table_cell_center), Paragraph("4,40", table_cell_center), Paragraph("4,10", table_cell_center), Paragraph("3,90", table_cell_center), Paragraph("3,80", table_cell_center), _badge_var("-0,10"), _badge_var("-1,00"), Paragraph("3,50", table_cell_center), Paragraph("3,20", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;YPF S.A. (Margen EBITDA %)", table_cell_left), Paragraph("28,50", table_cell_center), Paragraph("30,10", table_cell_center), Paragraph("31,40", table_cell_center), Paragraph("32,00", table_cell_center), Paragraph("32,40", table_cell_center), _badge_var("+0,40"), _badge_var("+3,90"), Paragraph("34,00", table_cell_center), Paragraph("36,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Pampa Energía (EV/EBITDA x)", table_cell_left), Paragraph("5,10", table_cell_center), Paragraph("4,70", table_cell_center), Paragraph("4,40", table_cell_center), Paragraph("4,20", table_cell_center), Paragraph("4,10", table_cell_center), _badge_var("-0,10"), _badge_var("-1,00"), Paragraph("3,80", table_cell_center), Paragraph("3,50", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Pampa Energía (Margen EBITDA %)", table_cell_left), Paragraph("34,20", table_cell_center), Paragraph("36,00", table_cell_center), Paragraph("37,50", table_cell_center), Paragraph("38,00", table_cell_center), Paragraph("38,50", table_cell_center), _badge_var("+0,50"), _badge_var("+4,30"), Paragraph("40,00", table_cell_center), Paragraph("42,00", table_cell_center)],
+        [Paragraph("&nbsp;&nbsp;Grupo Financiero Galicia (EV/EBITDA)", table_cell_left), Paragraph("7,80", table_cell_center), Paragraph("7,20", table_cell_center), Paragraph("6,80", table_cell_center), Paragraph("6,40", table_cell_center), Paragraph("6,20", table_cell_center), _badge_var("-0,20"), _badge_var("-1,60"), Paragraph("5,80", table_cell_center), Paragraph("5,00", table_cell_center)],
     ]
-    p14_bullets = [
-        ("El índice S&P Merval medido en dólares CCL alcanzó los 1.905 puntos, registrando una revalorización anual superior al +35%",
-         "El mercado accionario argentino ha dejado de operar como simple instrumento de cobertura contra el salto cambiario para transformarse en un vehículo "
-         "de arbitraje de flujos de caja operativos. La desregulación económica, la consolidación del marco de inversiones RIGI y la compresión del riesgo país "
-         "han reactivado el apetito de fondos institucionales globales por activos corporativos locales."),
-        ("El sector energético lidera las valuaciones relativas con múltiplos deprimidos que anticipan un elevado potencial de upside",
-         "YPF (EV/EBITDA de 3,8x y margen operativo del 32,4%) y Pampa Energía (4,1x y margen del 38,5%) cotizan con un descuento del 45% respecto a sus pares "
-         "latinoamericanos (Petrobras en 5,2x y Ecopetrol en 4,8x). La construcción del oleoducto Vaca Muerta Sur y los proyectos de licuefacción de GNL "
-         "transforman a las empresas integradas en generadoras estructurales de dividendos en dólares."),
-        ("Las entidades bancarias (Galicia, Macro, BBVA) completaron exitosamente la transición virtuosa hacia el crédito privado",
-         "Habiendo desmantelado sus carteras de pases pasivos del BCRA, el crédito corporativo y de consumo se expandió al 14,5% real interanual. "
-         "Los márgenes netos de intermediación financiera (NIM) se recomponen al compás de la reactivación del financiamiento de capital de trabajo a tasas de mercado, "
-         "con niveles de morosidad controlados por debajo del 2,5% de la cartera total.")
+    p14_conclusiones = [
+        ("Sobreponderar Sector Energético Integrado (YPF, Pampa Energía)",
+         "Cotizando con un descuento del 40% en múltiplos EV/EBITDA (3,8x a 4,1x) frente a comparables regionales de América Latina, los proyectos de transporte en Vaca Muerta y plantas de GNL transforman a estas empresas en productoras estructurales de flujo libre de caja en dólares."),
+        ("Rotación Hacia Intermediación Crediticia Bancaria",
+         "Con los pasivos del BCRA desmantelados, los bancos privados expanden préstamos comerciales al +14,5% real i.a., reconstruyendo márgenes netos de interés (NIM) con ratios de mora acotados (<2,5%)."),
+        ("Catalizador RIGI & Expansión de Múltiplos Bursátiles",
+         "La adhesión de grandes proyectos de infraestructura minera y de licuefacción proyecta un ciclo plurianual de inversión fija de capital (Capex) que consolidará la revalorización de múltiplos bursátiles hacia niveles de 6,0x EV/EBITDA.")
     ]
-    elements.extend(crear_pagina_editorial_ms(
+    elements.extend(crear_pagina_arquetipo_topchart(
+        kicker_txt="RENTA VARIABLE BYMA · VALUACIÓN CORPORATIVA & MÚLTIPLOS OPERATIVOS",
         titulo="8. Sector Financiero, Renta Variable y Radar de Balances",
         leadin_txt=p14_lead,
+        chart_filename="chart_editorial_equity.png",
+        chart_footnote="Nota: Evolución histórica del Merval en USD y dispersión de múltiplos EV/EBITDA vs. margen operativo.",
         tabla_titulo="Valuaciones bursátiles ByMA, múltiplos EV/EBITDA y márgenes operativos",
         tabla_data=p14_tabla_data,
         tabla_col_widths=[140, 44, 44, 44, 44, 44, 45, 45, 45, 45],
         tabla_footnote="(1) Fuentes: Bolsas y Mercados Argentinos (ByMA), balances contables consolidados 1T26 presentados ante CNV y estimaciones FCE UNCUYO.",
-        bullets_txt_list=p14_bullets,
-        chart_filename="chart_editorial_equity.png",
-        chart_footnote="Nota: Evolución histórica del Merval en USD y dispersión de múltiplos EV/EBITDA vs. margen operativo."
+        caja_titulo="CONCLUSIONES TÁCTICAS & ASSET ALLOCATION EN EQUITY",
+        conclusiones_tacticas=p14_conclusiones,
+        chart_height=205,
+        kicker_color="#9A3412"
     ))
-
-    # =========================================================================
+# =========================================================================
     # PÁGINA 15: 9. FLASH NORMATIVO, GOBERNANZA & REFERENCIAS APA
     # =========================================================================
     elements.append(Paragraph("9. Flash Normativo, Gobernanza de Modelos y Referencias", title_style))
@@ -1508,9 +2042,9 @@ def generar_informe_mensual_reportlab(ctx=None):
     t_dir = Table([
         [Paragraph("<b>DIRECTRICES ESTRATÉGICAS Y RECOMENDACIONES DE CIERRE DE MES</b>", ParagraphStyle('DCH', fontName='Georgia-Bold', fontSize=7.6, textColor=PRIMARY))],
         [Paragraph(
-            f"• <b>Gestión de Liquidez Corporativa (30-60 días):</b> Maximizar colocaciones en Lecaps del tramo corto (TEM {_fmt1(lecap_corta)}%), complementadas con cauciones bursátiles para optimizar rendimientos diarios de caja operativa.<br/>"
-            f"• <b>Estrategia Cambiaria y Comercio Exterior (90-180 días):</b> Coberturas selectivas mediante futuros CIP para compromisos rígidos de importación de bienes de capital e insumos.<br/>"
-            f"• <b>Posicionamiento Soberano en Moneda Extranjera (+12 meses):</b> Sobreponderar bonos globales GD35 y GD38 (TIR: {_fmt1(gd35_tir_val)}%), capturando la aceleración del retorno total ante convergencia del EMBI+ ({fmt_num(embi_val, 0)} pb).",
+            f"<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Gestión de Liquidez Corporativa (30-60 días):</b> Maximizar colocaciones en Lecaps del tramo corto (TEM {_fmt1(lecap_corta)}%), complementadas con cauciones bursátiles para optimizar rendimientos diarios de caja operativa.<br/>"
+            f"<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Estrategia Cambiaria y Comercio Exterior (90-180 días):</b> Coberturas selectivas mediante futuros CIP para compromisos rígidos de importación de bienes de capital e insumos.<br/>"
+            f"<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Posicionamiento Soberano en Moneda Extranjera (+12 meses):</b> Sobreponderar bonos globales GD35 y GD38 (TIR: {_fmt1(gd35_tir_val)}%), capturando la aceleración del retorno total ante convergencia del EMBI+ ({fmt_num(embi_val, 0)} pb).",
             ParagraphStyle('DCB', fontName='Georgia', fontSize=7.0, leading=9.2, textColor=DARK_TEXT)
         )]
     ], colWidths=[532])
