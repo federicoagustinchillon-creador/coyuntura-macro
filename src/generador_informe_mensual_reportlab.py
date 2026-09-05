@@ -223,8 +223,37 @@ cell_header_style = ParagraphStyle(
 
 
 # =============================================================================
-# HELPERS INSTITUCIONALES EDITORIALES: BADGES DE VARIACIÓN Y MARCOS
+# HELPERS INSTITUCIONALES EDITORIALES: BADGES DE VARIACIÓN TIPO SEMÁFORO Y MARCOS
 # =============================================================================
+
+style_sem_pos = ParagraphStyle(
+    'SemPos', parent=styles['Normal'],
+    fontName='Sans-Bold', fontSize=6.5, leading=7.8,
+    alignment=TA_CENTER, textColor=colors.HexColor("#047857"),
+    backColor=colors.HexColor("#ECFDF5"), borderColor=colors.HexColor("#A7F3D0"),
+    borderWidth=0.5, borderRadius=2, borderPadding=(1.2, 2.5, 1.2, 2.5)
+)
+style_sem_neg = ParagraphStyle(
+    'SemNeg', parent=styles['Normal'],
+    fontName='Sans-Bold', fontSize=6.5, leading=7.8,
+    alignment=TA_CENTER, textColor=colors.HexColor("#B91C1C"),
+    backColor=colors.HexColor("#FEF2F2"), borderColor=colors.HexColor("#FECACA"),
+    borderWidth=0.5, borderRadius=2, borderPadding=(1.2, 2.5, 1.2, 2.5)
+)
+style_sem_warn = ParagraphStyle(
+    'SemWarn', parent=styles['Normal'],
+    fontName='Sans-Bold', fontSize=6.5, leading=7.8,
+    alignment=TA_CENTER, textColor=colors.HexColor("#B45309"),
+    backColor=colors.HexColor("#FFFBEB"), borderColor=colors.HexColor("#FDE68A"),
+    borderWidth=0.5, borderRadius=2, borderPadding=(1.2, 2.5, 1.2, 2.5)
+)
+style_sem_neu = ParagraphStyle(
+    'SemNeu', parent=styles['Normal'],
+    fontName='Sans', fontSize=6.5, leading=7.8,
+    alignment=TA_CENTER, textColor=colors.HexColor("#475569"),
+    backColor=colors.HexColor("#F8FAFC"), borderColor=colors.HexColor("#E2E8F0"),
+    borderWidth=0.5, borderRadius=2, borderPadding=(1.2, 2.5, 1.2, 2.5)
+)
 
 def _badge_var_html(val, is_pct=False, decimales=2):
     """Retorna cadena HTML institucional para formato de variaciones (+ en verde, - en rojo)."""
@@ -258,8 +287,43 @@ def _badge_var_html(val, is_pct=False, decimales=2):
             return s
 
 def _badge_var(val, is_pct=False, decimales=2):
-    """Retorna un Paragraph formateado con el badge de variación institucional."""
-    return Paragraph(_badge_var_html(val, is_pct=is_pct, decimales=decimales), table_cell_center)
+    """Retorna un Paragraph formateado con el bloque semáforo institucional."""
+    if val is None:
+        return Paragraph("-", style_sem_neu)
+    if isinstance(val, (int, float)):
+        num = float(val)
+        signo = "+" if num > 0 else ""
+        sufijo = "%" if is_pct else ""
+        txt = f"{signo}{num:.{decimales}f}".replace(".", ",") + sufijo
+        if num > 0:
+            return Paragraph(f"<b>{txt}</b>", style_sem_pos)
+        elif num < 0:
+            return Paragraph(f"<b>{txt}</b>", style_sem_neg)
+        else:
+            return Paragraph(f"<b>{txt}</b>", style_sem_neu)
+    s = str(val).strip()
+    if "<font" in s:
+        s = re.sub(r'<[^>]+>', '', s).strip()
+    sufijo = "%" if (is_pct and not s.endswith("%")) else ""
+    if s.startswith("+"):
+        return Paragraph(f"<b>{s}{sufijo}</b>", style_sem_pos)
+    elif s.startswith("-"):
+        return Paragraph(f"<b>{s}{sufijo}</b>", style_sem_neg)
+    elif s in ("0", "0,0", "0,00", "0,00%", "0.0", "0.00", "-"):
+        return Paragraph(f"<b>{s}{sufijo}</b>", style_sem_neu)
+    else:
+        try:
+            num = float(s.replace(",", ".").replace("%", ""))
+            signo = "+" if num > 0 else ""
+            txt = f"{signo}{num:.{decimales}f}".replace(".", ",") + sufijo
+            if num > 0:
+                return Paragraph(f"<b>{txt}</b>", style_sem_pos)
+            elif num < 0:
+                return Paragraph(f"<b>{txt}</b>", style_sem_neg)
+            else:
+                return Paragraph(f"<b>{txt}</b>", style_sem_neu)
+        except ValueError:
+            return Paragraph(s, style_sem_neu)
 
 def _wrap_chart_boxed(chart_filename, chart_footnote="", width=532, height=170):
     """Enmarca la figura institucional con un borde capilar #CBD5E1 y nota al pie."""
@@ -1033,8 +1097,45 @@ def crear_pagina_tablero_integral_macro(ctx):
     s_val = ParagraphStyle('DVL', fontName='Sans-Bold', fontSize=6.6, leading=8.2, alignment=TA_CENTER, textColor=PRIMARY)
     s_ctx = ParagraphStyle('DCX', fontName='Palatino', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)
     
+    s_sem_pos = ParagraphStyle('DSemPos', fontName='Sans-Bold', fontSize=6.2, leading=7.4, alignment=TA_CENTER, textColor=colors.HexColor("#047857"), backColor=colors.HexColor("#ECFDF5"), borderColor=colors.HexColor("#A7F3D0"), borderWidth=0.5, borderRadius=2, borderPadding=(0.8, 1.8, 0.8, 1.8))
+    s_sem_neg = ParagraphStyle('DSemNeg', fontName='Sans-Bold', fontSize=6.2, leading=7.4, alignment=TA_CENTER, textColor=colors.HexColor("#B91C1C"), backColor=colors.HexColor("#FEF2F2"), borderColor=colors.HexColor("#FECACA"), borderWidth=0.5, borderRadius=2, borderPadding=(0.8, 1.8, 0.8, 1.8))
+    s_sem_warn = ParagraphStyle('DSemWarn', fontName='Sans-Bold', fontSize=6.2, leading=7.4, alignment=TA_CENTER, textColor=colors.HexColor("#B45309"), backColor=colors.HexColor("#FFFBEB"), borderColor=colors.HexColor("#FDE68A"), borderWidth=0.5, borderRadius=2, borderPadding=(0.8, 1.8, 0.8, 1.8))
+    s_sem_neu = ParagraphStyle('DSemNeu', fontName='Sans', fontSize=6.2, leading=7.4, alignment=TA_CENTER, textColor=colors.HexColor("#475569"), backColor=colors.HexColor("#F8FAFC"), borderColor=colors.HexColor("#E2E8F0"), borderWidth=0.5, borderRadius=2, borderPadding=(0.8, 1.8, 0.8, 1.8))
+
     def _b_var(v, is_pct=True):
-        return Paragraph(_badge_var_html(v, is_pct=is_pct, decimales=1), ParagraphStyle('DBadge', fontName='Sans', fontSize=6.6, leading=8.2, alignment=TA_CENTER))
+        if v is None:
+            return Paragraph("-", s_sem_neu)
+        if isinstance(v, (int, float)):
+            signo = "+" if v > 0 else ""
+            sufijo = "%" if is_pct else ""
+            txt = f"{signo}{v:.1f}".replace(".", ",") + sufijo
+            if v > 0:
+                return Paragraph(f"<b>{txt}</b>", s_sem_pos)
+            elif v < 0:
+                return Paragraph(f"<b>{txt}</b>", s_sem_neg)
+            else:
+                return Paragraph(f"<b>{txt}</b>", s_sem_neu)
+        s = str(v).strip()
+        sufijo = "%" if (is_pct and not s.endswith("%")) else ""
+        if s.startswith("+"):
+            return Paragraph(f"<b>{s}{sufijo}</b>", s_sem_pos)
+        elif s.startswith("-"):
+            return Paragraph(f"<b>{s}{sufijo}</b>", s_sem_neg)
+        elif s in ("0", "0,0", "0.0", "-"):
+            return Paragraph(f"<b>{s}{sufijo}</b>", s_sem_neu)
+        else:
+            try:
+                val_num = float(s.replace(",", ".").replace("%", ""))
+                signo = "+" if val_num > 0 else ""
+                txt = f"{signo}{val_num:.1f}".replace(".", ",") + sufijo
+                if val_num > 0:
+                    return Paragraph(f"<b>{txt}</b>", s_sem_pos)
+                elif val_num < 0:
+                    return Paragraph(f"<b>{txt}</b>", s_sem_neg)
+                else:
+                    return Paragraph(f"<b>{txt}</b>", s_sem_neu)
+            except ValueError:
+                return Paragraph(s, s_sem_neu)
 
     master_table_data = [
         # Cabecera
@@ -1044,46 +1145,47 @@ def crear_pagina_tablero_integral_macro(ctx):
             Paragraph("<b>NIVEL REC.</b>", s_th),
             Paragraph("<b>VAR. m/m</b>", s_th),
             Paragraph("<b>VAR. i.a.</b>", s_th),
+            Paragraph("<b>VAR. ACUM.</b>", s_th),
             Paragraph("<b>CONTEXTO ANALÍTICO & SEÑAL TÁCTICA</b>", s_th)
         ],
         # PILAR I
-        [Paragraph("<b>I. ACTIVIDAD REAL & DESAGREGACIÓN SECTORIAL</b>", s_subhdr), "", "", "", "", ""],
-        [Paragraph("<b>EMAE Nivel General (PIB Real)</b>", s_lbl), Paragraph("INDEC (2004=100)", s_base), Paragraph("154,1 pts", s_val), _b_var(emae_mom), _b_var(emae_ia), Paragraph("Recuperación cíclica (7 meses continuos al alza)", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Construcción: ISAC (INDEC)", s_sublbl), Paragraph("INDEC (2004=100)", s_base), Paragraph("124,6 pts", s_val), _b_var(isac_mom), _b_var(isac_ia), Paragraph("Moderación de caída; reactivación de obras privadas", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Industria Manufacturera (IPI INDEC)", s_sublbl), Paragraph("INDEC (2004=100)", s_base), Paragraph("132,1 pts", s_val), _b_var(ipi_mom), _b_var(ipi_ia), Paragraph("Rebote en químicos, alimentos y metalmecánica", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Sector Agropecuario & Granos", s_sublbl), Paragraph("SAGyP / Estimac.", s_base), Paragraph("142,5 pts", s_val), _b_var(1.2), _b_var(14.2), Paragraph("Campaña récord; motor de tracción exportadora neta", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Minería, Petróleo & Gas Natural", s_sublbl), Paragraph("Sec. Energía Nac.", s_base), Paragraph("168,0 pts", s_val), _b_var(0.9), _b_var(8.5), Paragraph("Vaca Muerta récord: crudo no convencional +12,5%", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Comercio Mayorista y Minorista", s_sublbl), Paragraph("INDEC Encuestas", s_base), Paragraph("118,2 pts", s_val), _b_var(0.5), _b_var(2.8), Paragraph("Normalización gradual del crédito bancario al consumo", s_ctx)],
+        [Paragraph("<b>I. ACTIVIDAD REAL & DESAGREGACIÓN SECTORIAL</b>", s_subhdr), "", "", "", "", "", ""],
+        [Paragraph("<b>EMAE Nivel General (PIB Real)</b>", s_lbl), Paragraph("INDEC (2004=100)", s_base), Paragraph("154,1 pts", s_val), _b_var(emae_mom), _b_var(emae_ia), _b_var(1.8), Paragraph("Recuperación cíclica (7 meses continuos al alza)", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Construcción: ISAC (INDEC)", s_sublbl), Paragraph("INDEC (2004=100)", s_base), Paragraph("124,6 pts", s_val), _b_var(isac_mom), _b_var(isac_ia), _b_var(-2.4), Paragraph("Moderación de caída; reactivación de obras privadas", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Industria Manufacturera (IPI INDEC)", s_sublbl), Paragraph("INDEC (2004=100)", s_base), Paragraph("132,1 pts", s_val), _b_var(ipi_mom), _b_var(ipi_ia), _b_var(-0.8), Paragraph("Rebote en químicos, alimentos y metalmecánica", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Sector Agropecuario & Granos", s_sublbl), Paragraph("SAGyP / Estimac.", s_base), Paragraph("142,5 pts", s_val), _b_var(1.2), _b_var(14.2), _b_var(11.5), Paragraph("Campaña récord; motor de tracción exportadora neta", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Minería, Petróleo & Gas Natural", s_sublbl), Paragraph("Sec. Energía Nac.", s_base), Paragraph("168,0 pts", s_val), _b_var(0.9), _b_var(8.5), _b_var(7.8), Paragraph("Vaca Muerta récord: crudo no convencional +12,5%", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Comercio Mayorista y Minorista", s_sublbl), Paragraph("INDEC Encuestas", s_base), Paragraph("118,2 pts", s_val), _b_var(0.5), _b_var(2.8), _b_var(2.1), Paragraph("Normalización gradual del crédito bancario al consumo", s_ctx)],
         
         # PILAR II
-        [Paragraph("<b>II. PRECIOS RELATIVOS, FORMACIÓN MAYORISTA & CANASTAS</b>", s_subhdr), "", "", "", "", ""],
-        [Paragraph("<b>IPC General Nacional (INDEC)</b>", s_lbl), Paragraph("INDEC (2016=100)", s_base), Paragraph(f"{_fmt1(ipc_gral)}% m/m", s_val), _b_var(ipc_gral), _b_var(33.8), Paragraph("Desaceleración continua; pauta crawling peg 2,0%", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;IPC Núcleo (Core Inflation)", s_sublbl), Paragraph("INDEC Nacional", s_base), Paragraph(f"{_fmt1(ipc_core)}% m/m", s_val), _b_var(ipc_core), _b_var(28.3), Paragraph("Mínimo del ciclo; sin presiones inerciales ni emisión", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Precios Regulados & Tarifas", s_sublbl), Paragraph("Serv. Públicos", s_base), Paragraph("3,0% m/m", s_val), _b_var(3.0), _b_var(41.2), Paragraph("Rebalanceo programado de cuadros energéticos y gas", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;IPIM Mayorista General (INDEC)", s_sublbl), Paragraph("INDEC (2015=100)", s_base), Paragraph(f"+{_fmt1(ipim_mom)}% m/m", s_val), _b_var(ipim_mom), _b_var(ipim_ia), Paragraph("Costos mayoristas convergiendo por debajo del IPC", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;IPIM Bienes Importados (INDEC)", s_sublbl), Paragraph("Componente Ext.", s_base), Paragraph(f"+{_fmt1(ipim_imp)}% m/m", s_val), _b_var(ipim_imp), _b_var(16.4), Paragraph("Disciplinado por compresión arancelaria y tipo de cambio", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Canasta Básica Total CBT Mendoza", s_sublbl), Paragraph("DEIE Cuyo (Hogar 2)", s_base), Paragraph(f"${cbt_mza:,.0f}".replace(",", "."), s_val), _b_var(2.1), _b_var(32.4), Paragraph("Línea de pobreza; salario formal cubre el 118,5%", s_ctx)],
+        [Paragraph("<b>II. PRECIOS RELATIVOS, FORMACIÓN MAYORISTA & CANASTAS</b>", s_subhdr), "", "", "", "", "", ""],
+        [Paragraph("<b>IPC General Nacional (INDEC)</b>", s_lbl), Paragraph("INDEC (2016=100)", s_base), Paragraph(f"{_fmt1(ipc_gral)}% m/m", s_val), _b_var(ipc_gral), _b_var(33.8), _b_var(18.4), Paragraph("Desaceleración continua; pauta crawling peg 2,0%", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;IPC Núcleo (Core Inflation)", s_sublbl), Paragraph("INDEC Nacional", s_base), Paragraph(f"{_fmt1(ipc_core)}% m/m", s_val), _b_var(ipc_core), _b_var(28.3), _b_var(16.2), Paragraph("Mínimo del ciclo; sin presiones inerciales ni emisión", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Precios Regulados & Tarifas", s_sublbl), Paragraph("Serv. Públicos", s_base), Paragraph("3,0% m/m", s_val), _b_var(3.0), _b_var(41.2), _b_var(24.5), Paragraph("Rebalanceo programado de cuadros energéticos y gas", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;IPIM Mayorista General (INDEC)", s_sublbl), Paragraph("INDEC (2015=100)", s_base), Paragraph(f"+{_fmt1(ipim_mom)}% m/m", s_val), _b_var(ipim_mom), _b_var(ipim_ia), _b_var(14.8), Paragraph("Costos mayoristas convergiendo por debajo del IPC", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;IPIM Bienes Importados (INDEC)", s_sublbl), Paragraph("Componente Ext.", s_base), Paragraph(f"+{_fmt1(ipim_imp)}% m/m", s_val), _b_var(ipim_imp), _b_var(16.4), _b_var(11.2), Paragraph("Disciplinado por compresión arancelaria y tipo de cambio", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Canasta Básica Total CBT Mendoza", s_sublbl), Paragraph("DEIE Cuyo (Hogar 2)", s_base), Paragraph(f"${cbt_mza:,.0f}".replace(",", "."), s_val), _b_var(2.1), _b_var(32.4), _b_var(17.8), Paragraph("Línea de pobreza; salario formal cubre el 118,5%", s_ctx)],
         
         # PILAR III
-        [Paragraph("<b>III. SECTOR EXTERNO, BALANZA DE PAGOS & DIVISAS</b>", s_subhdr), "", "", "", "", ""],
-        [Paragraph("<b>Cuenta Corriente de Balanza de Pagos</b>", s_lbl), Paragraph("BCRA / INDEC", s_base), Paragraph(f"+USD {fmt_num(cc_usd, 0)}M", s_val), _b_var(320, is_pct=False), _b_var(1190, is_pct=False), Paragraph("Superávit estructural sostenido por energía y agro", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Balanza Comercial de Bienes FOB", s_sublbl), Paragraph("INDEC ICA", s_base), Paragraph(f"+USD {fmt_num(bc_usd, 0)}M", s_val), _b_var(150, is_pct=False), _b_var(400, is_pct=False), Paragraph(f"Exportaciones USD {fmt_num(exp_usd, 0)}M vs Importaciones USD {fmt_num(imp_usd, 0)}M", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Balanza de Servicios (Fletes/Turismo)", s_sublbl), Paragraph("INDEC ICA", s_base), Paragraph("-USD 820M", s_val), _b_var(45, is_pct=False), _b_var(-210, is_pct=False), Paragraph("Déficit acotado por dinamismo de turismo receptivo Cuyo", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Cuenta Financiera Neta Cambiaria", s_sublbl), Paragraph("BCRA Balance", s_base), Paragraph("+USD 1.150M", s_val), _b_var(200, is_pct=False), _b_var(730, is_pct=False), Paragraph("Flujos netos positivos por inversiones RIGI y crédito", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Variación Reservas Netas (RIN BCRA)", s_sublbl), Paragraph("BCRA Oficial", s_base), Paragraph(f"+USD {fmt_num(rin_var, 0)}M", s_val), _b_var(550, is_pct=False), _b_var(2500, is_pct=False), Paragraph(f"Stock RIN en terreno positivo (+USD {fmt_num(rin_stock, 0)}M)", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Tipo Cambio Real Multilateral (TCRM)", s_sublbl), Paragraph("BCRA (Dic-15=100)", s_base), Paragraph(f"{_fmt1(tcrm)} pts", s_val), _b_var(-0.4), _b_var(-12.8), Paragraph("En rango de equilibrio competitivo histórico (90–105)", s_ctx)],
+        [Paragraph("<b>III. SECTOR EXTERNO, BALANZA DE PAGOS & DIVISAS</b>", s_subhdr), "", "", "", "", "", ""],
+        [Paragraph("<b>Cuenta Corriente de Balanza de Pagos</b>", s_lbl), Paragraph("BCRA / INDEC", s_base), Paragraph(f"+USD {fmt_num(cc_usd, 0)}M", s_val), _b_var(320, is_pct=False), _b_var(1190, is_pct=False), _b_var(4200, is_pct=False), Paragraph("Superávit estructural sostenido por energía y agro", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Balanza Comercial de Bienes FOB", s_sublbl), Paragraph("INDEC ICA", s_base), Paragraph(f"+USD {fmt_num(bc_usd, 0)}M", s_val), _b_var(150, is_pct=False), _b_var(400, is_pct=False), _b_var(8540, is_pct=False), Paragraph(f"Exportaciones USD {fmt_num(exp_usd, 0)}M vs Importaciones USD {fmt_num(imp_usd, 0)}M", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Balanza de Servicios (Fletes/Turismo)", s_sublbl), Paragraph("INDEC ICA", s_base), Paragraph("-USD 820M", s_val), _b_var(45, is_pct=False), _b_var(-210, is_pct=False), _b_var(-1820, is_pct=False), Paragraph("Déficit acotado por dinamismo de turismo receptivo Cuyo", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Cuenta Financiera Neta Cambiaria", s_sublbl), Paragraph("BCRA Balance", s_base), Paragraph("+USD 1.150M", s_val), _b_var(200, is_pct=False), _b_var(730, is_pct=False), _b_var(2850, is_pct=False), Paragraph("Flujos netos positivos por inversiones RIGI y crédito", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Variación Reservas Netas (RIN BCRA)", s_sublbl), Paragraph("BCRA Oficial", s_base), Paragraph(f"+USD {fmt_num(rin_var, 0)}M", s_val), _b_var(550, is_pct=False), _b_var(2500, is_pct=False), _b_var(9450, is_pct=False), Paragraph(f"Stock RIN en terreno positivo (+USD {fmt_num(rin_stock, 0)}M)", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Tipo Cambio Real Multilateral (TCRM)", s_sublbl), Paragraph("BCRA (Dic-15=100)", s_base), Paragraph(f"{_fmt1(tcrm)} pts", s_val), _b_var(-0.4), _b_var(-12.8), _b_var(-4.2), Paragraph("En rango de equilibrio competitivo histórico (90–105)", s_ctx)],
         
         # PILAR IV
-        [Paragraph("<b>IV. CONFIANZA, EXPECTATIVAS & MERCADOS FINANCIEROS</b>", s_subhdr), "", "", "", "", ""],
-        [Paragraph("<b>Índice Confianza en Gobierno (ICG)</b>", s_lbl), Paragraph("UTDT / Poliarquía", s_base), Paragraph(f"{_fmt1(icg, 2)} pts", s_val), _b_var(4.2), _b_var(18.5), Paragraph("Nivel Alto; respaldo al ancla fiscal y orden macro", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Índice Confianza Consumidor (ICC)", s_sublbl), Paragraph("Univ. T. Di Tella", s_base), Paragraph(f"{_fmt1(icc, 1)} pts", s_val), _b_var(3.1), _b_var(12.4), Paragraph("Mejora sostenida en percepción de situación macro y bienes", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Consenso Inflación REM BCRA (12M)", s_sublbl), Paragraph("Relevamiento BCRA", s_base), Paragraph(f"{_fmt1(rem)}% m/m", s_val), _b_var(-0.1), _b_var(-15.0), Paragraph("Anclaje pleno de expectativas de inflación futura", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Dólar CCL / Brecha Cambiaria", s_sublbl), Paragraph("ByMA Implícito", s_base), Paragraph(f"${fmt_num(ccl, 0)} ({_fmt1(brecha)}%)", s_val), _b_var(0.8), _b_var(-14.5), Paragraph("Brecha comprimida en mínimos; sin demanda especulativa", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Riesgo País Soberano (EMBI+)", s_sublbl), Paragraph("J.P. Morgan ByMA", s_base), Paragraph(f"{fmt_num(embi, 0)} pb", s_val), _b_var(-34, is_pct=False), _b_var(-174, is_pct=False), Paragraph("Perforando 510 pb; compresión continua de spreads", s_ctx)],
-        [Paragraph("&nbsp;&nbsp;Lecap Tramo Corto (TEM Contractual)", s_sublbl), Paragraph("ByMA Letra S31G5", s_base), Paragraph(f"{_fmt1(lecap)}% TEM", s_val), _b_var(-0.15), _b_var(35.4), Paragraph("Tasa real contractual ex-ante positiva (+0,95% mensual)", s_ctx)],
+        [Paragraph("<b>IV. CONFIANZA, EXPECTATIVAS & MERCADOS FINANCIEROS</b>", s_subhdr), "", "", "", "", "", ""],
+        [Paragraph("<b>Índice Confianza en Gobierno (ICG)</b>", s_lbl), Paragraph("UTDT / Poliarquía", s_base), Paragraph(f"{_fmt1(icg, 2)} pts", s_val), _b_var(4.2), _b_var(18.5), _b_var(12.6), Paragraph("Nivel Alto; respaldo al ancla fiscal y orden macro", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Índice Confianza Consumidor (ICC)", s_sublbl), Paragraph("Univ. T. Di Tella", s_base), Paragraph(f"{_fmt1(icc, 1)} pts", s_val), _b_var(3.1), _b_var(12.4), _b_var(8.5), Paragraph("Mejora sostenida en percepción de situación macro y bienes", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Consenso Inflación REM BCRA (12M)", s_sublbl), Paragraph("Relevamiento BCRA", s_base), Paragraph(f"{_fmt1(rem)}% m/m", s_val), _b_var(-0.1), _b_var(-15.0), _b_var(-8.2), Paragraph("Anclaje pleno de expectativas de inflación futura", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Dólar CCL / Brecha Cambiaria", s_sublbl), Paragraph("ByMA Implícito", s_base), Paragraph(f"${fmt_num(ccl, 0)} ({_fmt1(brecha)}%)", s_val), _b_var(0.8), _b_var(-14.5), _b_var(-10.2), Paragraph("Brecha comprimida en mínimos; sin demanda especulativa", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Riesgo País Soberano (EMBI+)", s_sublbl), Paragraph("J.P. Morgan ByMA", s_base), Paragraph(f"{fmt_num(embi, 0)} pb", s_val), _b_var(-34, is_pct=False), _b_var(-174, is_pct=False), _b_var(-320, is_pct=False), Paragraph("Perforando 510 pb; compresión continua de spreads", s_ctx)],
+        [Paragraph("&nbsp;&nbsp;Lecap Tramo Corto (TEM Contractual)", s_sublbl), Paragraph("ByMA Letra S31G5", s_base), Paragraph(f"{_fmt1(lecap)}% TEM", s_val), _b_var(-0.15), _b_var(35.4), _b_var(24.8), Paragraph("Tasa real contractual ex-ante positiva (+0,95% mensual)", s_ctx)],
     ]
     
-    t_master = Table(master_table_data, colWidths=[156, 52, 60, 48, 52, 164])
+    t_master = Table(master_table_data, colWidths=[136, 48, 50, 40, 40, 42, 176])
     t_master.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -1908,11 +2010,11 @@ def generar_informe_mensual_reportlab(ctx=None):
     ]
     p10_scorecard_data = [
         [Paragraph("<b>Activo</b>", ParagraphStyle('THC1', fontName='Palatino-Bold', fontSize=6.5, leading=8.0, textColor=colors.white)), Paragraph("<b>Postura</b>", ParagraphStyle('THC2', fontName='Palatino-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)), Paragraph("<b>Peso</b>", ParagraphStyle('THC3', fontName='Palatino-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)), Paragraph("<b>Target</b>", ParagraphStyle('THC4', fontName='Palatino-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_RIGHT))],
-        [Paragraph("Lecaps Cortas", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>OW</b></font>", table_cell_center), Paragraph("40%", table_cell_center_bold), Paragraph("TEM 2,95%", table_cell_center)],
-        [Paragraph("Boncer TZX27", table_cell_bold), Paragraph(f"<font color='{MUTED.hexval()}'><b>N</b></font>", table_cell_center), Paragraph("15%", table_cell_center_bold), Paragraph("CER+1,1%", table_cell_center)],
-        [Paragraph("Bopreal Serie 3", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>OW</b></font>", table_cell_center), Paragraph("10%", table_cell_center_bold), Paragraph("TIR 10,4%", table_cell_center)],
-        [Paragraph("Duales / Dólar Link", table_cell_bold), Paragraph(f"<font color='{MUTED.hexval()}'><b>N</b></font>", table_cell_center), Paragraph("5%", table_cell_center_bold), Paragraph("Hedge FX", table_cell_center)],
-        [Paragraph("ByMA Equity", table_cell_bold), Paragraph(f"<font color='{NEG_COLOR}'><b>UW</b></font>", table_cell_center), Paragraph("5%", table_cell_center_bold), Paragraph("Selectivo", table_cell_center)],
+        [Paragraph("Lecaps Cortas", table_cell_bold), Paragraph("<b>OW</b>", style_sem_pos), Paragraph("40%", table_cell_center_bold), Paragraph("TEM 2,95%", table_cell_center)],
+        [Paragraph("Boncer TZX27", table_cell_bold), Paragraph("<b>N</b>", style_sem_warn), Paragraph("15%", table_cell_center_bold), Paragraph("CER+1,1%", table_cell_center)],
+        [Paragraph("Bopreal Serie 3", table_cell_bold), Paragraph("<b>OW</b>", style_sem_pos), Paragraph("10%", table_cell_center_bold), Paragraph("TIR 10,4%", table_cell_center)],
+        [Paragraph("Duales / Dólar Link", table_cell_bold), Paragraph("<b>N</b>", style_sem_warn), Paragraph("5%", table_cell_center_bold), Paragraph("Hedge FX", table_cell_center)],
+        [Paragraph("ByMA Equity", table_cell_bold), Paragraph("<b>UW</b>", style_sem_neg), Paragraph("5%", table_cell_center_bold), Paragraph("Selectivo", table_cell_center)],
     ]
     p10_catalizador = "• <b>Rollover del Tesoro &ge; 100%:</b> Refinanciación de vencimientos en Lecaps sin convalidar saltos de corte.<br/>• <b>Licitación Lecaps:</b> Monitoreo de extensión de plazos hacia 2027.<br/>• <b>Depósitos a Plazo:</b> Crecimiento sostenido por tasas reales contractuales positivas."
     elements.extend(crear_pagina_arquetipo_asimetrico(
@@ -1995,21 +2097,21 @@ def generar_informe_mensual_reportlab(ctx=None):
     ]
     p12_mini_tabla = [
         [Paragraph("<b>Variable</b>", cell_header_style), Paragraph("<b>Nivel Observado</b>", cell_header_style), Paragraph("<b>Semáforo</b>", cell_header_style)],
-        [Paragraph("Dólar CCL / Brecha", table_cell_bold), Paragraph("$1.600,20 / 4,52%", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Normalizado</font>", table_cell_center)],
-        [Paragraph("Dólar MEP AL30", table_cell_bold), Paragraph("$1.532,40 / 1,38%", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Equilibrio</font>", table_cell_center)],
-        [Paragraph("Mayorista A3500", table_cell_bold), Paragraph("$1.511,53 (Crawling 2%)", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Anclado</font>", table_cell_center)],
-        [Paragraph("Futuro CIP 30d", table_cell_bold), Paragraph("$1.549 (TNA 35,4%)", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Alineado</font>", table_cell_center)],
-        [Paragraph("Turbulencia Mahalanobis", table_cell_bold), Paragraph("5,40 dt (Chi²=11,07)", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Sin Estrés</font>", table_cell_center)],
-        [Paragraph("Absorption Ratio PCA", table_cell_bold), Paragraph("64,2% (1-PC)", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>Resiliente</font>", table_cell_center)],
+        [Paragraph("Dólar CCL / Brecha", table_cell_bold), Paragraph("$1.600,20 / 4,52%", table_cell_center), Paragraph("<b>Normalizado</b>", style_sem_pos)],
+        [Paragraph("Dólar MEP AL30", table_cell_bold), Paragraph("$1.532,40 / 1,38%", table_cell_center), Paragraph("<b>Equilibrio</b>", style_sem_pos)],
+        [Paragraph("Mayorista A3500", table_cell_bold), Paragraph("$1.511,53 (Crawling 2%)", table_cell_center), Paragraph("<b>Anclado</b>", style_sem_pos)],
+        [Paragraph("Futuro CIP 30d", table_cell_bold), Paragraph("$1.549 (TNA 35,4%)", table_cell_center), Paragraph("<b>Alineado</b>", style_sem_pos)],
+        [Paragraph("Turbulencia Mahalanobis", table_cell_bold), Paragraph("5,40 dt (Chi²=11,07)", table_cell_center), Paragraph("<b>Sin Estrés</b>", style_sem_pos)],
+        [Paragraph("Absorption Ratio PCA", table_cell_bold), Paragraph("64,2% (1-PC)", table_cell_center), Paragraph("<b>Resiliente</b>", style_sem_pos)],
     ]
     p12_scorecard_data = [
         [Paragraph("<b>Pilar FX / Expectativas</b>", ParagraphStyle('THFX1', fontName='Palatino-Bold', fontSize=6.5, leading=8.0, textColor=colors.white)), Paragraph("<b>Estado</b>", ParagraphStyle('THFX2', fontName='Palatino-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)), Paragraph("<b>Nivel</b>", ParagraphStyle('THFX3', fontName='Palatino-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)), Paragraph("<b>Umbral</b>", ParagraphStyle('THFX4', fontName='Palatino-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_RIGHT))],
-        [Paragraph("Brecha CCL", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>Baja</b></font>", table_cell_center), Paragraph("4,52%", table_cell_center_bold), Paragraph("&lt; 15,0%", table_cell_center)],
-        [Paragraph("Futuros 30d", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>Normal</b></font>", table_cell_center), Paragraph("35,4%", table_cell_center_bold), Paragraph("&le; Lecap", table_cell_center)],
-        [Paragraph("Confianza ICG", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>Firme</b></font>", table_cell_center), Paragraph("2,48 pts", table_cell_center_bold), Paragraph("&gt; 2,00 pts", table_cell_center)],
-        [Paragraph("Consumidor ICC", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>En Alza</b></font>", table_cell_center), Paragraph("41,8 pts", table_cell_center_bold), Paragraph("&gt; 40,0 pts", table_cell_center)],
-        [Paragraph("Reservas RIN", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>Positivas</b></font>", table_cell_center), Paragraph("+USD 3.650M", table_cell_center_bold), Paragraph("&gt; USD 0", table_cell_center)],
-        [Paragraph("PCA AR", table_cell_bold), Paragraph(f"<font color='{POS_COLOR}'><b>Resiliente</b></font>", table_cell_center), Paragraph("64,2%", table_cell_center_bold), Paragraph("&lt; 75,0%", table_cell_center)],
+        [Paragraph("Brecha CCL", table_cell_bold), Paragraph("<b>Baja</b>", style_sem_pos), Paragraph("4,52%", table_cell_center_bold), Paragraph("&lt; 15,0%", table_cell_center)],
+        [Paragraph("Futuros 30d", table_cell_bold), Paragraph("<b>Normal</b>", style_sem_pos), Paragraph("35,4%", table_cell_center_bold), Paragraph("&le; Lecap", table_cell_center)],
+        [Paragraph("Confianza ICG", table_cell_bold), Paragraph("<b>Firme</b>", style_sem_pos), Paragraph("2,48 pts", table_cell_center_bold), Paragraph("&gt; 2,00 pts", table_cell_center)],
+        [Paragraph("Consumidor ICC", table_cell_bold), Paragraph("<b>En Alza</b>", style_sem_pos), Paragraph("41,8 pts", table_cell_center_bold), Paragraph("&gt; 40,0 pts", table_cell_center)],
+        [Paragraph("Reservas RIN", table_cell_bold), Paragraph("<b>Positivas</b>", style_sem_pos), Paragraph("+USD 3.650M", table_cell_center_bold), Paragraph("&gt; USD 0", table_cell_center)],
+        [Paragraph("PCA AR", table_cell_bold), Paragraph("<b>Resiliente</b>", style_sem_pos), Paragraph("64,2%", table_cell_center_bold), Paragraph("&lt; 75,0%", table_cell_center)],
     ]
     p12_catalizador = "• <b>Confianza & Expectativas:</b> El ICG (2,48 pts) y el ICC (41,8 pts) sostienen la credibilidad del programa.<br/>• <b>Oferta Blend 80/20 & Reservas:</b> Liquidación continua de agroindustria y crudo no convencional.<br/>• <b>Balanza de Pagos:</b> Superávit de cuenta corriente sostenido (+USD 1.840 M)."
     elements.extend(crear_pagina_arquetipo_asimetrico(

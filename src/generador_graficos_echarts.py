@@ -315,13 +315,7 @@ def gen_echarts_emae():
             desest_series_data.append({
                 "value": v,
                 "symbolSize": 7,
-                "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
-                "label": {
-                    "show": True, "position": [-75, -22],
-                    "formatter": f"{str(v).replace('.', ',')} pts (+3,1% i.a.)",
-                    "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5,
-                    "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 6], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
-                }
+                "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2}
             })
         else:
             desest_series_data.append(v)
@@ -361,10 +355,38 @@ def gen_echarts_emae():
             {
                 "name": "Desestacionalizado",
                 "markLine": {
-                    "silent": True, "symbol": ["none", "none"],
+                    "silent": True,
+                    "symbol": ["none", "none"],
                     "data": [
-                        {"yAxis": 147.8, "lineStyle": {"color": "#64748B", "type": [3, 3], "width": 1.1},
-                         "label": {"formatter": "Media Histórica (147,8 pts)", "position": "insideMiddleTop", "offset": [0, -6], "color": "#475569", "fontSize": 8.5, "fontWeight": "600", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}}
+                        {"yAxis": 147.8, "symbol": "none", "lineStyle": {"color": "#64748B", "type": [3, 3], "width": 1.1},
+                         "label": {"formatter": "Media Histórica (147,8 pts)", "position": "insideEndBottom", "offset": [-20, 8], "color": "#475569", "fontSize": 8.5, "fontWeight": "600", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
+                        [
+                            {
+                                "coord": [labels_x[-1], 170],
+                                "symbol": "circle",
+                                "symbolSize": 4,
+                                "lineStyle": {"color": "#0B2545", "width": 1.3, "type": "solid"},
+                                "label": {
+                                    "show": True,
+                                    "position": "start",
+                                    "offset": [-38, 0],
+                                    "formatter": f"{str(ultimo_val).replace('.', ',')} pts ({val_ia_str} i.a.)",
+                                    "color": "#0B2545",
+                                    "fontWeight": "bold",
+                                    "fontSize": 9.0,
+                                    "backgroundColor": "rgba(255, 255, 255, 0.96)",
+                                    "padding": [2, 6],
+                                    "borderRadius": 2,
+                                    "borderColor": "#0B2545",
+                                    "borderWidth": 0.8
+                                }
+                            },
+                            {
+                                "coord": [labels_x[-1], ultimo_val + 1.2],
+                                "symbol": "arrow",
+                                "symbolSize": 7
+                            }
+                        ]
                     ]
                 },
                 "type": "line",
@@ -500,15 +522,6 @@ def gen_echarts_ipc():
                     "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
                 }
             })
-        elif i == 5:  # May-24: first drop to ~4%
-            data_g_chart.append({
-                "value": v,
-                "label": {
-                    "show": True, "position": "top", "offset": [0, -4],
-                    "formatter": "4,2%", "color": "#475569", "fontSize": 8.0,
-                    "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1, 3], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
-                }
-            })
         elif i == idx_min_g:
             data_g_chart.append({
                 "value": v, "symbolSize": 6,
@@ -533,7 +546,7 @@ def gen_echarts_ipc():
                 "value": v, "symbolSize": 7,
                 "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
                 "label": {
-                    "show": True, "position": "top", "offset": [-44, -18],
+                    "show": True, "position": "top", "offset": [-20, -32],
                     "formatter": f"Gral: {str(v).replace('.', ',')}%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.0,
                     "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
                 }
@@ -553,21 +566,13 @@ def gen_echarts_ipc():
                     "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BAE6FD", "borderWidth": 0.5
                 }
             })
-        elif i == idx_min_n:
-            data_n_chart.append({
-                "value": v, "symbolSize": 5,
-                "label": {
-                    "show": True, "position": "top", "offset": [0, -6],
-                    "formatter": "1,5%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 8.0,
-                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1, 3], "borderRadius": 2, "borderColor": "#BAE6FD", "borderWidth": 0.5
-                }
-            })
+
         elif i == len(var_n) - 1:
             data_n_chart.append({
                 "value": v, "symbolSize": 7,
                 "itemStyle": {"color": "#0284C7", "borderColor": "#FFFFFF", "borderWidth": 2},
                 "label": {
-                    "show": True, "position": "top", "offset": [12, -18],
+                    "show": True, "position": "top", "offset": [22, -14],
                     "formatter": f"Núcleo: {str(v).replace('.', ',')}%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 9.0,
                     "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#0284C7", "borderWidth": 0.8
                 }
@@ -601,7 +606,7 @@ def gen_echarts_ipc():
                     "silent": True, "symbol": ["none", "none"],
                     "data": [
                         {"yAxis": 2.0, "lineStyle": {"color": "#047857", "type": [3, 3], "width": 1.2},
-                         "label": {"formatter": "Pauta Crawling (2,0% m/m)", "position": "insideMiddleTop", "offset": [0, -6], "color": "#047857", "fontSize": 8.5, "fontWeight": "bold", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
+                         "label": {"formatter": "Pauta Crawling (2,0% m/m)", "position": "insideMiddleTop", "offset": [-50, -28], "color": "#047857", "fontSize": 8.5, "fontWeight": "bold", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
                     ]
                 },
                 "markArea": {
