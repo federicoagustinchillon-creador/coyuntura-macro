@@ -312,6 +312,74 @@ class EditorialCanvas(canvas.Canvas):
             self.bookmarkPage(key)
             self.addOutlineEntry(title, key, level=0, closed=False)
 
+        if self._pageNumber == 1:
+            w, h = 612.0, 792.0  # Formato Letter estándar
+            footer_h = 36.0
+            header_h = 160.0
+            img_y = footer_h
+            img_h = h - header_h - footer_h  # 596.0 pt de altura continua
+
+            # 1. Obra de Arte Cuantitativa Monumental (Full Bleed de borde a borde 0 a 612 pt)
+            hero_path = _find_image("cover_macro_hero_cover.png")
+            if not os.path.exists(hero_path):
+                hero_path = _find_image("cover_macro_hero_portrait.png")
+            if os.path.exists(hero_path):
+                self.drawImage(hero_path, 0, img_y, width=w, height=img_h)
+
+            # 2. Pie Institucional Bicolor Sólido (Al ras del borde inferior y=0, altura 36 pt)
+            # Bloque izquierdo (ancho 195 pt): Ocre dorado / Mostaza institucional (#D97706)
+            split_x = 195.0
+            self.setFillColor(colors.HexColor('#D97706'))
+            self.rect(0, 0, split_x, footer_h, fill=True, stroke=False)
+            self.setFont('Sans-Bold', 8.5)
+            self.setFillColor(colors.white)
+            self.drawCentredString(split_x / 2.0, 13.0, 'OERU · FCE UNCUYO')
+
+            # Bloque derecho (ancho 417 pt): Azul Marino Profundo Institucional (#0B2545)
+            self.setFillColor(PRIMARY)
+            self.rect(split_x, 0, w - split_x, footer_h, fill=True, stroke=False)
+            self.setFont('Sans', 8.2)
+            self.setFillColor(colors.HexColor('#CBD5E1'))
+            self.drawString(split_x + 20.0, 13.0, 'Federico Agustín Chillón · Investigador en Métodos Cuantitativos')
+            self.drawRightString(w - 28.0, 13.0, 'www.fce.uncuyo.edu.ar')
+
+            # 3. Cabecera Blanca Aireada (Tipografía Monumental · Estándar Management Solutions)
+            header_top = h - 38.0
+
+            # Lado izquierdo: Insignia e Identidad Académica UNCUYO
+            self.setFont('Sans-Bold', 11.5)
+            self.setFillColor(PRIMARY)
+            self.drawString(38.0, header_top - 18.0, 'UNIVERSIDAD NACIONAL DE CUYO')
+
+            self.setFont('Sans-Bold', 8.5)
+            self.setFillColor(colors.HexColor('#475569'))
+            self.drawString(38.0, header_top - 32.0, 'FACULTAD DE CIENCIAS ECONÓMICAS')
+
+            self.setFont('Sans', 8.0)
+            self.setFillColor(MUTED)
+            self.drawString(38.0, header_top - 46.0, 'Observatorio Económico Regional Urbano (OERU)')
+
+            self.setFont('Sans-Bold', 7.5)
+            self.setFillColor(colors.HexColor('#94A3B8'))
+            self.drawString(38.0, header_top - 60.0, 'División de Economía Aplicada & Estrategia')
+
+            # Lado derecho: Título Monumental y Período
+            self.setFont('Sans-Bold', 22.0)
+            self.setFillColor(PRIMARY)
+            self.drawRightString(w - 38.0, header_top - 20.0, 'Informe de coyuntura')
+            self.drawRightString(w - 38.0, header_top - 46.0, 'macroeconómica')
+
+            self.setFont('Sans', 13.0)
+            self.setFillColor(BLUE_INST)
+            self.drawRightString(w - 38.0, header_top - 68.0, f'Cierre mensual · {_INFORME_PERIODO["header"].title()}')
+
+            self.setFont('Sans-Bold', 7.5)
+            self.setFillColor(MUTED)
+            self.drawRightString(w - 38.0, header_top - 84.0, 'RESEARCH INSTITUCIONAL · VOL. IV')
+
+            self.restoreState()
+            return
+
         if self._pageNumber > 1:
             header_y = 762
             p = self._pageNumber
@@ -910,24 +978,7 @@ def generar_informe_mensual_reportlab(ctx=None):
     periodo_texto_cap = f"{mes_nombre} de {anio_informe}"
     _INFORME_PERIODO["header"] = periodo_header
 
-    pdf_path = os.path.join(OUT_DIR_MENSUAL, "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
-    doc = SimpleDocTemplate(
-        pdf_path,
-        pagesize=letter,
-        leftMargin=40, rightMargin=40,
-        topMargin=32, bottomMargin=32,
-        title=f"Informe de Coyuntura Macroeconómica & Mercado de Capitales — {periodo_texto_cap}",
-        author="Federico Agustín Chillón",
-        subject="Economía Aplicada & Estrategia de Inversión — FCE UNCUYO",
-        creator="Federico Agustín Chillón — Investigador · Cs. Económicas UNCUYO",
-        keywords="Macroeconomía, Finanzas, Curva Soberana, Inflación, Riesgo Sistémico, Federico Agustín Chillón, UNCUYO"
-    )
-
-    elements = []
-
-    # =========================================================================
-    # PÁGINA 1: PORTADA DE GALA INSTITUCIONAL (CARÁTULA MONUMENTAL)
-    # =========================================================================
+    # Variables analíticas clave para el Resumen Ejecutivo & Tear-Sheet (Pág. 3)
     ipc_gral = inflacion.get("indec_general_mom", 2.2)
     ipc_core = inflacion.get("indec_nucleo_mom", 1.9)
     deie = inflacion.get("deie_mendoza_mom", 2.3)
@@ -946,155 +997,26 @@ def generar_informe_mensual_reportlab(ctx=None):
     _regimen_txt = riesgo_sistemico.get("regimen", "Normal")
     _turb_txt = _fmt1(riesgo_sistemico.get("turbulencia_dt", 2.05), decimales=2)
 
-    # a) MÁSTIL SUPERIOR FORMAL CON DOBLE FILETE INSTITUCIONAL
-    elements.append(HRFlowable(width="100%", thickness=2.2, color=PRIMARY, spaceBefore=0, spaceAfter=1.5))
-    elements.append(HRFlowable(width="100%", thickness=0.8, color=colors.HexColor("#D97706"), spaceBefore=0, spaceAfter=4))
+    pdf_path = os.path.join(OUT_DIR_MENSUAL, "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
+    doc = SimpleDocTemplate(
+        pdf_path,
+        pagesize=letter,
+        leftMargin=40, rightMargin=40,
+        topMargin=32, bottomMargin=32,
+        title=f"Informe de Coyuntura Macroeconómica & Mercado de Capitales — {periodo_texto_cap}",
+        author="Federico Agustín Chillón",
+        subject="Economía Aplicada & Estrategia de Inversión — FCE UNCUYO",
+        creator="Federico Agustín Chillón — Investigador · Cs. Económicas UNCUYO",
+        keywords="Macroeconomía, Finanzas, Curva Soberana, Inflación, Riesgo Sistémico, Federico Agustín Chillón, UNCUYO"
+    )
 
-    masthead_cov = Table([
-        [
-            Paragraph("<font color='#0B2545' size=9.2><b>UNIVERSIDAD NACIONAL DE CUYO</b> · FCE · OERU</font><br/><font color='#64748B' size=7.0>OBSERVATORIO ECONÓMICO REGIONAL URBANO · INSTITUTO DE INVESTIGACIONES ECONÓMICAS</font>", ParagraphStyle('MHC_L', fontName='Georgia', alignment=TA_LEFT, leading=10.2)),
-            Paragraph("<font color='#0B2545' size=9.2><b>DIVISIÓN DE ECONOMÍA APLICADA & ESTRATEGIA</b></font><br/><font color='#64748B' size=7.0>MACROECONOMIC RESEARCH & ASSET ALLOCATION · VOL. IV</font>", ParagraphStyle('MHC_R', fontName='Georgia', alignment=TA_RIGHT, leading=10.2))
-        ]
-    ], colWidths=[320, 212])
-    masthead_cov.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 1),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 1),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-    ]))
-    elements.append(masthead_cov)
-    elements.append(HRFlowable(width="100%", thickness=0.5, color=BORDER, spaceBefore=3, spaceAfter=6))
+    elements = []
 
-    # b) CÁPSULA KICKER INSTITUCIONAL
-    t_kicker = Table([[
-        Paragraph(
-            f"<font color='white' size=7.0><b>ESTRATEGIA MACROECONÓMICA & ASSET ALLOCATION · CIERRE MENSUAL · {periodo_header.upper()} · VOL. IV</b></font>",
-            ParagraphStyle('KickerCovP', fontName='Sans-Bold', alignment=TA_CENTER, leading=8.8)
-        )
-    ]], colWidths=[532])
-    t_kicker.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('TOPPADDING', (0,0), (-1,-1), 3.0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3.0),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-    ]))
-    elements.append(t_kicker)
-    elements.append(Spacer(1, 5))
-
-    # c) TÍTULO MONUMENTAL & SUBTÍTULO
-    elements.append(Paragraph(
-        "INFORME DE COYUNTURA MACROECONÓMICA",
-        ParagraphStyle('MonumentalTitle', fontName='Georgia-Bold', fontSize=21.5, leading=25.0, textColor=PRIMARY, spaceAfter=4)
-    ))
-    elements.append(Paragraph(
-        f"Desinflación Núcleo al {_fmt1(ipc_core)}%, Ancla Fiscal en Base Caja, Extinción de Pasivos Cuasifiscales y Normalización de Curvas Soberanas",
-        ParagraphStyle('MonumentalSub', fontName='Georgia-Italic', fontSize=9.8, leading=13.5, textColor=colors.HexColor("#334155"), spaceAfter=6)
-    ))
-
-    # d) HERO CENTERPIECE VISUAL (cover_macro_hero.png a 285 pt de altura para ratio nativo 16:9)
-    hero_path = _find_image("cover_macro_hero.png")
-    if os.path.exists(hero_path):
-        img_hero = Image(hero_path, width=532, height=280)
-        t_hero = Table([
-            [img_hero],
-            [Paragraph("<font color='#64748B' size=6.5>Topología de flujos macrofinancieros, calibración de curvas soberanas y convergencia de equilibrios · FCE UNCUYO</font>", ParagraphStyle('HeroEpig', fontName='Georgia', alignment=TA_CENTER, leading=8.4))]
-        ], colWidths=[532])
-        t_hero.setStyle(TableStyle([
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('RIGHTPADDING', (0,0), (-1,-1), 0),
-            ('TOPPADDING', (0,0), (-1,-1), 0),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-            ('TOPPADDING', (0,1), (-1,1), 2.8),
-            ('BOTTOMPADDING', (0,1), (-1,1), 2.8),
-            ('BOX', (0,0), (0,0), 0.6, colors.HexColor("#CBD5E1")),
-        ]))
-        elements.append(t_hero)
-    elements.append(Spacer(1, 6))
-
-    # e) EXECUTIVE KPI DASHBOARD RIBBON (5 Tarjetas Horizontales con cifras grandes de 13.5 pt)
-    def _render_kpi_card(top_color, title_kpi, val_kpi, sub_kpi):
-        p_top = Table([[""]], colWidths=[102.4], rowHeights=[2.5])
-        p_top.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor(top_color)),
-            ('TOPPADDING', (0,0), (-1,-1), 0),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-            ('LEFTPADDING', (0,0), (-1,-1), 0),
-            ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ]))
-        p_tit = Paragraph(f"<font color='#475569' size=6.2><b>{title_kpi.upper()}</b></font>", ParagraphStyle('KPITit', fontName='Sans-Bold', alignment=TA_CENTER, leading=7.6))
-        p_val = Paragraph(f"<font color='{PRIMARY.hexval()}' size=13.5><b>{val_kpi}</b></font>", ParagraphStyle('KPIVal', fontName='Georgia-Bold', alignment=TA_CENTER, leading=15.0))
-        p_sub = Paragraph(f"<font color='#64748B' size=6.2>{sub_kpi}</font>", ParagraphStyle('KPISub', fontName='Georgia', alignment=TA_CENTER, leading=7.6))
-        
-        t_card = Table([[p_top], [p_tit], [p_val], [p_sub]], colWidths=[102.4])
-        t_card.setStyle(TableStyle([
-            ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#F8FAFC")),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('TOPPADDING', (0,0), (-1,0), 0),
-            ('BOTTOMPADDING', (0,0), (-1,0), 0),
-            ('TOPPADDING', (0,1), (-1,1), 3.0),
-            ('BOTTOMPADDING', (0,1), (-1,1), 1.5),
-            ('TOPPADDING', (0,2), (-1,2), 1.5),
-            ('BOTTOMPADDING', (0,2), (-1,2), 2.0),
-            ('TOPPADDING', (0,3), (-1,3), 1.5),
-            ('BOTTOMPADDING', (0,3), (-1,3), 4.0),
-            ('LEFTPADDING', (0,0), (-1,-1), 2),
-            ('RIGHTPADDING', (0,0), (-1,-1), 2),
-            ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
-        ]))
-        return t_card
-
-    card_kpi1 = _render_kpi_card("#0284C7", "Inflación Núcleo", f"{_fmt1(ipc_core)}% m/m", "Mínimo 6 trimestres")
-    card_kpi2 = _render_kpi_card("#0B2545", "Lecap Corta", f"{_fmt1(lecap_corta)}% TEM", f"Tasa real: +{_fmt1(tasa_real_exante_val)}%")
-    card_kpi3 = _render_kpi_card("#059669", "Dólar CCL", f"${fmt_num(ccl_val, 0)} / {_fmt1(brecha_val)}%", "Ancla cambiaria 2%")
-    card_kpi4 = _render_kpi_card("#D97706", "EMBI+ Soberano", f"{fmt_num(embi_val, 0)} pb", "Compresión -174 pb")
-    card_kpi5 = _render_kpi_card("#047857", "Actividad EMAE", f"+{_fmt1(emae_ia_val)}% i.a.", "Tracción energía")
-
-    t_kpi_row = Table([[card_kpi1, card_kpi2, card_kpi3, card_kpi4, card_kpi5]], colWidths=[106.4, 106.4, 106.4, 106.4, 106.4])
-    t_kpi_row.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('LEFTPADDING', (0,0), (-1,-1), 2),
-        ('RIGHTPADDING', (0,0), (-1,-1), 2),
-        ('TOPPADDING', (0,0), (-1,-1), 0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-    ]))
-    elements.append(t_kpi_row)
-    elements.append(Spacer(1, 6))
-
-    # f) PIE DE AUTORÍA & IMPRINT INSTITUCIONAL
-    elements.append(HRFlowable(width="100%", thickness=0.5, color=BORDER, spaceBefore=2, spaceAfter=4))
-    t_imp_cover = Table([
-        [
-            Paragraph(
-                "<font color='#0B2545' size=7.8><b>FEDERICO AGUSTÍN CHILLÓN</b></font> · <font color='#475569' size=7.0>Investigador & Estratega Macrofinanciero</font><br/>"
-                "<font color='#64748B' size=6.5>Facultad de Ciencias Económicas · Universidad Nacional de Cuyo (UNCUYO) · OERU<br/>"
-                "federico.chillon@fce.uncuyo.edu.ar · Mendoza, República Argentina</font>",
-                ParagraphStyle('CovImpL', fontName='Georgia', leading=8.8)
-            ),
-            Paragraph(
-                "<font color='#0B2545' size=7.4><b>RESEARCH INSTITUCIONAL & ASSET ALLOCATION</b></font><br/>"
-                "<font color='#64748B' size=6.5>Modelos Nelson-Siegel, Taylor Rule & Simulación de Riesgo<br/>"
-                "Consenso REM BCRA · INDEC · DEIE · ByMA · Matba-Rofex</font>",
-                ParagraphStyle('CovImpR', fontName='Georgia', alignment=TA_RIGHT, leading=8.8)
-            )
-        ]
-    ], colWidths=[330, 202])
-    t_imp_cover.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 1),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 1),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-    ]))
-    elements.append(t_imp_cover)
-    elements.append(HRFlowable(width="100%", thickness=3.2, color=PRIMARY, spaceBefore=4, spaceAfter=1))
-    elements.append(HRFlowable(width="100%", thickness=0.8, color=colors.HexColor("#D97706"), spaceBefore=0, spaceAfter=0))
+    # =========================================================================
+    # PÁGINA 1: PORTADA MONUMENTAL INSTITUCIONAL (ESTÁNDAR MANAGEMENT SOLUTIONS)
+    # =========================================================================
+    # La portada de gala se renderiza de forma integral y full-bleed en EditorialCanvas,
+    # erradicando tarjetas dashboard, franjas plásticas y vicios de plantilla web.
     elements.append(PageBreak())
 
     # PÁGINA 2: ÍNDICE GENERAL Y METODOLOGÍA
