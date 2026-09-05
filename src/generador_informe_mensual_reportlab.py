@@ -926,7 +926,7 @@ def generar_informe_mensual_reportlab(ctx=None):
     elements = []
 
     # =========================================================================
-    # PÁGINA 1: PORTADA EDITORIAL ASIMÉTRICA INSTITUCIONAL (WALL STREET RESEARCH)
+    # PÁGINA 1: PORTADA DE GALA INSTITUCIONAL (CARÁTULA MONUMENTAL)
     # =========================================================================
     ipc_gral = inflacion.get("indec_general_mom", 2.2)
     ipc_core = inflacion.get("indec_nucleo_mom", 1.9)
@@ -946,229 +946,157 @@ def generar_informe_mensual_reportlab(ctx=None):
     _regimen_txt = riesgo_sistemico.get("regimen", "Normal")
     _turb_txt = _fmt1(riesgo_sistemico.get("turbulencia_dt", 2.05), decimales=2)
 
-    elements.append(HRFlowable(width="100%", thickness=2.5, color=PRIMARY, spaceBefore=0, spaceAfter=2))
+    # a) MÁSTIL SUPERIOR FORMAL CON DOBLE FILETE INSTITUCIONAL
+    elements.append(HRFlowable(width="100%", thickness=2.2, color=PRIMARY, spaceBefore=0, spaceAfter=1.5))
     elements.append(HRFlowable(width="100%", thickness=0.8, color=colors.HexColor("#D97706"), spaceBefore=0, spaceAfter=4))
 
-    masthead = Table([
+    masthead_cov = Table([
         [
-            Paragraph("<font color='#0B2545' size=9.0><b>UNIVERSIDAD NACIONAL DE CUYO</b> · FCE · OERU</font><br/><font color='#64748B' size=7.0>OBSERVATORIO ECONÓMICO REGIONAL URBANO · INSTITUTO DE INVESTIGACIONES ECONÓMICAS</font>", ParagraphStyle('MH_L', fontName='Georgia', alignment=TA_LEFT, leading=10.0)),
-            Paragraph("<font color='#0B2545' size=9.0><b>DIVISIÓN DE ECONOMÍA APLICADA & ESTRATEGIA</b></font><br/><font color='#64748B' size=7.0>REPORTE DE COYUNTURA MACROECONÓMICA · VOL. IV</font>", ParagraphStyle('MH_R', fontName='Georgia', alignment=TA_RIGHT, leading=10.0))
+            Paragraph("<font color='#0B2545' size=9.2><b>UNIVERSIDAD NACIONAL DE CUYO</b> · FCE · OERU</font><br/><font color='#64748B' size=7.0>OBSERVATORIO ECONÓMICO REGIONAL URBANO · INSTITUTO DE INVESTIGACIONES ECONÓMICAS</font>", ParagraphStyle('MHC_L', fontName='Georgia', alignment=TA_LEFT, leading=10.2)),
+            Paragraph("<font color='#0B2545' size=9.2><b>DIVISIÓN DE ECONOMÍA APLICADA & ESTRATEGIA</b></font><br/><font color='#64748B' size=7.0>MACROECONOMIC RESEARCH & ASSET ALLOCATION · VOL. IV</font>", ParagraphStyle('MHC_R', fontName='Georgia', alignment=TA_RIGHT, leading=10.2))
         ]
     ], colWidths=[320, 212])
-    masthead.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 2),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-    ]))
-    elements.append(masthead)
-    elements.append(HRFlowable(width="100%", thickness=0.5, color=BORDER, spaceBefore=3, spaceAfter=6))
-
-    elements.append(Paragraph(
-        f"<font color='#9A3412' size=7.5><b>ESTRATEGIA MACROECONÓMICA & ASSET ALLOCATION</b></font>&nbsp;&nbsp;"
-        f"<font color='#94A3B8' size=6.8><b>|</b></font>&nbsp;&nbsp;"
-        f"<font color='#0B2545' size=7.5><b>CIERRE MENSUAL · {periodo_header}</b></font>",
-        ParagraphStyle('Kicker_Ed', fontName='Georgia', leading=10.0, spaceAfter=3)
-    ))
-
-    elements.append(Paragraph(
-        f"ARGENTINA STRATEGY: Desinflación Núcleo al {_fmt1(ipc_core)}%, Ancla Monetaria y Normalización de Curvas en Pesos",
-        ParagraphStyle('HeroHeadline', fontName='Georgia-Bold', fontSize=14.0, leading=17.5, textColor=PRIMARY, spaceAfter=4)
-    ))
-
-    elements.append(Paragraph(
-        f"Evaluación del régimen de absorción monetaria, ancla fiscal en base caja, dinámica de precios relativos INDEC/DEIE, "
-        f"compresión del riesgo país a {fmt_num(embi_val, 0)} pb y recomendaciones tácticas de cartera multiactivo.",
-        ParagraphStyle('HeroSub', fontName='Georgia-Italic', fontSize=8.3, leading=11.4, textColor=colors.HexColor("#475569"), spaceAfter=6)
-    ))
-    elements.append(HRFlowable(width="100%", thickness=0.5, color=BORDER, spaceBefore=2, spaceAfter=8))
-
-    # Columna Izquierda (330 pt)
-    col_izq = []
-    col_izq.append(Paragraph("<font color='#0B2545' size=8.8><b>DIAGNÓSTICO EJECUTIVO & ANCLA MACROECONÓMICA</b></font>", ParagraphStyle('SecL', fontName='Georgia', leading=11.0)))
-    col_izq.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=2, spaceAfter=6))
-
-    p1_cov = (
-        f"El proceso de estabilización macroeconómica consolida su sendero de desinflación con el registro del IPC general "
-        f"en <b>{_fmt1(ipc_gral)}% m/m</b> y una desaceleración del componente núcleo al <b>{_fmt1(ipc_core)}% m/m</b> (con la medición regional DEIE Mendoza "
-        f"situándose en <b>{_fmt1(deie)}%</b>). La convergencia nominal responde a la persistencia del ancla fiscal en base caja —sin emisión monetaria directa al Tesoro— "
-        f"y al sostenimiento de rendimientos reales ex-ante positivos en la curva en pesos: la Lecap corta opera en una <b>TEM de {_fmt1(lecap_corta)}%</b> frente a una "
-        f"expectativa de inflación REM del {_fmt1(rem)}%, garantizando una tasa real contractual de <b>+{_fmt1(tasa_real_exante_val)}% mensual</b>. Este diferencial comprime "
-        f"la brecha del CCL al <b>{_fmt1(brecha_val)}%</b> sobre el tipo de cambio oficial mayorista (${fmt_num(ccl_val, 2)}), desarticulando expectativas de salto cambiario."
-    )
-    col_izq.append(Paragraph(p1_cov, ParagraphStyle('CovBL1', fontName='Georgia', fontSize=8.3, leading=11.6, alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=6)))
-
-    p2_cov = (
-        f"En el frente monetario, la ejecución de la segunda etapa del programa económico ha consolidado la extinción de los pasivos remunerados del Banco Central "
-        f"(migración de pases y LeFis hacia Letras del Tesoro), clausurando la emisión cuasifiscal endógena y guiando la tasa hacia el nivel neutral real (r*). "
-        f"En simultáneo, la economía real refleja una reactivación cíclica con el EMAE expandiéndose <b>+{_fmt1(emae_ia_val)}% i.a.</b> (<b>+{_fmt1(emae_mom_val)}% m/m</b> desestacionalizado), "
-        f"traccionada por la región Cuyo (Mendoza <b>+{_fmt1(isarc_mdz_val)}%</b>, San Luis <b>+{_fmt1(isarc_sl_val)}%</b>). En deuda soberana, el riesgo país EMBI+ "
-        f"comprime a <b>{fmt_num(embi_val, 0)} pb</b> con una tasa asintótica Nelson-Siegel de <b>{_fmt1(beta0_val)}%</b> y el GD35 rindiendo <b>{_fmt1(gd35_tir_val)}% TIR</b>."
-    )
-    col_izq.append(Paragraph(p2_cov, ParagraphStyle('CovBL2', fontName='Georgia', fontSize=8.3, leading=11.6, alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=6)))
-
-    p3_cov = (
-        f"En el sector externo y cambiario, las reservas brutas del BCRA alcanzan los <b>${fmt_num(tasas_bcra.get('reservas_brutas_usd_m', {}).get('valor', 50660), 0)} M USD</b>, "
-        f"con recomposición de reservas netas y reversión del déficit cuasifiscal. Las liquidaciones de la balanza comercial energética y agroindustrial sostienen "
-        f"la oferta en el segmento financiero bajo el esquema blend 80/20, mientras el programa de rollover del Tesoro supera el 110% de cobertura sobre vencimientos "
-        f"en moneda local, extendiendo los plazos de colocación hacia 2027 sin fricciones de liquidez."
-    )
-    col_izq.append(Paragraph(p3_cov, ParagraphStyle('CovBL3', fontName='Georgia', fontSize=8.3, leading=11.6, alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=6)))
-
-    # Bloque de catalizadores
-    t_cat = Table([
-        [Paragraph("<font color='#0B2545' size=7.5><b>CATALIZADORES & FACTORES DE RIESGO TÁCTICO (30–60 DÍAS)</b></font>", ParagraphStyle('CatT', fontName='Georgia', leading=9.4))],
-        [Paragraph(
-            "<font color='#1E293B' size=6.7>"
-            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Transición Cambiaria & Reservas:</b> Sostenibilidad de la acumulación de divisas y calibración del crawling peg.<br/>"
-            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Roll-over de Deuda en Pesos:</b> Capacidad del Tesoro para refinanciar más del 100% en Lecaps sin convalidar tasas elevadas.<br/>"
-            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Compresión Soberana:</b> Ruptura del piso de 500 pb en EMBI+ como condición para retornar al crédito internacional."
-            "</font>",
-            ParagraphStyle('CatB', fontName='Georgia', leading=9.0)
-        )]
-    ], colWidths=[324])
-    t_cat.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), BG_CURR),
-        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
-        ('LINELEFT', (0,0), (0,-1), 2.5, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 4.0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4.0),
-        ('LEFTPADDING', (0,0), (-1,-1), 6),
-        ('RIGHTPADDING', (0,0), (-1,-1), 6),
-    ]))
-    col_izq.append(t_cat)
-    col_izq.append(Spacer(1, 6))
-
-    # Matriz de escenarios en portada
-    t_esc_cov = Table([
-        [
-            Paragraph("<b>Escenario Macro (30–90d)</b>", ParagraphStyle('EH1', fontName='Georgia-Bold', fontSize=6.5, leading=8.2, textColor=colors.white)),
-            Paragraph("<b>Prob.</b>", ParagraphStyle('EH2', fontName='Georgia-Bold', fontSize=6.5, leading=8.2, textColor=colors.white, alignment=TA_CENTER)),
-            Paragraph("<b>Directriz de Asignación Sugerida</b>", ParagraphStyle('EH3', fontName='Georgia-Bold', fontSize=6.5, leading=8.2, textColor=colors.white))
-        ],
-        [Paragraph("<b>Base (Convergencia)</b>", ParagraphStyle('EB1', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, textColor=PRIMARY)), Paragraph("<b>65%</b>", ParagraphStyle('EB2', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, alignment=TA_CENTER, textColor=colors.HexColor(POS_COLOR))), Paragraph("Ancla fiscal y monetaria firme; sostener Lecaps cortas y acumular GD35.", ParagraphStyle('EB3', fontName='Georgia', fontSize=6.2, leading=7.8, textColor=DARK_TEXT))],
-        [Paragraph("<b>Shock Tarifario / Brecha</b>", ParagraphStyle('EB1', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, textColor=colors.HexColor("#B45309"))), Paragraph("<b>25%</b>", ParagraphStyle('EB2', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, alignment=TA_CENTER, textColor=colors.HexColor("#B45309"))), Paragraph("Rebote de regulados; rotar 15% hacia Boncer TZX26/TZX27.", ParagraphStyle('EB3', fontName='Georgia', fontSize=6.2, leading=7.8, textColor=DARK_TEXT))],
-        [Paragraph("<b>Estrés Externo / Salida</b>", ParagraphStyle('EB1', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, textColor=colors.HexColor(NEG_COLOR))), Paragraph("<b>10%</b>", ParagraphStyle('EB2', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, alignment=TA_CENTER, textColor=colors.HexColor(NEG_COLOR))), Paragraph("Volatilidad global; cobertura en Bopreal y acortar duration.", ParagraphStyle('EB3', fontName='Georgia', fontSize=6.2, leading=7.8, textColor=DARK_TEXT))],
-    ], colWidths=[88, 30, 206])
-    t_esc_cov.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 3.0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3.0),
-        ('LEFTPADDING', (0,0), (-1,-1), 3),
-        ('RIGHTPADDING', (0,0), (-1,-1), 3),
-        ('LINEBELOW', (0,1), (-1,-1), 0.4, HAIRLINE),
-        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
-    ]))
-    col_izq.append(t_esc_cov)
-
-    # Columna Derecha (192 pt)
-    col_der = []
-    col_der.append(Paragraph("<font color='#0B2545' size=8.5><b>ASIGNACIÓN TÁCTICA DE ACTIVOS</b></font>", ParagraphStyle('SecR1', fontName='Georgia', leading=10.5)))
-    col_der.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=2, spaceAfter=4))
-
-    t_tact = Table([
-        [
-            Paragraph("<b>Activo</b>", ParagraphStyle('TH1', fontName='Georgia-Bold', fontSize=6.6, leading=8.0, textColor=colors.white)),
-            Paragraph("<b>Postura</b>", ParagraphStyle('TH2', fontName='Georgia-Bold', fontSize=6.6, leading=8.0, textColor=colors.white, alignment=TA_CENTER)),
-            Paragraph("<b>Peso</b>", ParagraphStyle('TH3', fontName='Georgia-Bold', fontSize=6.6, leading=8.0, textColor=colors.white, alignment=TA_CENTER)),
-            Paragraph("<b>Target</b>", ParagraphStyle('TH4', fontName='Georgia-Bold', fontSize=6.6, leading=8.0, textColor=colors.white, alignment=TA_RIGHT))
-        ],
-        [Paragraph("Lecaps Cortas", ParagraphStyle('TD1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph("<font color='#059669'><b>Sobreponderar</b></font>", ParagraphStyle('TD2', fontName='Georgia', fontSize=6.0, leading=8.0, alignment=TA_CENTER)), Paragraph("40%", ParagraphStyle('TD3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_CENTER, textColor=PRIMARY)), Paragraph("TEM 2.95%", ParagraphStyle('TD4', fontName='Georgia', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-        [Paragraph("Soberanos GD35", ParagraphStyle('TD1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph("<font color='#059669'><b>Sobreponderar</b></font>", ParagraphStyle('TD2', fontName='Georgia', fontSize=6.0, leading=8.0, alignment=TA_CENTER)), Paragraph("30%", ParagraphStyle('TD3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_CENTER, textColor=PRIMARY)), Paragraph("TIR 9.65%", ParagraphStyle('TD4', fontName='Georgia', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-        [Paragraph("Boncer TZX26", ParagraphStyle('TD1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph("<font color='#475569'><b>Mantener</b></font>", ParagraphStyle('TD2', fontName='Georgia', fontSize=6.0, leading=8.0, alignment=TA_CENTER)), Paragraph("15%", ParagraphStyle('TD3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_CENTER, textColor=SLATE)), Paragraph("CER+7.8%", ParagraphStyle('TD4', fontName='Georgia', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-        [Paragraph("Bopreal BPY26", ParagraphStyle('TD1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph("<font color='#059669'><b>Sobreponderar</b></font>", ParagraphStyle('TD2', fontName='Georgia', fontSize=6.0, leading=8.0, alignment=TA_CENTER)), Paragraph("10%", ParagraphStyle('TD3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_CENTER, textColor=PRIMARY)), Paragraph("TIR 10.4%", ParagraphStyle('TD4', fontName='Georgia', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-        [Paragraph("Equity Merval", ParagraphStyle('TD1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph("<font color='#DC2626'><b>Subponderar</b></font>", ParagraphStyle('TD2', fontName='Georgia', fontSize=6.0, leading=8.0, alignment=TA_CENTER)), Paragraph("5%", ParagraphStyle('TD3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_CENTER, textColor=colors.HexColor(NEG_COLOR))), Paragraph("Valuación", ParagraphStyle('TD4', fontName='Georgia', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-    ], colWidths=[68, 54, 28, 42])
-    t_tact.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 3.4),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3.4),
-        ('LEFTPADDING', (0,0), (-1,-1), 2.0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 2.0),
-        ('LINEBELOW', (0,1), (-1,-1), 0.4, HAIRLINE),
-        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
-    ]))
-    col_der.append(t_tact)
-    col_der.append(Spacer(1, 6))
-
-    col_der.append(Paragraph("<font color='#0B2545' size=8.5><b>MACRO & MARKET SCORECARD</b></font>", ParagraphStyle('SecR2', fontName='Georgia', leading=10.5)))
-    col_der.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=2, spaceAfter=4))
-
-    t_sc = Table([
-        [Paragraph("<b>Métrica Clave</b>", ParagraphStyle('SH1', fontName='Georgia-Bold', fontSize=6.6, leading=8.0, textColor=colors.white)), Paragraph("<b>Nivel Observado</b>", ParagraphStyle('SH2', fontName='Georgia-Bold', fontSize=6.6, leading=8.0, textColor=colors.white, alignment=TA_RIGHT))],
-        [Paragraph("IPC General / Núcleo", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph(f"{_fmt1(ipc_gral)}% / {_fmt1(ipc_core)}% m/m", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-        [Paragraph("Lecap Corta (TEM)", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph(f"{_fmt1(lecap_corta)}% (Real: +{_fmt1(tasa_real_exante_val)}%)", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=colors.HexColor(POS_COLOR)))],
-        [Paragraph("Dólar CCL / Brecha", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph(f"${fmt_num(ccl_val, 2)} / {_fmt1(brecha_val)}%", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-        [Paragraph("EMBI+ Riesgo País", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph(f"{fmt_num(embi_val, 0)} pb (-174 pb)", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=PRIMARY))],
-        [Paragraph("Curva N-S (Beta 0)", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph(f"{_fmt1(beta0_val)}%", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-        [Paragraph("Actividad EMAE", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph(f"{_fmt1(emae_ia_val, signo=True)}% i.a.", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-        [Paragraph("Régimen Sistémico", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph(f"{_regimen_txt} (Turb {_turb_txt})", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=colors.HexColor(POS_COLOR)))],
-    ], colWidths=[100, 92])
-    t_sc.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 2.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 2.0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 2.0),
-        ('LINEBELOW', (0,1), (-1,-1), 0.4, HAIRLINE),
-        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
-    ]))
-    col_der.append(t_sc)
-    col_der.append(Spacer(1, 6))
-
-    t_cal_cov = Table([
-        [Paragraph("<b>Hito Financiero (30d)</b>", ParagraphStyle('CL1', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, textColor=colors.white)), Paragraph("<b>Estrategia</b>", ParagraphStyle('CL2', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, textColor=colors.white, alignment=TA_RIGHT))],
-        [Paragraph("Licitación Tesoro", ParagraphStyle('CD1', fontName='Georgia-Bold', fontSize=6.2, leading=7.8, textColor=DARK_TEXT)), Paragraph("Rollover &ge; 100% en Lecaps", ParagraphStyle('CD2', fontName='Georgia', fontSize=6.1, leading=7.8, alignment=TA_RIGHT, textColor=PRIMARY))],
-        [Paragraph("Publicación IPC INDEC", ParagraphStyle('CD1', fontName='Georgia-Bold', fontSize=6.2, leading=7.8, textColor=DARK_TEXT)), Paragraph("Ancla núcleo &le; 2,0%", ParagraphStyle('CD2', fontName='Georgia', fontSize=6.1, leading=7.8, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-        [Paragraph("Vencimiento CIP / Rofex", ParagraphStyle('CD1', fontName='Georgia-Bold', fontSize=6.2, leading=7.8, textColor=DARK_TEXT)), Paragraph("Arbitraje blend 80/20", ParagraphStyle('CD2', fontName='Georgia', fontSize=6.1, leading=7.8, alignment=TA_RIGHT, textColor=DARK_TEXT))],
-        [Paragraph("Directorio BCRA", ParagraphStyle('CD1', fontName='Georgia-Bold', fontSize=6.2, leading=7.8, textColor=DARK_TEXT)), Paragraph("Tasa neutral r*", ParagraphStyle('CD2', fontName='Georgia', fontSize=6.1, leading=7.8, alignment=TA_RIGHT, textColor=PRIMARY))],
-    ], colWidths=[108, 84])
-    t_cal_cov.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 2.4),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.4),
-        ('LEFTPADDING', (0,0), (-1,-1), 2.0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 2.0),
-        ('LINEBELOW', (0,1), (-1,-1), 0.4, HAIRLINE),
-        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
-    ]))
-    col_der.append(t_cal_cov)
-
-    t_main_cov = Table([[col_izq, "", col_der]], colWidths=[330, 10, 192])
-    t_main_cov.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ('TOPPADDING', (0,0), (-1,-1), 0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-        ('LINEBEFORE', (2,0), (2,0), 0.5, HAIRLINE),
-    ]))
-    elements.append(t_main_cov)
-    elements.append(Spacer(1, 6))
-
-    elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=4))
-    t_imp_cov = Table([
-        [
-            Paragraph("<font color='#0B2545' size=7.2><b>AUTORÍA & RESPONSABILIDAD TÉCNICA:</b> Federico Agustín Chillón · Investigador en Métodos Cuantitativos</font><br/><font color='#64748B' size=6.5>Facultad de Ciencias Económicas · Universidad Nacional de Cuyo (UNCUYO) · Observatorio Económico Regional Urbano (OERU)</font>", ParagraphStyle('IL', fontName='Georgia', leading=8.8)),
-            Paragraph("<font color='#0B2545' size=7.2><b>RESEARCH INSTITUCIONAL</b></font><br/><font color='#64748B' size=6.5>Modelos Nelson-Siegel & GARCH · Cierre Mensual</font>", ParagraphStyle('IR', fontName='Georgia', alignment=TA_RIGHT, leading=8.8))
-        ]
-    ], colWidths=[370, 162])
-    t_imp_cov.setStyle(TableStyle([
+    masthead_cov.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TOPPADDING', (0,0), (-1,-1), 1),
         ('BOTTOMPADDING', (0,0), (-1,-1), 1),
         ('LEFTPADDING', (0,0), (-1,-1), 0),
         ('RIGHTPADDING', (0,0), (-1,-1), 0),
     ]))
-    elements.append(t_imp_cov)
+    elements.append(masthead_cov)
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=BORDER, spaceBefore=3, spaceAfter=6))
+
+    # b) CÁPSULA KICKER INSTITUCIONAL
+    t_kicker = Table([[
+        Paragraph(
+            f"<font color='white' size=7.0><b>ESTRATEGIA MACROECONÓMICA & ASSET ALLOCATION · CIERRE MENSUAL · {periodo_header.upper()} · VOL. IV</b></font>",
+            ParagraphStyle('KickerCovP', fontName='Sans-Bold', alignment=TA_CENTER, leading=8.8)
+        )
+    ]], colWidths=[532])
+    t_kicker.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), PRIMARY),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING', (0,0), (-1,-1), 3.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.0),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+    ]))
+    elements.append(t_kicker)
+    elements.append(Spacer(1, 5))
+
+    # c) TÍTULO MONUMENTAL & SUBTÍTULO
+    elements.append(Paragraph(
+        "INFORME DE COYUNTURA MACROECONÓMICA",
+        ParagraphStyle('MonumentalTitle', fontName='Georgia-Bold', fontSize=21.5, leading=25.0, textColor=PRIMARY, spaceAfter=4)
+    ))
+    elements.append(Paragraph(
+        f"Desinflación Núcleo al {_fmt1(ipc_core)}%, Ancla Fiscal en Base Caja, Extinción de Pasivos Cuasifiscales y Normalización de Curvas Soberanas",
+        ParagraphStyle('MonumentalSub', fontName='Georgia-Italic', fontSize=9.8, leading=13.5, textColor=colors.HexColor("#334155"), spaceAfter=6)
+    ))
+
+    # d) HERO CENTERPIECE VISUAL (cover_macro_hero.png a 285 pt de altura para ratio nativo 16:9)
+    hero_path = _find_image("cover_macro_hero.png")
+    if os.path.exists(hero_path):
+        img_hero = Image(hero_path, width=532, height=280)
+        t_hero = Table([
+            [img_hero],
+            [Paragraph("<font color='#64748B' size=6.5>Topología de flujos macrofinancieros, calibración de curvas soberanas y convergencia de equilibrios · FCE UNCUYO</font>", ParagraphStyle('HeroEpig', fontName='Georgia', alignment=TA_CENTER, leading=8.4))]
+        ], colWidths=[532])
+        t_hero.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (-1,-1), 0),
+            ('TOPPADDING', (0,0), (-1,-1), 0),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+            ('TOPPADDING', (0,1), (-1,1), 2.8),
+            ('BOTTOMPADDING', (0,1), (-1,1), 2.8),
+            ('BOX', (0,0), (0,0), 0.6, colors.HexColor("#CBD5E1")),
+        ]))
+        elements.append(t_hero)
+    elements.append(Spacer(1, 6))
+
+    # e) EXECUTIVE KPI DASHBOARD RIBBON (5 Tarjetas Horizontales con cifras grandes de 13.5 pt)
+    def _render_kpi_card(top_color, title_kpi, val_kpi, sub_kpi):
+        p_top = Table([[""]], colWidths=[102.4], rowHeights=[2.5])
+        p_top.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor(top_color)),
+            ('TOPPADDING', (0,0), (-1,-1), 0),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ]))
+        p_tit = Paragraph(f"<font color='#475569' size=6.2><b>{title_kpi.upper()}</b></font>", ParagraphStyle('KPITit', fontName='Sans-Bold', alignment=TA_CENTER, leading=7.6))
+        p_val = Paragraph(f"<font color='{PRIMARY.hexval()}' size=13.5><b>{val_kpi}</b></font>", ParagraphStyle('KPIVal', fontName='Georgia-Bold', alignment=TA_CENTER, leading=15.0))
+        p_sub = Paragraph(f"<font color='#64748B' size=6.2>{sub_kpi}</font>", ParagraphStyle('KPISub', fontName='Georgia', alignment=TA_CENTER, leading=7.6))
+        
+        t_card = Table([[p_top], [p_tit], [p_val], [p_sub]], colWidths=[102.4])
+        t_card.setStyle(TableStyle([
+            ('BACKGROUND', (0,1), (-1,-1), colors.HexColor("#F8FAFC")),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('TOPPADDING', (0,0), (-1,0), 0),
+            ('BOTTOMPADDING', (0,0), (-1,0), 0),
+            ('TOPPADDING', (0,1), (-1,1), 3.0),
+            ('BOTTOMPADDING', (0,1), (-1,1), 1.5),
+            ('TOPPADDING', (0,2), (-1,2), 1.5),
+            ('BOTTOMPADDING', (0,2), (-1,2), 2.0),
+            ('TOPPADDING', (0,3), (-1,3), 1.5),
+            ('BOTTOMPADDING', (0,3), (-1,3), 4.0),
+            ('LEFTPADDING', (0,0), (-1,-1), 2),
+            ('RIGHTPADDING', (0,0), (-1,-1), 2),
+            ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ]))
+        return t_card
+
+    card_kpi1 = _render_kpi_card("#0284C7", "Inflación Núcleo", f"{_fmt1(ipc_core)}% m/m", "Mínimo 6 trimestres")
+    card_kpi2 = _render_kpi_card("#0B2545", "Lecap Corta", f"{_fmt1(lecap_corta)}% TEM", f"Tasa real: +{_fmt1(tasa_real_exante_val)}%")
+    card_kpi3 = _render_kpi_card("#059669", "Dólar CCL", f"${fmt_num(ccl_val, 0)} / {_fmt1(brecha_val)}%", "Ancla cambiaria 2%")
+    card_kpi4 = _render_kpi_card("#D97706", "EMBI+ Soberano", f"{fmt_num(embi_val, 0)} pb", "Compresión -174 pb")
+    card_kpi5 = _render_kpi_card("#047857", "Actividad EMAE", f"+{_fmt1(emae_ia_val)}% i.a.", "Tracción energía")
+
+    t_kpi_row = Table([[card_kpi1, card_kpi2, card_kpi3, card_kpi4, card_kpi5]], colWidths=[106.4, 106.4, 106.4, 106.4, 106.4])
+    t_kpi_row.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('LEFTPADDING', (0,0), (-1,-1), 2),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2),
+        ('TOPPADDING', (0,0), (-1,-1), 0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+    ]))
+    elements.append(t_kpi_row)
+    elements.append(Spacer(1, 6))
+
+    # f) PIE DE AUTORÍA & IMPRINT INSTITUCIONAL
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=BORDER, spaceBefore=2, spaceAfter=4))
+    t_imp_cover = Table([
+        [
+            Paragraph(
+                "<font color='#0B2545' size=7.8><b>FEDERICO AGUSTÍN CHILLÓN</b></font> · <font color='#475569' size=7.0>Investigador & Estratega Macrofinanciero</font><br/>"
+                "<font color='#64748B' size=6.5>Facultad de Ciencias Económicas · Universidad Nacional de Cuyo (UNCUYO) · OERU<br/>"
+                "federico.chillon@fce.uncuyo.edu.ar · Mendoza, República Argentina</font>",
+                ParagraphStyle('CovImpL', fontName='Georgia', leading=8.8)
+            ),
+            Paragraph(
+                "<font color='#0B2545' size=7.4><b>RESEARCH INSTITUCIONAL & ASSET ALLOCATION</b></font><br/>"
+                "<font color='#64748B' size=6.5>Modelos Nelson-Siegel, Taylor Rule & Simulación de Riesgo<br/>"
+                "Consenso REM BCRA · INDEC · DEIE · ByMA · Matba-Rofex</font>",
+                ParagraphStyle('CovImpR', fontName='Georgia', alignment=TA_RIGHT, leading=8.8)
+            )
+        ]
+    ], colWidths=[330, 202])
+    t_imp_cover.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 1),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 1),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
+    ]))
+    elements.append(t_imp_cover)
+    elements.append(HRFlowable(width="100%", thickness=3.2, color=PRIMARY, spaceBefore=4, spaceAfter=1))
+    elements.append(HRFlowable(width="100%", thickness=0.8, color=colors.HexColor("#D97706"), spaceBefore=0, spaceAfter=0))
     elements.append(PageBreak())
 
-    # =========================================================================
     # PÁGINA 2: ÍNDICE GENERAL Y METODOLOGÍA
     # =========================================================================
     elements.append(Paragraph("Índice General y Estructura del Informe", title_style))
@@ -1279,183 +1207,231 @@ def generar_informe_mensual_reportlab(ctx=None):
     elements.append(PageBreak())
 
     # =========================================================================
-    # PÁGINA 3: RESUMEN EJECUTIVO, MATRIZ DE ESCENARIOS Y CARTERAS
+    # PÁGINA 3: WALL STREET STRATEGY TEAR-SHEET (DIAGNÓSTICO EJECUTIVO, ASIGNACIÓN TÁCTICA Y ESCENARIOS)
     # =========================================================================
-    elements.append(Paragraph("Resumen Ejecutivo, Matriz de Escenarios y Asignación Táctica", title_style))
-    elements.append(HRFlowable(width="100%", thickness=1.0, color=PRIMARY, spaceBefore=0, spaceAfter=5))
-
-    p1_p3 = (
-        f"El diagnóstico macroeconómico al cierre de {periodo_texto_cap} confirma la vigencia y solidez del ancla fiscal y monetaria. "
-        f"La convergencia inflacionaria (IPC INDEC: {_fmt1(inflacion.get('indec_general_mom'))}% MoM vs. Mendoza DEIE: {_fmt1(inflacion.get('deie_mendoza_mom'))}% MoM) "
-        f"estuvo liderada por el reacomodamiento de precios regulados ({_fmt1(inflacion.get('indec_regulados_mom'))}% MoM) y servicios privados ({_fmt1(inflacion.get('indec_servicios_mom'))}% MoM), "
-        f"compensados por la marcada estabilidad en la inflación núcleo ({_fmt1(inflacion.get('indec_nucleo_mom'))}% MoM). En el frente monetario, la tasa real ex-ante "
-        f"(+{_fmt1(tasa_real_exante, signo=False)}% mensual TEM Lecap vs. REM) opera como dique de contención contra la dolarización de carteras, preservando la estabilidad "
-        f"del tipo de cambio financiero. La absorción bancaria de liquidez opera vía la tasa de pases pasivos a 1 día ({_fmt1(tasas_bcra.get('pases_1d_tna', {}).get('valor'))}% TNA) "
-        f"y el equilibrio presupuestario primario sostenido en base caja."
-    )
-    elements.append(Paragraph(p1_p3, body_style))
-
-    p2_p3 = (
-        f"En el plano distributivo, la Canasta Básica Total en Mendoza (${fmt_num(inflacion.get('canasta_basica_total_mza'), 0)}) exige ingresos crecientes para superar el umbral de pobreza, "
-        f"mientras el salario formal (RIPTE) comienza a registrar mejoras reales marginales en los sectores transables. A nivel soberano, el riesgo país EMBI+ comprime a "
-        f"<b>{fmt_num(embi_val, 0)} pb</b>, reduciendo sustancialmente el costo marginal de fondeo y habilitando la rotación táctica hacia tramos medios de bonos Globales (GD35/GD38)."
-    )
-    elements.append(Paragraph(p2_p3, body_style))
+    elements.append(Paragraph(
+        f"<font color='#0284C7' size=7.2><b>RESEARCH INSTITUCIONAL · WALL STREET STRATEGY TEAR-SHEET</b></font>",
+        ParagraphStyle('Kicker_P3', parent=styles['Normal'], fontName='Georgia-Bold', leading=9.0, spaceAfter=2)
+    ))
+    elements.append(Paragraph("Resumen Ejecutivo: Diagnóstico Macroeconómico, Asignación Táctica y Escenarios", title_style))
+    
+    t_lead_p3 = Table([[Paragraph(
+        "Evaluación del régimen de absorción monetaria, ancla fiscal en base caja, dinámica de precios relativos INDEC/DEIE, "
+        f"compresión del riesgo país a {fmt_num(embi_val, 0)} pb y directrices tácticas de asignación multiactivo.",
+        leadin_style
+    )]], colWidths=[532])
+    t_lead_p3.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+        ('TOPPADDING', (0,0), (-1,-1), 3.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.0),
+        ('LINELEFT', (0,0), (0,-1), 2.5, PRIMARY),
+    ]))
+    elements.append(t_lead_p3)
     elements.append(Spacer(1, 4))
 
-    elements.append(Paragraph("<font color='#0284C7'><b>Matriz de Escenarios Macroeconómicos a 12 Meses (Proyecciones de Research)</b></font>", table_title_style))
-    elements.append(Spacer(1, 2))
+    # Columna Izquierda (330 pt)
+    col_izq_p3 = []
+    col_izq_p3.append(Paragraph("<font color='#0B2545' size=8.4><b>DIAGNÓSTICO EJECUTIVO & ANCLA MACROECONÓMICA</b></font>", ParagraphStyle('SecL3', fontName='Georgia', leading=10.5)))
+    col_izq_p3.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=2, spaceAfter=5))
 
-    esc_p3_data = [
+    p1_cov = (
+        f"El proceso de estabilización macroeconómica consolida su sendero de desinflación con el registro del IPC general "
+        f"en <b>{_fmt1(ipc_gral)}% m/m</b> y una desaceleración del componente núcleo al <b>{_fmt1(ipc_core)}% m/m</b> (con la medición regional DEIE Mendoza "
+        f"situándose en <b>{_fmt1(deie)}%</b>). La convergencia nominal responde a la persistencia del ancla fiscal en base caja —sin emisión monetaria directa al Tesoro— "
+        f"y al sostenimiento de rendimientos reales ex-ante positivos en la curva en pesos: la Lecap corta opera en una <b>TEM de {_fmt1(lecap_corta)}%</b> frente a una "
+        f"expectativa de inflación REM del {_fmt1(rem)}%, garantizando una tasa real contractual de <b>+{_fmt1(tasa_real_exante_val)}% mensual</b>. Este diferencial comprime "
+        f"la brecha del CCL al <b>{_fmt1(brecha_val)}%</b> sobre el tipo de cambio oficial mayorista (${fmt_num(ccl_val, 2)}), desarticulando expectativas de salto cambiario."
+    )
+    col_izq_p3.append(Paragraph(p1_cov, ParagraphStyle('CovBL1', fontName='Georgia', fontSize=8.0, leading=11.2, alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=5)))
+
+    p2_cov = (
+        f"En el frente monetario, la ejecución de la segunda etapa del programa económico ha consolidado la extinción de los pasivos remunerados del Banco Central "
+        f"(migración de pases y LeFis hacia Letras del Tesoro), clausurando la emisión cuasifiscal endógena y guiando la tasa hacia el nivel neutral real (r*). "
+        f"En simultáneo, la economía real refleja una reactivación cíclica con el EMAE expandiéndose <b>+{_fmt1(emae_ia_val)}% i.a.</b> (<b>+{_fmt1(emae_mom_val)}% m/m</b> desestacionalizado), "
+        f"traccionada por la región Cuyo (Mendoza <b>+{_fmt1(isarc_mdz_val)}%</b>, San Luis <b>+{_fmt1(isarc_sl_val)}%</b>). En deuda soberana, el riesgo país EMBI+ "
+        f"comprime a <b>{fmt_num(embi_val, 0)} pb</b> con una tasa asintótica Nelson-Siegel de <b>{_fmt1(beta0_val)}%</b> y el GD35 rindiendo <b>{_fmt1(gd35_tir_val)}% TIR</b>."
+    )
+    col_izq_p3.append(Paragraph(p2_cov, ParagraphStyle('CovBL2', fontName='Georgia', fontSize=8.0, leading=11.2, alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=5)))
+
+    p3_cov = (
+        f"En el sector externo y cambiario, las reservas brutas del BCRA alcanzan los <b>${fmt_num(tasas_bcra.get('reservas_brutas_usd_m', {}).get('valor', 50660), 0)} M USD</b>, "
+        f"con recomposición de reservas netas y reversión del déficit cuasifiscal. Las liquidaciones de la balanza comercial energética y agroindustrial sostienen "
+        f"la oferta en el segmento financiero bajo el esquema blend 80/20, mientras el programa de rollover del Tesoro supera el 110% de cobertura sobre vencimientos "
+        f"en moneda local, extendiendo los plazos de colocación hacia 2027 sin fricciones de liquidez."
+    )
+    col_izq_p3.append(Paragraph(p3_cov, ParagraphStyle('CovBL3', fontName='Georgia', fontSize=8.0, leading=11.2, alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=5)))
+
+    # Bloque de catalizadores
+    t_cat = Table([
+        [Paragraph("<font color='#0B2545' size=7.2><b>CATALIZADORES & FACTORES DE RIESGO TÁCTICO (30–60 DÍAS)</b></font>", ParagraphStyle('CatT', fontName='Georgia-Bold', leading=9.0))],
+        [Paragraph(
+            "<font color='#1E293B' size=6.5>"
+            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Transición Cambiaria & Reservas:</b> Sostenibilidad de la acumulación de divisas y calibración del crawling peg.<br/>"
+            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Roll-over de Deuda en Pesos:</b> Capacidad del Tesoro para refinanciar más del 100% en Lecaps sin convalidar tasas elevadas.<br/>"
+            "<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Compresión Soberana:</b> Ruptura del piso de 500 pb en EMBI+ como condición para retornar al crédito internacional."
+            "</font>",
+            ParagraphStyle('CatB', fontName='Georgia', leading=8.8)
+        )]
+    ], colWidths=[324])
+    t_cat.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), BG_CURR),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+        ('LINELEFT', (0,0), (0,-1), 2.5, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 3.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+    ]))
+    col_izq_p3.append(t_cat)
+    col_izq_p3.append(Spacer(1, 5))
+
+    # Matriz de escenarios en P3
+    t_esc_cov = Table([
         [
-            Paragraph("<b>Escenario</b>", cell_header_style),
-            Paragraph("<b>Prob.</b>", cell_header_style),
-            Paragraph("<b>Dólar CCL (Dic-26)</b>", cell_header_style),
-            Paragraph("<b>Inflación 2026</b>", cell_header_style),
-            Paragraph("<b>TIR GD30 Esperada</b>", cell_header_style),
-            Paragraph("<b>Estrategia Recomendada</b>", cell_header_style)
+            Paragraph("<b>Escenario Macro (30–90d)</b>", ParagraphStyle('EH1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white)),
+            Paragraph("<b>Prob.</b>", ParagraphStyle('EH2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)),
+            Paragraph("<b>Directriz de Asignación Sugerida</b>", ParagraphStyle('EH3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white))
         ],
-        [Paragraph("<b>Base (Continuidad)</b>", table_cell_bold), Paragraph("60%", table_cell_center), Paragraph("$1.750 - $1.850", table_cell_center), Paragraph("28% - 32% anual", table_cell_center), Paragraph("9,50% (Upside +12%)", table_cell_center), Paragraph("Carry en Lecaps del tramo corto + sobreponderar tramo GD35/GD38.", table_cell_left)],
-        [Paragraph("<b>Bull (Salida de Cepo)</b>", table_cell_bold), Paragraph("25%", table_cell_center), Paragraph("$1.620 - $1.700", table_cell_center), Paragraph("20% - 25% anual", table_cell_center), Paragraph("7,80% (Upside +28%)", table_cell_center), Paragraph("Máxima exposición a Globales largos y acciones energéticas (YPF, PAMP).", table_cell_left)],
-        [Paragraph("<b>Bear (Shock Externo)</b>", table_cell_bold), Paragraph("15%", table_cell_center), Paragraph("$1.950 - $2.150", table_cell_center), Paragraph("40% - 48% anual", table_cell_center), Paragraph("13,50% (Hedge)", table_cell_center), Paragraph("Dolarización de liquidez en Bopreal / Boncer tramo corto.", table_cell_left)],
-    ]
-    t_esc_p3 = Table(esc_p3_data, colWidths=[82, 35, 85, 75, 85, 170])
-    t_esc_p3.setStyle(TableStyle([
+        [Paragraph("<b>Base (Convergencia)</b>", ParagraphStyle('EB1', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, textColor=PRIMARY)), Paragraph("<b>65%</b>", ParagraphStyle('EB2', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, alignment=TA_CENTER, textColor=colors.HexColor(POS_COLOR))), Paragraph("Ancla fiscal y monetaria firme; sostener Lecaps cortas y acumular GD35.", ParagraphStyle('EB3', fontName='Georgia', fontSize=6.2, leading=7.8, textColor=DARK_TEXT))],
+        [Paragraph("<b>Shock Tarifario / Brecha</b>", ParagraphStyle('EB1', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, textColor=colors.HexColor("#B45309"))), Paragraph("<b>25%</b>", ParagraphStyle('EB2', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, alignment=TA_CENTER, textColor=colors.HexColor("#B45309"))), Paragraph("Rebote de regulados; rotar 15% hacia Boncer TZX26/TZX27.", ParagraphStyle('EB3', fontName='Georgia', fontSize=6.2, leading=7.8, textColor=DARK_TEXT))],
+        [Paragraph("<b>Estrés Externo / Salida</b>", ParagraphStyle('EB1', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, textColor=colors.HexColor(NEG_COLOR))), Paragraph("<b>10%</b>", ParagraphStyle('EB2', fontName='Georgia-Bold', fontSize=6.4, leading=8.0, alignment=TA_CENTER, textColor=colors.HexColor(NEG_COLOR))), Paragraph("Volatilidad global; cobertura en Bopreal y acortar duration.", ParagraphStyle('EB3', fontName='Georgia', fontSize=6.2, leading=7.8, textColor=DARK_TEXT))],
+    ], colWidths=[88, 30, 206])
+    t_esc_cov.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,1), (-1,1), BG_CURR),
-        ('BACKGROUND', (0,2), (-1,2), colors.white),
-        ('BACKGROUND', (0,3), (-1,3), BG_CURR),
-        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 2.8),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.8),
+        ('LEFTPADDING', (0,0), (-1,-1), 3),
+        ('RIGHTPADDING', (0,0), (-1,-1), 3),
+        ('LINEBELOW', (0,1), (-1,-1), 0.4, HAIRLINE),
         ('BOX', (0,0), (-1,-1), 0.5, BORDER),
-        ('TOPPADDING', (0,0), (-1,-1), 2.2),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.2),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
-    elements.append(t_esc_p3)
-    elements.append(Spacer(1, 6))
+    col_izq_p3.append(t_esc_cov)
 
-    # Matriz de Sensibilidad Táctica & Retorno Total en Bonos Soberanos (Duration vs EMBI+)
-    elements.append(Spacer(1, 4))
-    elements.append(Paragraph("<font color='#0284C7'><b>Matriz de Sensibilidad Táctica & Retorno Total en Deuda Soberana USD</b></font>", table_title_style))
-    elements.append(Spacer(1, 2))
+    # Columna Derecha (192 pt)
+    col_der_p3 = []
+    col_der_p3.append(Paragraph("<font color='#0B2545' size=8.2><b>ASIGNACIÓN TÁCTICA DE ACTIVOS</b></font>", ParagraphStyle('SecR1', fontName='Georgia', leading=10.2)))
+    col_der_p3.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=2, spaceAfter=4))
 
-    sens_p3_data = [
+    t_tact = Table([
         [
-            Paragraph("<b>Instrumento</b>", cell_header_style),
-            Paragraph("<b>Maturity</b>", cell_header_style),
-            Paragraph("<b>Mod. Dur.</b>", cell_header_style),
-            Paragraph("<b>TIR Actual</b>", cell_header_style),
-            Paragraph("<b>Shock -200 pb (Bull)</b>", cell_header_style),
-            Paragraph("<b>Shock -100 pb (Base)</b>", cell_header_style),
-            Paragraph("<b>Shock +100 pb (Hedge)</b>", cell_header_style)
+            Paragraph("<b>Activo</b>", ParagraphStyle('TH1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white)),
+            Paragraph("<b>Postura</b>", ParagraphStyle('TH2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)),
+            Paragraph("<b>Peso</b>", ParagraphStyle('TH3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_CENTER)),
+            Paragraph("<b>Target</b>", ParagraphStyle('TH4', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_RIGHT))
         ],
-        [Paragraph("<b>Bonares AL30</b>", table_cell_bold), Paragraph("2030", table_cell_center), Paragraph("2,65", table_cell_center), Paragraph(f"{_fmt1(soberano.get('al30_tir', 11.20))}%", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+5,8%</font>", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>+2,8%</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-2,5%</font>", table_cell_center)],
-        [Paragraph("<b>Globales GD30</b>", table_cell_bold), Paragraph("2030", table_cell_center), Paragraph("2,80", table_cell_center), Paragraph(f"{_fmt1(soberano.get('gd30_tir', 9.80))}%", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+6,1%</font>", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>+3,0%</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-2,7%</font>", table_cell_center)],
-        [Paragraph("<b>Globales GD35</b>", table_cell_bold), Paragraph("2035", table_cell_center), Paragraph("6,40", table_cell_center), Paragraph(f"{_fmt1(gd35_tir_val)}%", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+14,2%</font>", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>+6,9%</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-6,1%</font>", table_cell_center)],
-        [Paragraph("<b>Globales GD38</b>", table_cell_bold), Paragraph("2038", table_cell_center), Paragraph("5,20", table_cell_center), Paragraph(f"{_fmt1(soberano.get('gd38_tir', 9.70))}%", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'>+11,8%</font>", table_cell_center_bold), Paragraph(f"<font color='{POS_COLOR}'>+5,7%</font>", table_cell_center), Paragraph(f"<font color='{NEG_COLOR}'>-4,9%</font>", table_cell_center)],
-    ]
-    t_sens_p3 = Table(sens_p3_data, colWidths=[90, 55, 60, 65, 90, 86, 86])
-    t_sens_p3.setStyle(TableStyle([
+        [Paragraph("Lecaps Cortas", ParagraphStyle('TD1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph("<font color='#059669'><b>Sobreponderar</b></font>", ParagraphStyle('TD2', fontName='Georgia', fontSize=6.0, leading=8.0, alignment=TA_CENTER)), Paragraph("40%", ParagraphStyle('TD3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_CENTER, textColor=PRIMARY)), Paragraph("TEM 2.95%", ParagraphStyle('TD4', fontName='Georgia', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+        [Paragraph("Soberanos GD35", ParagraphStyle('TD1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph("<font color='#059669'><b>Sobreponderar</b></font>", ParagraphStyle('TD2', fontName='Georgia', fontSize=6.0, leading=8.0, alignment=TA_CENTER)), Paragraph("30%", ParagraphStyle('TD3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_CENTER, textColor=PRIMARY)), Paragraph("TIR 9.65%", ParagraphStyle('TD4', fontName='Georgia', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+        [Paragraph("Boncer TZX26", ParagraphStyle('TD1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph("<font color='#475569'><b>Mantener</b></font>", ParagraphStyle('TD2', fontName='Georgia', fontSize=6.0, leading=8.0, alignment=TA_CENTER)), Paragraph("15%", ParagraphStyle('TD3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_CENTER, textColor=SLATE)), Paragraph("CER+7.8%", ParagraphStyle('TD4', fontName='Georgia', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+        [Paragraph("Bopreal BPY26", ParagraphStyle('TD1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph("<font color='#059669'><b>Sobreponderar</b></font>", ParagraphStyle('TD2', fontName='Georgia', fontSize=6.0, leading=8.0, alignment=TA_CENTER)), Paragraph("10%", ParagraphStyle('TD3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_CENTER, textColor=PRIMARY)), Paragraph("TIR 10.4%", ParagraphStyle('TD4', fontName='Georgia', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+        [Paragraph("Equity Merval", ParagraphStyle('TD1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=DARK_TEXT)), Paragraph("<font color='#DC2626'><b>Subponderar</b></font>", ParagraphStyle('TD2', fontName='Georgia', fontSize=6.0, leading=8.0, alignment=TA_CENTER)), Paragraph("5%", ParagraphStyle('TD3', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, alignment=TA_CENTER, textColor=colors.HexColor(NEG_COLOR))), Paragraph("Valuación", ParagraphStyle('TD4', fontName='Georgia', fontSize=6.5, leading=8.0, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+    ], colWidths=[68, 54, 28, 42])
+    t_tact.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), PRIMARY),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,1), (-1,1), BG_CURR),
-        ('BACKGROUND', (0,2), (-1,2), colors.white),
-        ('BACKGROUND', (0,3), (-1,3), BG_CURR),
-        ('BACKGROUND', (0,4), (-1,4), colors.white),
-        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 3.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.0),
+        ('LEFTPADDING', (0,0), (-1,-1), 2.0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2.0),
+        ('LINEBELOW', (0,1), (-1,-1), 0.4, HAIRLINE),
         ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+    ]))
+    col_der_p3.append(t_tact)
+    col_der_p3.append(Spacer(1, 5))
+
+    col_der_p3.append(Paragraph("<font color='#0B2545' size=8.2><b>MACRO & MARKET SCORECARD</b></font>", ParagraphStyle('SecR2', fontName='Georgia', leading=10.2)))
+    col_der_p3.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=2, spaceAfter=4))
+
+    t_sc = Table([
+        [Paragraph("<b>Métrica Clave</b>", ParagraphStyle('SH1', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white)), Paragraph("<b>Nivel Observado</b>", ParagraphStyle('SH2', fontName='Georgia-Bold', fontSize=6.5, leading=8.0, textColor=colors.white, alignment=TA_RIGHT))],
+        [Paragraph("IPC General / Núcleo", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.4, leading=7.8, textColor=DARK_TEXT)), Paragraph(f"{_fmt1(ipc_gral)}% / {_fmt1(ipc_core)}% m/m", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.4, leading=7.8, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+        [Paragraph("Lecap Corta (TEM)", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.4, leading=7.8, textColor=DARK_TEXT)), Paragraph(f"{_fmt1(lecap_corta)}% (Real: +{_fmt1(tasa_real_exante_val)}%)", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.4, leading=7.8, alignment=TA_RIGHT, textColor=colors.HexColor(POS_COLOR)))],
+        [Paragraph("Dólar CCL / Brecha", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.4, leading=7.8, textColor=DARK_TEXT)), Paragraph(f"${fmt_num(ccl_val, 2)} / {_fmt1(brecha_val)}%", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.4, leading=7.8, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+        [Paragraph("EMBI+ Riesgo País", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.4, leading=7.8, textColor=DARK_TEXT)), Paragraph(f"{fmt_num(embi_val, 0)} pb (-174 pb)", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.4, leading=7.8, alignment=TA_RIGHT, textColor=PRIMARY))],
+        [Paragraph("Curva N-S (Beta 0)", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.4, leading=7.8, textColor=DARK_TEXT)), Paragraph(f"{_fmt1(beta0_val)}%", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.4, leading=7.8, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+        [Paragraph("Actividad EMAE", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.4, leading=7.8, textColor=DARK_TEXT)), Paragraph(f"{_fmt1(emae_ia_val, signo=True)}% i.a.", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.4, leading=7.8, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+        [Paragraph("Régimen Sistémico", ParagraphStyle('SD1', fontName='Georgia', fontSize=6.4, leading=7.8, textColor=DARK_TEXT)), Paragraph(f"{_regimen_txt} (Turb {_turb_txt})", ParagraphStyle('SD2', fontName='Georgia-Bold', fontSize=6.4, leading=7.8, alignment=TA_RIGHT, textColor=colors.HexColor(POS_COLOR)))],
+    ], colWidths=[100, 92])
+    t_sc.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TOPPADDING', (0,0), (-1,-1), 2.2),
         ('BOTTOMPADDING', (0,0), (-1,-1), 2.2),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
+        ('LEFTPADDING', (0,0), (-1,-1), 2.0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2.0),
+        ('LINEBELOW', (0,1), (-1,-1), 0.4, HAIRLINE),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
     ]))
-    elements.append(t_sens_p3)
-    elements.append(Spacer(1, 5))
+    col_der_p3.append(t_sc)
+    col_der_p3.append(Spacer(1, 5))
 
-    # Dos columnas asimétricas de asignación y vulnerabilidad
-    col_izq_p3 = [
-        Paragraph("<b>Guía de Asignación Táctica por Perfil de Cartera:</b>", h2_style),
-        Paragraph("<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Conservador (Treasury):</b> 70% Lecap corta (TEM 2,95%) + 30% Boncer TZX27. Captura de tasa real de +95 pb mensual con mínimo riesgo de volatilidad de precio.", body_style),
-        Paragraph("<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Moderado (Institucional):</b> 40% Lecap tramo medio + 20% Boncer + 25% GD35/GD38 + 15% Bopreal Serie 3. Balance de carry real y compresión soberana.", body_style),
-        Paragraph("<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Agresivo (Total Return):</b> 20% Lecaps + 45% Globales GD35/GD38 + 35% Equity ByMA (YPF, Pampa, TGS). Maximización de convexidad ante el régimen RIGI.", body_style),
-    ]
-    col_der_p3 = [
-        Paragraph("<b>Termómetro de Vulnerabilidad & Señales de Mercado:</b>", h2_style),
-        Paragraph("<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Brecha Cambiaria CCL (4,5%):</b> El esquema blend 80/20 y la absorción de liquidez contienen la cotización financiera por debajo del umbral de alerta del 10%.", body_style),
-        Paragraph("<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Curva de Futuros CIP:</b> Las tasas implícitas en derivados (35,4% TNA a 30d) descartan presiones de devaluación en el horizonte de corto plazo.", body_style),
-        Paragraph(f"<font name='SymFont' color='#0284C7'><b>▸</b></font> <b>Riesgo País EMBI+ ({fmt_num(embi_val, 0)} pb):</b> La compresión de spreads consolida el acceso al financiamiento y la normalización de paridades.", body_style),
-    ]
-    t_2col_p3 = Table([[col_izq_p3, col_der_p3]], colWidths=[260, 260])
-    t_2col_p3.setStyle(TableStyle([
+    t_cal_cov = Table([
+        [Paragraph("<b>Hito Financiero (30d)</b>", ParagraphStyle('CL1', fontName='Georgia-Bold', fontSize=6.4, leading=7.8, textColor=colors.white)), Paragraph("<b>Estrategia</b>", ParagraphStyle('CL2', fontName='Georgia-Bold', fontSize=6.4, leading=7.8, textColor=colors.white, alignment=TA_RIGHT))],
+        [Paragraph("Licitación Tesoro", ParagraphStyle('CD1', fontName='Georgia-Bold', fontSize=6.2, leading=7.6, textColor=DARK_TEXT)), Paragraph("Rollover &ge; 100% en Lecaps", ParagraphStyle('CD2', fontName='Georgia', fontSize=6.1, leading=7.6, alignment=TA_RIGHT, textColor=PRIMARY))],
+        [Paragraph("Publicación IPC INDEC", ParagraphStyle('CD1', fontName='Georgia-Bold', fontSize=6.2, leading=7.6, textColor=DARK_TEXT)), Paragraph("Ancla núcleo &le; 2,0%", ParagraphStyle('CD2', fontName='Georgia', fontSize=6.1, leading=7.6, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+        [Paragraph("Vencimiento CIP / Rofex", ParagraphStyle('CD1', fontName='Georgia-Bold', fontSize=6.2, leading=7.6, textColor=DARK_TEXT)), Paragraph("Arbitraje blend 80/20", ParagraphStyle('CD2', fontName='Georgia', fontSize=6.1, leading=7.6, alignment=TA_RIGHT, textColor=DARK_TEXT))],
+        [Paragraph("Directorio BCRA", ParagraphStyle('CD1', fontName='Georgia-Bold', fontSize=6.2, leading=7.6, textColor=DARK_TEXT)), Paragraph("Tasa neutral r*", ParagraphStyle('CD2', fontName='Georgia', fontSize=6.1, leading=7.6, alignment=TA_RIGHT, textColor=PRIMARY))],
+    ], colWidths=[108, 84])
+    t_cal_cov.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 2.2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.2),
+        ('LEFTPADDING', (0,0), (-1,-1), 2.0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 2.0),
+        ('LINEBELOW', (0,1), (-1,-1), 0.4, HAIRLINE),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+    ]))
+    col_der_p3.append(t_cal_cov)
+
+    t_main_p3 = Table([[col_izq_p3, "", col_der_p3]], colWidths=[330, 10, 192])
+    t_main_p3.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
         ('LEFTPADDING', (0,0), (-1,-1), 0),
         ('RIGHTPADDING', (0,0), (-1,-1), 0),
         ('TOPPADDING', (0,0), (-1,-1), 0),
         ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (0,0), 6),
-        ('LEFTPADDING', (1,0), (1,0), 6),
+        ('LINEBEFORE', (2,0), (2,0), 0.5, HAIRLINE),
     ]))
-    elements.append(t_2col_p3)
+    elements.append(t_main_p3)
     elements.append(Spacer(1, 6))
 
-    # Pull-quote institucional
-    p_cita = Paragraph("<i>«El trípode de superávit primario irrestricto, tasa de interés real positiva y saneamiento patrimonial del Banco Central convalida la mayor compresión de primas de riesgo soberano de la última década, transformando el arbitraje financiero.»</i>", ParagraphStyle('PQuote', fontName='Georgia-Italic', fontSize=8.0, leading=10.8, alignment=TA_JUSTIFY, textColor=PRIMARY))
-    p_aut = Paragraph("<b>— Comité de Asignación Estratégica · FCE UNCUYO · OERU</b>", ParagraphStyle('PQuoteAut', fontName='Sans-Bold', fontSize=6.6, leading=8.2, alignment=TA_RIGHT, textColor=MUTED))
+    # Pull-quote institucional a ancho completo
+    p_cita = Paragraph("<i>«El trípode de superávit primario irrestricto, tasa de interés real positiva y saneamiento patrimonial del Banco Central convalida la mayor compresión de primas de riesgo soberano de la última década, transformando el arbitraje financiero y consolidando la normalización de curvas de rendimiento.»</i>", ParagraphStyle('PQuoteP3', fontName='Georgia-Italic', fontSize=7.8, leading=10.5, alignment=TA_JUSTIFY, textColor=PRIMARY))
+    p_aut = Paragraph("<b>— Comité de Estrategia Macroeconómica & Asset Allocation · FCE UNCUYO · OERU</b>", ParagraphStyle('PQuoteAutP3', fontName='Sans-Bold', fontSize=6.8, leading=8.4, alignment=TA_RIGHT, textColor=MUTED))
     t_pq = Table([[p_cita], [p_aut]], colWidths=[532])
     t_pq.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('LINETOP', (0,0), (-1,0), 0.6, PRIMARY),
-        ('LINEBELOW', (0,-1), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 2.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
+        ('LINELEFT', (0,0), (0,-1), 2.5, PRIMARY),
+        ('TOPPADDING', (0,0), (-1,-1), 3.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
         ('LEFTPADDING', (0,0), (-1,-1), 8),
         ('RIGHTPADDING', (0,0), (-1,-1), 8),
     ]))
     elements.append(t_pq)
     elements.append(Spacer(1, 5))
 
-    # Radar de Alertas Tempranas & Umbrales de Sostenibilidad Macroeconómica
-    elements.append(Paragraph("<font color='#0284C7'><b>Radar de Alertas Tempranas & Umbrales de Sostenibilidad Macroeconómica</b></font>", table_title_style))
-    elements.append(Spacer(1, 2))
-
-    radar_p3_data = [
+    elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=3))
+    t_imp_p3 = Table([
         [
-            Paragraph("<b>Pilar Macroeconómico</b>", cell_header_style),
-            Paragraph("<b>Métrica / Benchmark</b>", cell_header_style),
-            Paragraph("<b>Nivel Observado</b>", cell_header_style),
-            Paragraph("<b>Umbral de Alerta</b>", cell_header_style),
-            Paragraph("<b>Diagnóstico de Régimen</b>", cell_header_style),
-            Paragraph("<b>Implicancia Operativa de Corto Plazo</b>", cell_header_style)
-        ],
-        [Paragraph("<b>Ancla Fiscal Primaria</b>", table_cell_bold), Paragraph("Superávit Base Caja (% PBI)", table_cell_left), Paragraph("+1,8% PBI", table_cell_center_bold), Paragraph("&lt; +1,0% PBI", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'><b>Consolidado</b></font>", table_cell_center), Paragraph("Clausura de transferencias de emisión al Tesoro.", table_cell_left)],
-        [Paragraph("<b>Régimen de Tasas Reales</b>", table_cell_bold), Paragraph("TEM Lecap vs. Inflación REM", table_cell_left), Paragraph("+0,95% m/m", table_cell_center_bold), Paragraph("&le; 0,00% m/m", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'><b>Contractivo</b></font>", table_cell_center), Paragraph("Incentivo robusto a la retención de depósitos en ARS.", table_cell_left)],
-        [Paragraph("<b>Microestructura Cambiaria</b>", table_cell_bold), Paragraph("Brecha CCL vs. Mayorista", table_cell_left), Paragraph("4,52%", table_cell_center_bold), Paragraph("&gt; 15,0%", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'><b>Normalizado</b></font>", table_cell_center), Paragraph("Esquema blend 80/20 esteriliza la prima de salto.", table_cell_left)],
-        [Paragraph("<b>Hoja de Balance BCRA</b>", table_cell_bold), Paragraph("Reservas Netas (RIN USD)", table_cell_left), Paragraph("+3.650 MM USD", table_cell_center_bold), Paragraph("&lt; 0 MM USD", table_cell_center), Paragraph(f"<font color='{BLUE_INST}'><b>Recuperación</b></font>", table_cell_center), Paragraph("Cancelación de pasivos remunerados a stock $0.", table_cell_left)],
-        [Paragraph("<b>Fragilidad Multivariada</b>", table_cell_bold), Paragraph("Absorption Ratio (Kritzman AR)", table_cell_left), Paragraph("64,2% (dt=5,4)", table_cell_center_bold), Paragraph("&gt; 75,0%", table_cell_center), Paragraph(f"<font color='{POS_COLOR}'><b>Resiliente</b></font>", table_cell_center), Paragraph("Ausencia de concentración de volatilidad cruzada.", table_cell_left)],
-    ]
-    t_radar_p3 = Table(radar_p3_data, colWidths=[90, 95, 68, 62, 65, 152])
-    t_radar_p3.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
+            Paragraph("<font color='#0B2545' size=7.0><b>ESTRATEGIA MACROECONÓMICA & ASSET ALLOCATION</b> · FCE UNCUYO · OERU</font>", ParagraphStyle('IL3', fontName='Georgia', leading=8.4)),
+            Paragraph("<font color='#64748B' size=6.5>Resumen Ejecutivo · Modelos Nelson-Siegel & CIP Rofex</font>", ParagraphStyle('IR3', fontName='Georgia', alignment=TA_RIGHT, leading=8.4))
+        ]
+    ], colWidths=[370, 162])
+    t_imp_p3.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,1), (-1,1), BG_CURR),
-        ('BACKGROUND', (0,2), (-1,2), colors.white),
-        ('BACKGROUND', (0,3), (-1,3), BG_CURR),
-        ('BACKGROUND', (0,4), (-1,4), colors.white),
-        ('BACKGROUND', (0,5), (-1,5), BG_CURR),
-        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
-        ('BOX', (0,0), (-1,-1), 0.5, BORDER),
-        ('TOPPADDING', (0,0), (-1,-1), 2.2),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.2),
-        ('LEFTPADDING', (0,0), (-1,-1), 3),
-        ('RIGHTPADDING', (0,0), (-1,-1), 3),
+        ('TOPPADDING', (0,0), (-1,-1), 1),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 1),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
     ]))
-    elements.append(t_radar_p3)
+    elements.append(t_imp_p3)
     elements.append(PageBreak())
 
-    
-    # =========================================================================
     # PÁGINA 4: 1. NIVEL DE ACTIVIDAD GENERAL (EMAE) — ARQUETIPO SCORECARD
     # =========================================================================
     p4_lead = (
