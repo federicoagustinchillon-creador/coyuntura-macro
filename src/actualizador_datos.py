@@ -2,7 +2,7 @@
 MÓDULO DE INGESTA, MODELADO Y VALIDACIÓN DE LA BASE DE DATOS MACRO-FINANCIERA
 =============================================================================
 Autor: Federico Agustín Chillón
-Facultad de Ciencias Económicas — UNCUYO / OERU
+Facultad de Ciencias Económicas — UNCUYO
 
 Consolida 6 solapas analíticas estandarizadas en Base_Datos_Macro_Financiera.xlsx:
 1. Cambiario_y_Derivados: Cotizaciones spot, brechas, flujos MULC y futuros Matba-Rofex con tasas implícitas.

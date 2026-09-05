@@ -71,8 +71,8 @@ TONE_CARD_BG    = "#F8FAFC"       # Fondo de tarjetas KPI ejecutivas
 TONE_AREA_FILL  = "#F0F4F8"       # Lavado tonal de soporte (alpha 0.10)
 
 # Acentos semánticos contenidos y refinados
-TONE_ALERT      = "#881337"       # Muted Deep Wine (alertas de riesgo o inflación pico)
-TONE_POSITIVE   = "#064E3B"       # Deep Pine (ganancias, equilibrio o superávit)
+TONE_ALERT      = "#B91C1C"       # Muted Deep Wine (alertas de riesgo o inflación pico)
+TONE_POSITIVE   = "#047857"       # Deep Pine (ganancias, equilibrio o superávit)
 
 # Halos blancos anticolisión para legibilidad absoluta sobre fondos y tramas
 WHITE_HALO = [pe.withStroke(linewidth=3.5, foreground="#FFFFFF"), pe.Normal()]
@@ -300,6 +300,50 @@ def render_chart_emae(emae: Optional[Dict[str, Any]] = None) -> str:
     ax.set_xticklabels([labels_x[i] for i in tick_pos], fontsize=9.2, color=TONE_SLATE)
     ax.set_ylabel("Índice de Volumen Físico (Base 2004 = 100)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax.set_ylim(min_val, max(desest.max(), original.max()) * 1.05)
+    
+    if len(x) > 0:
+        ax.set_xlim(left=x[0], right=x[-1])
+
+    if len(original) >= 3:
+        import pandas as pd
+        ma3 = pd.Series(original).rolling(3).mean().values
+        ax.plot(x, ma3, color='#0369A1', lw=1.2, ls='--', alpha=0.75,
+                     label='Media movil 3M', zorder=4)
+        hist_mean = np.mean([v for v in original if v is not None and not np.isnan(v)])
+        ax.axhline(hist_mean, color='#64748B', lw=0.7, ls=':', alpha=0.6)
+        ax.text(x[-1], hist_mean, f' Media {hist_mean:.1f}',
+                     fontsize=5.5, color='#64748B', va='center')
+
+    import pandas as pd
+    REGIMENES = [
+        ('2018-05-01', '2019-12-31', 'Crisis cambiaria'),
+        ('2020-03-01', '2020-12-31', 'COVID-19'),
+    ]
+    fechas_dt = pd.to_datetime(meses, format='%Y-%m')
+    for fecha_ini, fecha_fin, label_reg in REGIMENES:
+        fi = pd.Timestamp(fecha_ini)
+        ff = pd.Timestamp(fecha_fin)
+        if fi >= fechas_dt[0] and ff <= fechas_dt[-1]:
+            idx_i = np.interp(fi.timestamp(), fechas_dt.view('int64') / 1e9, x)
+            idx_f = np.interp(ff.timestamp(), fechas_dt.view('int64') / 1e9, x)
+            ax.axvspan(idx_i, idx_f, alpha=0.07, color='#881337', zorder=0)
+            ax.text(idx_i + (idx_f - idx_i)/2, ax.get_ylim()[1] * 0.98,
+                    label_reg, fontsize=4.5, color='#881337',
+                    ha='center', va='top', alpha=0.7)
+
+    EVENTOS = [
+        (pd.Timestamp('2023-12-10'), 'Inicio programa fiscal'),
+        (pd.Timestamp('2024-04-15'), 'Acuerdo FMI'),
+        (pd.Timestamp('2025-04-15'), 'Apertura cambiaria'),
+    ]
+    for fecha_ev, label_ev in EVENTOS:
+        if fechas_dt[0] <= fecha_ev <= fechas_dt[-1]:
+            idx_ev = np.interp(fecha_ev.timestamp(), fechas_dt.view('int64') / 1e9, x)
+            ax.axvline(idx_ev, color='#475569', lw=0.55, ls=':', alpha=0.55, zorder=2)
+            ax.text(idx_ev, ax.get_ylim()[1] * 0.96, label_ev,
+                    fontsize=4.8, color='#475569', ha='center', va='top',
+                    rotation=90, alpha=0.65)
+
     ax.legend(loc="lower right", fontsize=8.8, frameon=False)
 
     # Encabezado, Banner Superior de KPIs y Pie
@@ -314,7 +358,7 @@ def render_chart_emae(emae: Optional[Dict[str, Any]] = None) -> str:
         {"label": "Fase del Ciclo", "val": "Recuperación", "sub": f"Tendencia: {tendencia[-1]:.1f}".replace(".", ",") + " pts", "accent": TONE_POSITIVE},
     ]
     draw_top_kpi_banner(fig, kpis_emae)
-    draw_figure_footer(fig, "Instituto Nacional de Estadística y Censos (INDEC) & OERU / Cs. Económicas UNCUYO.")
+    draw_figure_footer(fig, "Instituto Nacional de Estadística y Censos (INDEC) & Cs. Económicas UNCUYO.")
 
     plt.tight_layout(rect=[0.02, 0.05, 0.98, 0.740], pad=2.0)
     return save_dual_figure(fig, "chart_indec_emae_master.png")
@@ -380,6 +424,11 @@ def render_chart_rates(tasas_ars: Optional[Dict[str, Any]] = None) -> str:
     ax2.set_ylabel("Inflación Implícita (% MoM)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax2.set_xticks(plazos)
     ax2.set_ylim(1.2, 3.5)
+    
+    if len(plazos) > 0:
+        ax1.set_xlim(left=plazos[0], right=plazos[-1])
+        ax2.set_xlim(left=plazos[0], right=plazos[-1])
+        
     ax2.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f"{y:.1f}%".replace(".", ",")))
     ax2.set_title("B. Breakeven Inflacionario vs. REM BCRA", fontsize=10.5, fontweight="bold", color=TONE_HERO, loc="left", pad=8)
     ax2.legend(loc="lower left", fontsize=8.5, frameon=False)
@@ -450,12 +499,18 @@ def render_chart_ipc(inflacion: Optional[Dict[str, Any]] = None, ipc_trayectoria
     vals_ap = [a[1] for a in aperturas]
     cols_ap = [a[2] for a in aperturas]
 
-    bars = ax1.barh(y_pos, vals_ap, height=0.48, color=cols_ap, edgecolor=TONE_BORDER, linewidth=0.8, zorder=3)
+    bars = ax1.barh(y_pos, vals_ap, height=0.48, color=cols_ap, edgecolor=TONE_BORDER, linewidth=0, zorder=3)
     for b, val, col in zip(bars, vals_ap, cols_ap):
         w = b.get_width()
         ax1.annotate(f"{val:.1f}% m/m".replace(".", ","), xy=(w, b.get_y() + b.get_height() / 2),
                      xytext=(8, 0), textcoords="offset points", va="center", ha="left",
                      fontsize=10.0, fontweight="bold", color=col)
+
+    # Pauta de referencia crawling peg
+    ax1.axvline(2.0, color='#047857', lw=1.0, ls='--', alpha=0.70, zorder=3,
+               label='Pauta crawling 2,0%')
+    ax1.text(2.0, -0.5, ' Pauta 2,0%', fontsize=5.5, color='#047857',
+            va='bottom', ha='left')
 
     ax1.set_yticks(y_pos)
     ax1.set_yticklabels(labels_ap, fontsize=10.0, fontweight="bold", color=TONE_SLATE)
@@ -487,6 +542,35 @@ def render_chart_ipc(inflacion: Optional[Dict[str, Any]] = None, ipc_trayectoria
     ax2.set_xticks(x_tr)
     ax2.set_xticklabels(meses, fontsize=8.8, color=TONE_SLATE)
     ax2.set_ylabel("Variación Mensual (% MoM)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
+    
+    if len(x_tr) > 0:
+        ax2.set_xlim(left=x_tr[0], right=x_tr[-1])
+
+    if len(meses) > 0 and 'ipc_trayectoria' in locals() and ipc_trayectoria and 'meses_dt' not in locals():
+        # Parsing months as datetime for regime shading could be complex if we only have string labels like 'Ene-25'.
+        # Assuming we don't have exact datetimes easily, the user asked to shade if exact datetimes matched. 
+        # But this function only has `meses` as strings like 'Dic-25'. We can just use the indices if we can parse it.
+        pass
+
+    import pandas as pd
+    REGIMENES = [
+        ('2018-05-01', '2019-12-31', 'Crisis cambiaria'),
+        ('2020-03-01', '2020-12-31', 'COVID-19'),
+    ]
+    # For IPC, the raw dates are available if ipc_trayectoria is loaded
+    if ipc_trayectoria and "meses" in ipc_trayectoria:
+        fechas_dt = pd.to_datetime(ipc_trayectoria["meses"], format='%Y-%m')
+        for fecha_ini, fecha_fin, label_reg in REGIMENES:
+            fi = pd.Timestamp(fecha_ini)
+            ff = pd.Timestamp(fecha_fin)
+            if fi >= fechas_dt[0] and ff <= fechas_dt[-1]:
+                idx_i = np.interp(fi.timestamp(), fechas_dt.view('int64') / 1e9, x_tr)
+                idx_f = np.interp(ff.timestamp(), fechas_dt.view('int64') / 1e9, x_tr)
+                ax2.axvspan(idx_i, idx_f, alpha=0.07, color='#881337', zorder=0)
+                ax2.text(idx_i + (idx_f - idx_i)/2, ax2.get_ylim()[1] * 0.98,
+                        label_reg, fontsize=4.5, color='#881337',
+                        ha='center', va='top', alpha=0.7)
+
     ax2.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f"{y:.0f}%".replace(".", ",")))
     ax2.set_title("B. Trayectoria Desinflacionaria Oficial (INDEC)", fontsize=10.5, fontweight="bold", color=TONE_HERO, loc="left", pad=8)
     ax2.legend(loc="upper right", fontsize=8.5, frameon=False)
@@ -549,6 +633,8 @@ def render_chart_cuyo(isac: Optional[Dict[str, Any]] = None) -> str:
     ax1.set_xticklabels(meses, fontsize=9.0, color=TONE_SLATE)
     ax1.set_ylabel("Índice de Construcción (Base 2004 = 100)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax1.set_ylim(min_isac, max(valores) * 1.05)
+    if len(x_idx) > 0:
+        ax1.set_xlim(left=x_idx[0], right=x_idx[-1])
     ax1.set_title("A. Actividad de la Construcción (ISAC)", fontsize=10.5, fontweight="bold", color=TONE_HERO, loc="left", pad=8)
     ax1.legend(loc="lower right", fontsize=8.5, frameon=False)
 
@@ -564,7 +650,7 @@ def render_chart_cuyo(isac: Optional[Dict[str, Any]] = None) -> str:
     vars_c = [c[1] for c in cadenas]
     cols_c = [c[2] for c in cadenas]
 
-    bars = ax2.barh(y_p, vars_c, height=0.48, color=cols_c, edgecolor=TONE_BORDER, linewidth=0.8, zorder=3)
+    bars = ax2.barh(y_p, vars_c, height=0.48, color=cols_c, edgecolor=TONE_BORDER, linewidth=0, zorder=3)
     ax2.axvline(0, color=TONE_SLATE, linewidth=1.0, linestyle="-", zorder=2)
 
     for b, val, col in zip(bars, vars_c, cols_c):
@@ -625,7 +711,7 @@ def render_chart_cuyo_regional(actividad: Optional[Dict[str, Any]] = None) -> st
     colores = [p[2] for p in provincias]
     descrip = [p[3] for p in provincias]
 
-    bars = ax.barh(y_pos, valores, height=0.46, color=colores, edgecolor=TONE_BORDER, linewidth=1.0, zorder=3)
+    bars = ax.barh(y_pos, valores, height=0.46, color=colores, edgecolor=TONE_BORDER, linewidth=0, zorder=3)
     ax.axvline(0, color=TONE_SLATE, linewidth=1.0, linestyle="-")
 
     for b, val, col, d in zip(bars, valores, colores, descrip):
@@ -648,7 +734,7 @@ def render_chart_cuyo_regional(actividad: Optional[Dict[str, Any]] = None) -> st
     # Encabezado, Banner Superior de KPIs y Pie
     draw_figure_header(fig, "ACTIVIDAD ECONÓMICA COMPARADA · REGIÓN DE CUYO (ISARC)",
                        "San Luis y Mendoza Encabezan el Ritmo de Expansión en la Región de Cuyo",
-                       "Índice Sintético de Actividad Regional (ISARC) · Variación interanual estimada · OERU / DEIE")
+                       "Índice Sintético de Actividad Regional (ISARC) · Variación interanual estimada / DEIE")
 
     kpis_regional = [
         {"label": "Liderazgo Regional", "val": "San Luis: +5,8%", "sub": "Tracción manufacturera y agro", "accent": TONE_HERO},
@@ -657,7 +743,7 @@ def render_chart_cuyo_regional(actividad: Optional[Dict[str, Any]] = None) -> st
         {"label": "Promedio Cuyano", "val": "+3,8% i.a.", "sub": "Reactivación coordinada regional", "accent": TONE_POSITIVE},
     ]
     draw_top_kpi_banner(fig, kpis_regional)
-    draw_figure_footer(fig, "OERU / Facultad de Ciencias Económicas UNCUYO sobre datos provinciales.")
+    draw_figure_footer(fig, "Facultad de Ciencias Económicas UNCUYO sobre datos provinciales.")
 
     plt.tight_layout(rect=[0.02, 0.05, 0.98, 0.740], pad=2.0)
     return save_dual_figure(fig, "chart_indec_3b_regional_cuyo.png")
@@ -698,6 +784,8 @@ def render_chart_monetary(tasas_bcra: Optional[Dict[str, Any]] = None) -> str:
     ax1.set_xticklabels(meses_m, fontsize=9.0, color=TONE_SLATE)
     ax1.set_ylabel("Stock en Billones de Pesos ($ B)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax1.set_ylim(-2, 40)
+    if len(x_m) > 0:
+        ax1.set_xlim(left=x_m[0], right=x_m[-1])
     ax1.set_title("A. Evolución Base Monetaria y Pases", fontsize=10.5, fontweight="bold", color=TONE_HERO, loc="left", pad=8)
     ax1.legend(loc="center left", fontsize=8.5, frameon=False)
 
@@ -712,7 +800,7 @@ def render_chart_monetary(tasas_bcra: Optional[Dict[str, Any]] = None) -> str:
     vals_t = [t[1] for t in tasas_nom]
     cols_t = [t[2] for t in tasas_nom]
 
-    bars2 = ax2.barh(y_t, vals_t, height=0.48, color=cols_t, edgecolor=TONE_BORDER, linewidth=0.8, zorder=3)
+    bars2 = ax2.barh(y_t, vals_t, height=0.48, color=cols_t, edgecolor=TONE_BORDER, linewidth=0, zorder=3)
     for b, val, col in zip(bars2, vals_t, cols_t):
         w = b.get_width()
         ax2.annotate(f"{val:.1f}% TNA".replace(".", ","), xy=(w, b.get_y() + b.get_height() / 2),
@@ -783,14 +871,16 @@ def render_chart_sovereign(soberano: Optional[Dict[str, Any]] = None, ns: Option
         ax.annotate(f"{ticker_b}\nTIR: {tir:.2f}%".replace(".", ","), xy=(dur, tir),
                     xytext=offset, textcoords="offset points", ha=ha_pos,
                     fontsize=9.2, fontweight="bold", color=col,
-                    path_effects=WHITE_HALO_THICK,
-                    arrowprops=dict(arrowstyle="->", color=col, lw=0.9), zorder=6)
+                    path_effects=[pe.withStroke(linewidth=2.5, foreground='white'), pe.Normal()],
+                    arrowprops=dict(arrowstyle="-", color='#94A3B8', lw=0.6), zorder=6)
 
     ax.set_xlabel("Duración Modificada / Maturity (Años)", fontsize=11.0, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax.set_ylabel("Tasa Interna de Retorno (TIR % USD)", fontsize=11.0, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f"{y:.1f}%".replace(".", ",")))
     ax.set_xlim(0, 15)
     ax.set_ylim(8.0, 15.5)
+    if len(m) > 0:
+        ax.set_xlim(left=m[0], right=m[-1])
     ax.legend(loc="lower right", fontsize=8.8, frameon=False)
 
     # Encabezado, Banner Superior de KPIs y Pie
@@ -837,7 +927,7 @@ def render_chart_fx(dolar: Optional[Dict[str, Any]] = None, riesgo: Optional[Dic
     vals_c = [c[1] for c in cotiz]
     cols_c = [c[2] for c in cotiz]
 
-    bars1 = ax1.barh(y_c, vals_c, height=0.46, color=cols_c, edgecolor=TONE_BORDER, linewidth=0.8, zorder=3)
+    bars1 = ax1.barh(y_c, vals_c, height=0.46, color=cols_c, edgecolor=TONE_BORDER, linewidth=0, zorder=3)
     for b, val, col in zip(bars1, vals_c, cols_c):
         w = b.get_width()
         ax1.annotate(f"${fmt_num_ar(val, 2)}", xy=(w, b.get_y() + b.get_height() / 2),
@@ -870,6 +960,8 @@ def render_chart_fx(dolar: Optional[Dict[str, Any]] = None, riesgo: Optional[Dic
     ax2.set_xlabel("Plazo del Contrato de Futuro", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=8)
     ax2.set_ylabel("Precio Implícito del Futuro (ARS)", fontsize=10.5, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax2.set_ylim(oficial * 0.98, max(futuros_cip) * 1.08)
+    if len(plazos_fut) > 0:
+        ax2.set_xlim(left=plazos_fut[0], right=plazos_fut[-1])
     ax2.set_title("B. Curva Teórica Futuros (CIP)", fontsize=10.5, fontweight="bold", color=TONE_HERO, loc="left", pad=8)
 
     # Encabezado, Banner Superior de KPIs y Pie
@@ -928,14 +1020,18 @@ def render_chart_equity(equity: Optional[Dict[str, Any]] = None) -> str:
         ev = emp.get("ev_ebitda", 5.0)
         mg = emp.get("margen_ebitda", 30.0)
         col = emp.get("color", TONE_HERO)
-        ox = emp.get("ox", 12)
-        oy = emp.get("oy", 0)
+
+        y_med = np.median([e.get("ev_ebitda", 5.0) for e in lideres])
+        if ev > y_med:
+            ox, oy = 6, 8
+        else:
+            ox, oy = 6, -12
 
         ax.scatter([mg], [ev], color=col, s=110, edgecolor="#FFFFFF", linewidth=1.8, zorder=5)
         ax.annotate(f"{tck}\n{ev:.1f}x · {mg:.1f}%".replace(".", ","),
                     xy=(mg, ev), xytext=(ox, oy), textcoords="offset points",
                     fontsize=8.8, fontweight="bold", color=col, va="center",
-                    path_effects=WHITE_HALO_THICK,
+                    path_effects=[pe.withStroke(linewidth=2.5, foreground='white'), pe.Normal()],
                     zorder=6)
 
     ax.set_xlabel("Margen Operativo EBITDA (%)", fontsize=11.0, fontweight="bold", color=TONE_SLATE, labelpad=10)
@@ -997,6 +1093,17 @@ def render_chart_tcr() -> str:
     ax.axhline(100, color=TONE_MUTED, linestyle="--", linewidth=1.2, zorder=2, label=f"Paridad Fundamental (Base {tcr_data['base_mes']}=100)")
 
     ax.plot(x_idx, valores, color=TONE_HERO, linewidth=2.6, label="Índice TCR Bilateral ARS/USD", path_effects=WHITE_HALO_THICK, zorder=3)
+    
+    tcr_array = np.array([v for v in valores if v is not None and not np.isnan(float(v))])
+    if len(tcr_array) > 2:
+        tcr_mean = np.mean(tcr_array)
+        tcr_std = np.std(tcr_array)
+        ax.axhspan(tcr_mean - tcr_std, tcr_mean + tcr_std,
+                   alpha=0.10, color='#0369A1', zorder=1)
+        ax.axhline(tcr_mean, color='#0369A1', lw=0.7, ls=':', alpha=0.55, zorder=2)
+        ax.text(x_idx[-1], tcr_mean, f' Media {tcr_mean:.1f}',
+                fontsize=5.5, color='#0369A1', va='center')
+                
     ax.fill_between(x_idx, valores, 100, where=[v < 100 for v in valores], color=TONE_PRIMARY, alpha=0.08, interpolate=True, zorder=2)
     ax.fill_between(x_idx, valores, 100, where=[v >= 100 for v in valores], color=TONE_ACCENT, alpha=0.08, interpolate=True, zorder=2)
 
@@ -1006,7 +1113,7 @@ def render_chart_tcr() -> str:
     ax.annotate(f"Pico ({meses[idx_pico]})\n{valores[idx_pico]:.1f} pts".replace(".", ","),
                 xy=(idx_pico, valores[idx_pico]), xytext=(15, -12), textcoords="offset points",
                 fontsize=8.8, fontweight="bold", color=TONE_PRIMARY,
-                path_effects=WHITE_HALO_THICK)
+                path_effects=[pe.withStroke(linewidth=2.5, foreground='white'), pe.Normal()])
 
     ultimo = tcr_data["ultimo"]
     u_val = ultimo["tcr_indice"]
@@ -1017,14 +1124,39 @@ def render_chart_tcr() -> str:
     ax.annotate(f"Nivel Actual ({ultimo['mes']})\n{u_val:.1f} pts ({lectura})".replace(".", ","),
                 xy=(x_idx[-1], u_val), xytext=(-125, 20), textcoords="offset points",
                 fontsize=9.2, fontweight="bold", color=TONE_HERO,
-                path_effects=WHITE_HALO_THICK,
-                arrowprops=dict(arrowstyle="->", color=TONE_HERO, lw=1.0), zorder=6)
+                path_effects=[pe.withStroke(linewidth=2.5, foreground='white'), pe.Normal()],
+                arrowprops=dict(arrowstyle="-", color='#94A3B8', lw=0.6), zorder=6)
 
     tick_pos = sanitize_date_ticks(len(meses), target_ticks=8)
     ax.set_xticks(tick_pos)
     ax.set_xticklabels([meses[i] for i in tick_pos], fontsize=9.0, color=TONE_SLATE)
     ax.set_ylabel(f"Índice TCR Bilateral (Base {tcr_data['base_mes']} = 100)", fontsize=11.0, fontweight="bold", color=TONE_SLATE, labelpad=10)
     ax.set_ylim(65, 175)
+    if len(x_idx) > 0:
+        ax.set_xlim(left=x_idx[0], right=x_idx[-1])
+        
+    import pandas as pd
+    try:
+        # Convert month labels like 'Dic-23' to datetime to match events
+        meses_map = {'Ene':'01','Feb':'02','Mar':'03','Abr':'04','May':'05','Jun':'06','Jul':'07','Ago':'08','Sep':'09','Oct':'10','Nov':'11','Dic':'12'}
+        meses_dt = [pd.Timestamp(f"20{m.split('-')[1]}-{meses_map[m.split('-')[0]]}-01") for m in meses]
+        EVENTOS = [
+            (pd.Timestamp('2023-12-10'), 'Inicio programa fiscal'),
+            (pd.Timestamp('2024-04-15'), 'Acuerdo FMI'),
+            (pd.Timestamp('2025-04-15'), 'Apertura cambiaria'),
+        ]
+        for fecha_ev, label_ev in EVENTOS:
+            if meses_dt[0] <= fecha_ev <= meses_dt[-1]:
+                # Find interpolated index
+                t_arr = np.array([m.timestamp() for m in meses_dt])
+                idx_ev = np.interp(fecha_ev.timestamp(), t_arr, x_idx)
+                ax.axvline(idx_ev, color='#475569', lw=0.55, ls=':', alpha=0.55, zorder=2)
+                ax.text(idx_ev, ax.get_ylim()[1] * 0.96, label_ev,
+                        fontsize=4.8, color='#475569', ha='center', va='top',
+                        rotation=90, alpha=0.65)
+    except Exception:
+        pass
+        
     ax.legend(loc="upper right", fontsize=8.8, frameon=False)
 
     # Encabezado, Banner Superior de KPIs y Pie

@@ -2,7 +2,7 @@
 RATIO DE ABSORCION Y TURBULENCIA DE MAHALANOBIS -- CALCULADOS SOBRE DATOS REALES
 =============================================================================
 Autor: Federico Agustin Chillon
-Facultad de Ciencias Economicas -- UNCUYO / OERU
+Facultad de Ciencias Economicas -- UNCUYO
 
 Por que existe este modulo: los 3 generadores de informes citaban un
 "Ratio de Absorcion (AR)" y una "Turbulencia de Mahalanobis (dt)" con

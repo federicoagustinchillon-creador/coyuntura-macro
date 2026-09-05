@@ -21,7 +21,7 @@ def sincronizar_drive():
         "03_Figuras_HD",
         "04_Informes_Diarios",
         "05_Informes_Semanales_APA7",
-        "06_Informes_Mensuales_OERU",
+        "06_Informes_Mensuales",
         "07_Reportes_Ejecutivos_PDF",
         "01_Bases_Datos"
     ]
@@ -85,7 +85,7 @@ def sincronizar_drive():
         # PDFs
         p_dia = os.path.join(src_root, "04_Informes_Diarios", "2026-08-25_Monitor_Diario_Mercados.pdf")
         p_sem = os.path.join(src_root, "05_Informes_Semanales_APA7", "2026-08-25_Paper_Macroeconomico_Semanal.pdf")
-        p_men = os.path.join(src_root, "06_Informes_Mensuales_OERU", "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
+        p_men = os.path.join(src_root, "06_Informes_Mensuales", "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
 
         for d in ["Monitores_Diarios", "04_Informes_Diarios"]:
             os.makedirs(os.path.join(dst_g, d), exist_ok=True)
@@ -95,14 +95,17 @@ def sincronizar_drive():
             os.makedirs(os.path.join(dst_g, d), exist_ok=True)
             shutil.copy2(p_sem, os.path.join(dst_g, d, os.path.basename(p_sem)))
 
-        for d in ["Informes_Mensuales", "06_Informes_Mensuales_OERU"]:
+        for d in ["Informes_Mensuales", "06_Informes_Mensuales"]:
             os.makedirs(os.path.join(dst_g, d), exist_ok=True)
             shutil.copy2(p_men, os.path.join(dst_g, d, os.path.basename(p_men)))
 
+        p_ape = os.path.join(src_root, "07_Reportes_Ejecutivos_PDF", "Apendice_Econometrico_y_Validacion_Modelos_Agosto_2026.pdf")
+
         eje_g = os.path.join(dst_g, "07_Reportes_Ejecutivos_PDF")
         os.makedirs(eje_g, exist_ok=True)
-        for p in [p_dia, p_sem, p_men]:
-            shutil.copy2(p, os.path.join(eje_g, os.path.basename(p)))
+        for p in [p_dia, p_sem, p_men, p_ape]:
+            if os.path.exists(p):
+                shutil.copy2(p, os.path.join(eje_g, os.path.basename(p)))
 
         print("[Drive G OK] Sincronización completada en G:\\Mi unidad.")
 

@@ -101,7 +101,7 @@ class NumberedCanvasDiario(canvas.Canvas):
 
         self.setFont("Georgia", 6.8)
         self.setFillColor(MUTED)
-        self.drawString(left, cy - 2.5, "Facultad de Ciencias Económicas · UNCUYO · OERU")
+        self.drawString(left, cy - 2.5, "Facultad de Ciencias Económicas · UNCUYO")
         self.drawRightString(right, cy - 2.5, "Monitor de Cierre Diario de Mercados")
         self.restoreState()
 
@@ -289,7 +289,7 @@ def generar_monitor_diario_reportlab(ctx=None):
     header_data = [
         [
             Paragraph(
-                "<font color='#0B2545' size=9.0><b>UNIVERSIDAD NACIONAL DE CUYO</b> · FCE · OERU</font><br/>"
+                "<font color='#0B2545' size=9.0><b>UNIVERSIDAD NACIONAL DE CUYO</b> · FCE</font><br/>"
                 "<font color='#64748B' size=7.0>OBSERVATORIO ECONÓMICO REGIONAL URBANO · INSTITUTO DE INVESTIGACIONES ECONÓMICAS</font>",
                 ParagraphStyle('H_L', fontName='Georgia', alignment=TA_LEFT, leading=10.0)
             ),
@@ -468,7 +468,7 @@ def generar_monitor_diario_reportlab(ctx=None):
     ]
     for el in _crear_tabla_estilizada(tab_rec_data, col_w_rec, "Matriz de asignación táctica multiactivo y recomendaciones de cartera a 30-90 días"):
         story.append(el)
-    story.append(Paragraph("<font size=5.5 color='#64748B'>(1) Evaluaciones tácticas del Comité de Inversiones OERU FCE UNCUYO. Ponderaciones optimizadas bajo criterio Mean-CVaR.</font>", caption_style))
+    story.append(Paragraph("<font size=5.5 color='#64748B'>(1) Evaluaciones tácticas del FCE UNCUYO. Ponderaciones optimizadas bajo criterio Mean-CVaR.</font>", caption_style))
     story.append(Spacer(1, 5))
 
     # Párrafos analíticos con bullet azul
@@ -507,7 +507,7 @@ def generar_monitor_diario_reportlab(ctx=None):
     imprint_diario = Table([
         [Paragraph(
             "<font color='#0B2545' size=6.5><b>RESPONSABILIDAD INSTITUCIONAL:</b></font> "
-            "<font color='#64748B' size=5.8>Documento elaborado por Federico Agustín Chillón para el Observatorio Económico Regional Urbano (OERU) "
+            "<font color='#64748B' size=5.8>Documento elaborado por Federico Agustín Chillón "
             "y el Instituto de Investigaciones Económicas de la Facultad de Ciencias Económicas, Universidad Nacional de Cuyo (UNCUYO). "
             "Las estimaciones tienen fines informativos y no constituyen asesoramiento vinculante. Mendoza, Argentina, 2026.</font>",
             ParagraphStyle('ImpDia', fontName='Georgia', leading=7.2)

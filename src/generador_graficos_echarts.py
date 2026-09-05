@@ -197,7 +197,7 @@ def render_dual_echarts(kicker: str, main_title: str, badge_text: str,
   </div>
   <div class="footer">
     <span>Fuente: {fuente}</span>
-    <span>Federico Agustín Chillón · Facultad de Ciencias Económicas — UNCUYO · OERU</span>
+    <span>Federico Agustín Chillón · Facultad de Ciencias Económicas — UNCUYO</span>
   </div>
 
 <script>
@@ -302,11 +302,11 @@ def gen_echarts_emae():
             desest_series_data.append({
                 "value": v,
                 "symbolSize": 6,
-                "itemStyle": {"color": "#9E2A2B", "borderColor": "#FFFFFF", "borderWidth": 1.5},
+                "itemStyle": {"color": "#B91C1C", "borderColor": "#FFFFFF", "borderWidth": 1.5},
                 "label": {
                     "show": True, "position": "bottom", "offset": [0, 4],
                     "formatter": f"Piso: {str(v).replace('.', ',')} (-4,5% i.a.)",
-                    "color": "#9E2A2B", "fontWeight": "bold", "fontSize": 8.5
+                    "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5
                 }
             })
         elif i == len(desest) - 1:
@@ -330,12 +330,12 @@ def gen_echarts_emae():
             "type": "category",
             "data": labels_x,
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.0, "interval": 4}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.0, "interval": 4}
         },
         "yAxis": {
             "type": "value", "min": 125, "max": 175, "interval": 10,
             "splitLine": {"lineStyle": {"color": "#F1F5F9", "type": [3, 3]}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.0}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.0}
         },
         "legend": {"top": 0, "right": 10, "itemWidth": 14, "itemHeight": 6, "textStyle": {"fontSize": 8.5, "color": "#64748B"}},
         "series": [
@@ -357,6 +357,13 @@ def gen_echarts_emae():
             },
             {
                 "name": "Desestacionalizado",
+                "markLine": {
+                    "silent": True, "symbol": ["none", "none"],
+                    "data": [
+                        {"yAxis": 147.8, "lineStyle": {"color": "#64748B", "type": [3, 3], "width": 1.1},
+                         "label": {"formatter": "Media Histórica (147,8 pts)", "position": "insideEndTop", "color": "#64748B", "fontSize": 8.0}}
+                    ]
+                },
                 "type": "line",
                 "smooth": False,
                 "data": desest_series_data,
@@ -373,7 +380,7 @@ def gen_echarts_emae():
                     "silent": True,
                     "itemStyle": {"color": "rgba(15, 118, 110, 0.04)"},
                     "data": [[
-                        {"xAxis": labels_x[14], "label": {"formatter": "Consolidación de Crecimiento", "position": "insideTopLeft", "color": "#0F766E", "fontSize": 8.5, "offset": [10, 20]}},
+                        {"xAxis": labels_x[14], "label": {"formatter": "Consolidación de Crecimiento", "position": "insideTopLeft", "color": "#047857", "fontSize": 8.5, "offset": [10, 20]}},
                         {"xAxis": labels_x[-1]}
                     ]]
                 }
@@ -399,11 +406,11 @@ def gen_echarts_emae():
         "series": [{
             "type": "bar",
             "data": [
-                {"value": -4.2, "itemStyle": {"color": "#9E2A2B", "borderRadius": [4, 0, 0, 4]}, "label": {"show": True, "position": "left", "formatter": "-4,2%", "color": "#9E2A2B", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": -1.8, "itemStyle": {"color": "#9E2A2B", "borderRadius": [4, 0, 0, 4]}, "label": {"show": True, "position": "left", "formatter": "-1,8%", "color": "#9E2A2B", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 2.8,  "itemStyle": {"color": "#0F766E", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "+2,8%", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 8.5,  "itemStyle": {"color": "#0F766E", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "+8,5%", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 14.2, "itemStyle": {"color": "#0F766E", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "+14,2%", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}}
+                {"value": -4.2, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "formatter": "-4,2%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": -1.8, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "formatter": "-1,8%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 2.8,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+2,8%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 8.5,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+8,5%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 14.2, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+14,2%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}}
             ],
             "barWidth": 12
         }]
@@ -420,7 +427,7 @@ def gen_echarts_emae():
         "Tracción sectorial: Minería/Petróleo y Agro lideran la expansión",
         json.dumps(opt2),
         "chart_editorial_emae.png",
-        "Instituto Nacional de Estadística y Censos (INDEC) & OERU UNCUYO."
+        "Instituto Nacional de Estadística y Censos (INDEC) & FCE UNCUYO."
     )
 
 
@@ -480,8 +487,8 @@ def gen_echarts_ipc():
         elif i == idx_min_g:
             data_g_chart.append({
                 "value": v, "symbolSize": 6,
-                "itemStyle": {"color": "#0F766E"},
-                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Mínimo: 1,5%", "color": "#0F766E", "fontWeight": "bold", "fontSize": 8.5}
+                "itemStyle": {"color": "#047857"},
+                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Mínimo: 1,5%", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5}
             })
         elif i == 27:  # Mar-26 rebound
             data_g_chart.append({
@@ -526,7 +533,7 @@ def gen_echarts_ipc():
             "type": "category",
             "data": labels_ipc,
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.0, "interval": 4}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.0, "interval": 4}
         },
         "yAxis": {
             "type": "value", "min": 0, "max": 28, "interval": 5,
@@ -540,7 +547,14 @@ def gen_echarts_ipc():
                 "type": "bar",
                 "data": data_g_chart,
                 "barWidth": "42%",
-                "itemStyle": {"color": "#0B2545", "borderRadius": [2, 2, 0, 0]},
+                "itemStyle": {"color": "#0B2545"},
+                "markLine": {
+                    "silent": True, "symbol": ["none", "none"],
+                    "data": [
+                        {"yAxis": 2.0, "lineStyle": {"color": "#047857", "type": [3, 3], "width": 1.2},
+                         "label": {"formatter": "Pauta Crawling (2,0%)", "position": "insideEndTop", "color": "#047857", "fontSize": 8.0, "fontWeight": "bold"}}
+                    ]
+                },
                 "markArea": {
                     "silent": True,
                     "itemStyle": {"color": "rgba(15, 118, 110, 0.06)"},
@@ -570,7 +584,7 @@ def gen_echarts_ipc():
             "type": "category",
             "data": labels_yoy,
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.0}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.0}
         },
         "yAxis": {
             "type": "value", "min": 20, "max": 130, "interval": 20,
@@ -611,22 +625,22 @@ def gen_echarts_ipc():
                 "data": [
                     {
                         "value": 116.2, "symbolSize": 6,
-                        "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "116,2% i.a.", "color": "#0F766E", "fontSize": 8.5}
+                        "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "116,2% i.a.", "color": "#047857", "fontSize": 8.5}
                     },
                     54.2, 38.2, 31.2,
                     {
                         "value": 31.0, "symbolSize": 6,
-                        "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "31,0%", "color": "#0F766E", "fontSize": 8.5}
+                        "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "31,0%", "color": "#047857", "fontSize": 8.5}
                     },
                     32.1, 33.0,
                     {
                         "value": 33.2, "symbolSize": 7,
-                        "itemStyle": {"color": "#0F766E", "borderColor": "#FFFFFF", "borderWidth": 2},
-                        "label": {"show": True, "position": [-45, 14], "formatter": "33,2% i.a.", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}
+                        "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 2},
+                        "label": {"show": True, "position": [-45, 14], "formatter": "33,2% i.a.", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}
                     }
                 ],
-                "lineStyle": {"width": 2.0, "color": "#0F766E", "type": "dashed"},
-                "itemStyle": {"color": "#0F766E", "borderColor": "#FFFFFF", "borderWidth": 1.5},
+                "lineStyle": {"width": 2.0, "color": "#047857", "type": "dashed"},
+                "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 1.5},
                 "symbolSize": 5
             }
         ]
@@ -708,7 +722,7 @@ def gen_echarts_rates():
         "xAxis": {
             "type": "category", "data": plazos,
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
             "type": "value", "min": 0.5, "max": 4.2, "interval": 0.5,
@@ -742,8 +756,8 @@ def gen_echarts_rates():
         if i == 0:
             curva_be.append({
                 "value": v, "symbolSize": 7,
-                "itemStyle": {"color": "#0F766E", "borderColor": "#FFFFFF", "borderWidth": 2},
-                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": f"Premio: +{premio} pb ({str(v).replace('.', ',')}%)", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.0}
+                "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 2},
+                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": f"Premio: +{premio} pb ({str(v).replace('.', ',')}%)", "color": "#047857", "fontWeight": "bold", "fontSize": 9.0}
             })
         elif i == 2 or i == 3:
             curva_be.append({
@@ -765,7 +779,7 @@ def gen_echarts_rates():
         "xAxis": {
             "type": "category", "data": plazos,
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
             "type": "value", "min": 1.4, "max": 3.5, "interval": 0.4,
@@ -792,12 +806,12 @@ def gen_echarts_rates():
                 "name": f"Consenso REM ({str(rem).replace('.', ',')}%)",
                 "type": "line", "smooth": False,
                 "data": [
-                    {"value": rem, "symbolSize": 5, "label": {"show": True, "position": "bottom", "offset": [0, 3], "formatter": f"REM: {str(rem).replace('.', ',')}%", "color": "#0F766E", "fontSize": 8.5}},
+                    {"value": rem, "symbolSize": 5, "label": {"show": True, "position": "bottom", "offset": [0, 3], "formatter": f"REM: {str(rem).replace('.', ',')}%", "color": "#047857", "fontSize": 8.5}},
                     rem, rem, round(rem - 0.05, 2), round(rem - 0.10, 2),
-                    {"value": round(rem - 0.15, 2), "symbolSize": 5, "label": {"show": True, "position": "bottom", "offset": [0, 3], "formatter": f"{str(round(rem - 0.15, 2)).replace('.', ',')}%", "color": "#0F766E", "fontSize": 8.5}}
+                    {"value": round(rem - 0.15, 2), "symbolSize": 5, "label": {"show": True, "position": "bottom", "offset": [0, 3], "formatter": f"{str(round(rem - 0.15, 2)).replace('.', ',')}%", "color": "#047857", "fontSize": 8.5}}
                 ],
-                "lineStyle": {"width": 1.8, "color": "#0F766E", "type": "dotted"},
-                "itemStyle": {"color": "#0F766E", "borderColor": "#FFFFFF", "borderWidth": 1.5},
+                "lineStyle": {"width": 1.8, "color": "#047857", "type": "dotted"},
+                "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 1.5},
                 "symbolSize": 4
             }
         ]
@@ -954,7 +968,7 @@ def gen_echarts_fx():
             "type": "category",
             "data": ["Ene-24", "May-24", "Sep-24", "Ene-25", "May-25", "Sep-25", "Ene-26", "Ago-26"],
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
             "type": "value", "min": 700, "max": 1850, "interval": 250,
@@ -1010,7 +1024,7 @@ def gen_echarts_fx():
         "xAxis": {
             "type": "category", "data": ["Spot", "30d", "60d", "90d", "180d", "360d"],
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
             "type": "value", "min": 1400, "max": 2250, "interval": 200,
@@ -1021,7 +1035,7 @@ def gen_echarts_fx():
             "name": "Futuros CIP",
             "type": "line", "smooth": False,
             "data": [
-                {"value": round(oficial, 2), "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": f"${int(round(oficial))} (Spot)", "color": "#0F766E", "fontWeight": "bold", "fontSize": 8.5}},
+                {"value": round(oficial, 2), "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": f"${int(round(oficial))} (Spot)", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5}},
                 {"value": 1576.0, "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$1.576 (35,4%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}},
                 {"value": 1622.0, "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$1.622 (36,0%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}},
                 {"value": 1670.0, "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$1.670 (36,5%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}},
@@ -1065,7 +1079,7 @@ def gen_echarts_equity():
             "type": "category",
             "data": ["Ene-21", "Ene-22", "Ene-23", "Nov-23", "May-24", "Jun-25", "Ago-26"],
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
             "type": "value", "min": 200, "max": 2300, "interval": 400,
@@ -1089,8 +1103,8 @@ def gen_echarts_equity():
                 },
                 {
                     "value": 1720, "symbolSize": 6,
-                    "itemStyle": {"color": "#0F766E", "borderColor": "#FFFFFF", "borderWidth": 1.5},
-                    "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "Acuerdo FMI (1.720 USD)", "color": "#0F766E", "fontSize": 8.5, "fontWeight": "bold"}
+                    "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 1.5},
+                    "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "Acuerdo FMI (1.720 USD)", "color": "#047857", "fontSize": 8.5, "fontWeight": "bold"}
                 },
                 {
                     "value": merval_usd,
@@ -1129,9 +1143,9 @@ def gen_echarts_equity():
         {"name": "TGS (5,0x)",  "value": [36.5, 5.0], "itemStyle": {"color": "#0B2545"}},
         {"name": "YPFD (3,8x)", "value": [32.4, 3.8], "itemStyle": {"color": "#0B2545"}},
         {"name": "CEPU (4,3x)", "value": [30.5, 4.3], "itemStyle": {"color": "#0B2545"}},
-        {"name": "GGAL (6,2x)", "value": [28.5, 6.2], "itemStyle": {"color": "#9E2A2B"}},
-        {"name": "BMA (5,8x)",  "value": [26.0, 5.8], "itemStyle": {"color": "#9E2A2B"}},
-        {"name": "BBAR (5,4x)", "value": [24.5, 5.4], "itemStyle": {"color": "#9E2A2B"}},
+        {"name": "GGAL (6,2x)", "value": [28.5, 6.2], "itemStyle": {"color": "#B91C1C"}},
+        {"name": "BMA (5,8x)",  "value": [26.0, 5.8], "itemStyle": {"color": "#B91C1C"}},
+        {"name": "BBAR (5,4x)", "value": [24.5, 5.4], "itemStyle": {"color": "#B91C1C"}},
         {"name": "ALUA (5,6x)", "value": [22.0, 5.6], "itemStyle": {"color": "#0284C7"}},
         {"name": "TXAR (5,1x)", "value": [21.0, 5.1], "itemStyle": {"color": "#0284C7"}}
     ]
@@ -1220,12 +1234,12 @@ def gen_echarts_monetary():
         if i == 0:
             pasivos_series_data.append({
                 "value": v, "symbolSize": 6,
-                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$34,0B", "color": "#9E2A2B", "fontWeight": "bold", "fontSize": 8.5}
+                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$34,0B", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5}
             })
         elif i == 6:  # Jul-25
             pasivos_series_data.append({
                 "value": v, "symbolSize": 6,
-                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Extinción: $0", "color": "#0F766E", "fontWeight": "bold", "fontSize": 8.5}
+                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Extinción: $0", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5}
             })
         else:
             pasivos_series_data.append(v)
@@ -1236,7 +1250,7 @@ def gen_echarts_monetary():
         "xAxis": {
             "type": "category", "data": meses_m,
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.0}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.0}
         },
         "yAxis": {
             "type": "value", "min": 0, "max": 55, "interval": 10,
@@ -1267,8 +1281,8 @@ def gen_echarts_monetary():
                 "stack": "total",
                 "smooth": False,
                 "data": pasivos_series_data,
-                "lineStyle": {"width": 2.2, "color": "#9E2A2B"},
-                "itemStyle": {"color": "#9E2A2B", "borderColor": "#FFFFFF", "borderWidth": 1.5},
+                "lineStyle": {"width": 2.2, "color": "#B91C1C"},
+                "itemStyle": {"color": "#B91C1C", "borderColor": "#FFFFFF", "borderWidth": 1.5},
                 "symbolSize": 5,
                 "areaStyle": {
                     "color": {
@@ -1278,9 +1292,9 @@ def gen_echarts_monetary():
                 },
                 "markLine": {
                     "silent": True, "symbol": ["none", "none"],
-                    "lineStyle": {"type": [3, 3], "color": "#0F766E", "width": 1.5},
+                    "lineStyle": {"type": [3, 3], "color": "#047857", "width": 1.5},
                     "data": [
-                        {"xAxis": "Jul-25", "label": {"formatter": "Extinción Pases: $0", "position": "insideStartTop", "color": "#0F766E", "fontWeight": "bold", "fontSize": 8.5}}
+                        {"xAxis": "Jul-25", "label": {"formatter": "Extinción Pases: $0", "position": "insideStartTop", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5}}
                     ]
                 }
             }
@@ -1305,10 +1319,10 @@ def gen_echarts_monetary():
         "series": [{
             "type": "bar",
             "data": [
-                {"value": 9.0,  "itemStyle": {"color": "#64748B", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "9,0% TNA", "color": "#64748B", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 23.1, "itemStyle": {"color": "#0F766E", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "23,1% TNA", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 23.6, "itemStyle": {"color": "#0284C7", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "23,6% TNA", "color": "#0284C7", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 35.4, "itemStyle": {"color": "#0B2545", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "35,4% TNA", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}}
+                {"value": 9.0,  "itemStyle": {"color": "#64748B"}, "label": {"show": True, "position": "right", "formatter": "9,0% TNA", "color": "#64748B", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 23.1, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "23,1% TNA", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 23.6, "itemStyle": {"color": "#0284C7"}, "label": {"show": True, "position": "right", "formatter": "23,6% TNA", "color": "#0284C7", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 35.4, "itemStyle": {"color": "#0B2545"}, "label": {"show": True, "position": "right", "formatter": "35,4% TNA", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}}
             ],
             "barWidth": 16
         }]
@@ -1339,7 +1353,7 @@ def gen_echarts_cuyo():
         "xAxis": {
             "type": "category", "data": ["2021", "2022", "2023", "2024", "2025", "2026 (e)"],
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
             "type": "value", "min": 5000, "max": 8300, "interval": 1000,
@@ -1353,16 +1367,16 @@ def gen_echarts_cuyo():
             "data": [
                 {"value": 7100, "label": {"show": True, "position": "top", "formatter": "7.100", "color": "#64748B", "fontSize": 8.0}},
                 {"value": 6800, "label": {"show": True, "position": "top", "formatter": "6.800", "color": "#64748B", "fontSize": 8.0}},
-                {"value": 6200, "label": {"show": True, "position": "top", "formatter": "6.200 (Piso)", "color": "#9E2A2B", "fontWeight": "bold", "fontSize": 8.0}},
+                {"value": 6200, "label": {"show": True, "position": "top", "formatter": "6.200 (Piso)", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.0}},
                 {"value": 6950, "label": {"show": True, "position": "top", "formatter": "6.950", "color": "#64748B", "fontSize": 8.0}},
                 {"value": 7120, "label": {"show": True, "position": "top", "formatter": "7.120", "color": "#64748B", "fontSize": 8.0}},
                 {
                     "value": 7340,
-                    "itemStyle": {"color": "#0B2545", "borderRadius": [3, 3, 0, 0]},
+                    "itemStyle": {"color": "#0B2545"},
                     "label": {"show": True, "position": "top", "formatter": "7.340 kHL (+3,1%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}
                 }
             ],
-            "itemStyle": {"color": "#1E3A8A", "borderRadius": [3, 3, 0, 0]}
+            "itemStyle": {"color": "#1E3A8A"}
         }]
     }
 
@@ -1372,7 +1386,7 @@ def gen_echarts_cuyo():
         "xAxis": {
             "type": "category", "data": ["Ene-25", "Abr", "Jul", "Oct", "Ene-26", "Abr", "Ago-26"],
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
             "type": "value", "min": 270000, "max": 330000, "interval": 15000,
@@ -1389,12 +1403,12 @@ def gen_echarts_cuyo():
                 306000,
                 {
                     "value": 318000, "symbolSize": 7,
-                    "itemStyle": {"color": "#0F766E", "borderColor": "#FFFFFF", "borderWidth": 2},
-                    "label": {"show": True, "position": [-55, -18], "formatter": "318.000 m³ (+11,6%)", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}
+                    "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 2},
+                    "label": {"show": True, "position": [-55, -18], "formatter": "318.000 m³ (+11,6%)", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}
                 }
             ],
-            "lineStyle": {"width": 2.5, "color": "#0F766E"},
-            "itemStyle": {"color": "#0F766E", "borderColor": "#FFFFFF", "borderWidth": 1.5},
+            "lineStyle": {"width": 2.5, "color": "#047857"},
+            "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 1.5},
             "symbolSize": 5,
             "areaStyle": {
                 "color": {
@@ -1416,7 +1430,7 @@ def gen_echarts_cuyo():
         "Tracción de áreas no convencionales en Malargüe y pozos reactivados",
         json.dumps(opt2),
         "chart_editorial_cuyo.png",
-        "Instituto Nacional de Vitivinicultura (INV), Min. Energía Mza y OERU UNCUYO."
+        "Instituto Nacional de Vitivinicultura (INV), Min. Energía Mza y FCE UNCUYO."
     )
 
 
@@ -1429,7 +1443,7 @@ def gen_echarts_regional_cuyo():
     mza_val = act.get("isarc_mendoza_ia_pct", 3.4)
     sj_val = act.get("isarc_san_juan_ia_pct", 2.1)
     sl_data = [
-        {"value": v, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": f"+{str(v).replace('.', ',')}%", "color": "#0F766E", "fontWeight": "bold", "fontSize": 8.5}}
+        {"value": v, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": f"+{str(v).replace('.', ',')}%", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5}}
         for v in [3.2, 4.0, 4.8, 5.2, sl_val]
     ]
     mza_data = [
@@ -1447,7 +1461,7 @@ def gen_echarts_regional_cuyo():
         "xAxis": {
             "type": "category", "data": ["2T25", "3T25", "4T25", "1T26", "2T26"],
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
             "type": "value", "min": 0, "max": 7.2, "interval": 1.5,
@@ -1461,21 +1475,21 @@ def gen_echarts_regional_cuyo():
                 "type": "bar",
                 "barWidth": 8,
                 "data": sl_data,
-                "itemStyle": {"color": "#0F766E", "borderRadius": [2, 2, 0, 0]}
+                "itemStyle": {"color": "#047857"}
             },
             {
                 "name": f"Mendoza (+{str(mza_val).replace('.', ',')}%)",
                 "type": "bar",
                 "barWidth": 8,
                 "data": mza_data,
-                "itemStyle": {"color": "#0B2545", "borderRadius": [2, 2, 0, 0]}
+                "itemStyle": {"color": "#0B2545"}
             },
             {
                 "name": f"San Juan (+{str(sj_val).replace('.', ',')}%)",
                 "type": "bar",
                 "barWidth": 8,
                 "data": sj_data,
-                "itemStyle": {"color": "#0284C7", "borderRadius": [2, 2, 0, 0]}
+                "itemStyle": {"color": "#0284C7"}
             }
         ]
     }
@@ -1498,11 +1512,11 @@ def gen_echarts_regional_cuyo():
         "series": [{
             "type": "bar",
             "data": [
-                {"value": -1.5, "itemStyle": {"color": "#9E2A2B", "borderRadius": [4, 0, 0, 4]}, "label": {"show": True, "position": "left", "formatter": "-1,5%", "color": "#9E2A2B", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 2.4,  "itemStyle": {"color": "#0F766E", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "+2,4%", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 1.2,  "itemStyle": {"color": "#0F766E", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "+1,2%", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 3.8,  "itemStyle": {"color": "#0F766E", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "+3,8%", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 8.5,  "itemStyle": {"color": "#0F766E", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "+8,5%", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}}
+                {"value": -1.5, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "formatter": "-1,5%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 2.4,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+2,4%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 1.2,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+1,2%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 3.8,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+3,8%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 8.5,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+8,5%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}}
             ],
             "barWidth": 12
         }]
@@ -1519,7 +1533,7 @@ def gen_echarts_regional_cuyo():
         "Tracción destacada en Hidrocarburos (+8,5%) y Agroindustria (+3,8%)",
         json.dumps(opt2),
         "chart_editorial_regional_cuyo.png",
-        "DEIE Mendoza, Direcciones Provinciales de Estadística y OERU UNCUYO."
+        "DEIE Mendoza, Direcciones Provinciales de Estadística y FCE UNCUYO."
     )
 
 
@@ -1540,14 +1554,14 @@ def gen_echarts_tcr():
         elif i == 12:  # Dic-23
             series_tcrm_chart.append({
                 "value": v, "symbolSize": 6,
-                "itemStyle": {"color": "#9E2A2B"},
-                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Pico: 145,8", "color": "#9E2A2B", "fontWeight": "bold", "fontSize": 8.5}
+                "itemStyle": {"color": "#B91C1C"},
+                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Pico: 145,8", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5}
             })
         elif i == len(puntos_tcrm) - 1:
             series_tcrm_chart.append({
                 "value": v, "symbolSize": 7,
                 "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
-                "label": {"show": True, "position": [-45, -18], "formatter": "TCRM: 94,5 pts", "color": "#0B2545", "fontWeight": "bold", "fontSize": 10}
+                "label": {"show": True, "position": "top", "offset": [-15, -6], "formatter": "TCRM: 94,5 pts", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}
             })
         else:
             series_tcrm_chart.append(v)
@@ -1559,7 +1573,7 @@ def gen_echarts_tcr():
             "type": "category",
             "data": labels_tcr,
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.0, "interval": 2}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.0, "interval": 2}
         },
         "yAxis": {
             "type": "value", "min": 60, "max": 160, "interval": 20,
@@ -1587,7 +1601,7 @@ def gen_echarts_tcr():
                 "silent": True,
                 "itemStyle": {"color": "rgba(2, 132, 199, 0.04)"},
                 "data": [[
-                    {"yAxis": 95, "label": {"formatter": "Rango de Paridad Fundamental", "position": "insideBottomRight", "color": "#0284C7", "fontSize": 8.5, "offset": [-10, -10]}},
+                    {"yAxis": 95, "label": {"formatter": "Rango de Paridad Fundamental (95–105)", "position": "insideBottomLeft", "color": "#0284C7", "fontSize": 8.5, "offset": [10, 10]}},
                     {"yAxis": 105}
                 ]]
             }
@@ -1612,10 +1626,10 @@ def gen_echarts_tcr():
         "series": [{
             "type": "bar",
             "data": [
-                {"value": 91.2,  "itemStyle": {"color": "#9E2A2B", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "91,2 pts", "color": "#9E2A2B", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 94.5,  "itemStyle": {"color": "#0B2545", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "94,5 pts", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 94.5,  "itemStyle": {"color": "#64748B", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "94,5 pts", "color": "#64748B", "fontWeight": "bold", "fontSize": 9.0}},
-                {"value": 102.4, "itemStyle": {"color": "#0F766E", "borderRadius": [0, 4, 4, 0]}, "label": {"show": True, "position": "right", "formatter": "102,4 pts", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}}
+                {"value": 91.2,  "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "right", "formatter": "91,2 pts", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 94.5,  "itemStyle": {"color": "#0B2545"}, "label": {"show": True, "position": "right", "formatter": "94,5 pts", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}},
+                {"value": 94.5,  "itemStyle": {"color": "#64748B"}, "label": {"show": True, "position": "right", "formatter": "94,5 pts", "color": "#64748B", "fontWeight": "bold", "fontSize": 9.0}},
+                {"value": 102.4, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "102,4 pts", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}}
             ],
             "barWidth": 14,
             "markLine": {
@@ -1684,7 +1698,7 @@ def gen_echarts_canastas():
         {"value": 515, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": "$935k", "color": "#64748B", "fontSize": 8.0}},
         {
             "value": cbt - cba,
-            "itemStyle": {"color": "#0B2545", "borderRadius": [3, 3, 0, 0]},
+            "itemStyle": {"color": "#0B2545"},
             "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": "$963.000 CBT", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}
         }
     ]
@@ -1696,7 +1710,7 @@ def gen_echarts_canastas():
             "type": "category",
             "data": ["Ago-25", "Oct-25", "Dic-25", "Feb-26", "Abr-26", "Jun-26", "Ago-26"],
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
             "type": "value", "min": 0, "max": 1150, "interval": 250,
@@ -1719,7 +1733,7 @@ def gen_echarts_canastas():
                 "stack": "total",
                 "barWidth": "42%",
                 "data": cbt_series,
-                "itemStyle": {"color": "#0B2545", "borderRadius": [3, 3, 0, 0]}
+                "itemStyle": {"color": "#0B2545"}
             }
         ]
     }
@@ -1731,7 +1745,7 @@ def gen_echarts_canastas():
             "type": "category",
             "data": ["Ago-25", "Oct-25", "Dic-25", "Feb-26", "Abr-26", "Jun-26", "Ago-26"],
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
-            "axisLabel": {"color": "#64748B", "fontSize": 9.5}
+            "axisLabel": {"showMaxLabel": True, "color": "#64748B", "fontSize": 9.5}
         },
         "yAxis": {
             "type": "value", "min": 0.8, "max": 2.3, "interval": 0.3,
@@ -1748,12 +1762,12 @@ def gen_echarts_canastas():
                 1.42, 1.55,
                 {
                     "value": ratio_ripte_cbt, "symbolSize": 7,
-                    "itemStyle": {"color": "#0F766E", "borderColor": "#FFFFFF", "borderWidth": 2},
-                    "label": {"show": True, "position": [-55, -18], "formatter": f"{ratio_fmt} CBT (+28,8%)", "color": "#0F766E", "fontWeight": "bold", "fontSize": 9.5}
+                    "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 2},
+                    "label": {"show": True, "position": [-55, -18], "formatter": f"{ratio_fmt} CBT (+28,8%)", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}
                 }
             ],
-            "lineStyle": {"width": 2.5, "color": "#0F766E"},
-            "itemStyle": {"color": "#0F766E", "borderColor": "#FFFFFF", "borderWidth": 1.5},
+            "lineStyle": {"width": 2.5, "color": "#047857"},
+            "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 1.5},
             "symbolSize": 6,
             "areaStyle": {
                 "color": {
@@ -1763,7 +1777,7 @@ def gen_echarts_canastas():
             },
             "markLine": {
                 "silent": True, "symbol": ["none", "none"],
-                "data": [{"yAxis": 1.0, "lineStyle": {"color": "#9E2A2B", "type": [3, 3], "width": 1.2}, "label": {"formatter": "Línea Pobreza (1,0x)", "position": "insideStartTop", "color": "#9E2A2B", "fontSize": 8.5}}]
+                "data": [{"yAxis": 1.0, "lineStyle": {"color": "#B91C1C", "type": [3, 3], "width": 1.2}, "label": {"formatter": "Línea Pobreza (1,0x)", "position": "insideStartTop", "color": "#B91C1C", "fontSize": 8.5}}]
             }
         }]
     }

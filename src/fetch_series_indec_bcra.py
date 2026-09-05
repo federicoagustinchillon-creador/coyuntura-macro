@@ -2,7 +2,7 @@
 SERIES HISTORICAS REALES PARA LAS INFOGRAFIAS DEL PIPELINE (EMAE, IPC, MONETARIO)
 =============================================================================
 Autor: Federico Agustin Chillon
-Facultad de Ciencias Economicas -- UNCUYO / OERU
+Facultad de Ciencias Economicas -- UNCUYO
 
 Por que existe este modulo: src/generador_graficos_hd.py generaba sus 9
 infografias con arrays de relleno hardcodeados (numpy arrays literales) en

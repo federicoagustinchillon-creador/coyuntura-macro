@@ -2,7 +2,7 @@
 FUENTES SECUNDARIAS REALES: RIPTE, ISAC, EMBI+ HISTORICO, DESPACHOS DE VINO
 =============================================================================
 Autor: Federico Agustin Chillon
-Facultad de Ciencias Economicas -- UNCUYO / OERU
+Facultad de Ciencias Economicas -- UNCUYO
 
 Por que existe este modulo: tras la primera pasada de correccion de datos
 hardcodeados, varios campos quedaron marcados "sin fuente automatizable"

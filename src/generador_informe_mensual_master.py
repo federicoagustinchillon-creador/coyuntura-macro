@@ -682,7 +682,7 @@ def compilar_informe_mensual_master(ruta_salida_docx: str):
 
 if __name__ == "__main__":
     import os
-    ruta_salida = os.path.join(BASE_DIR, "06_Informes_Mensuales_OERU", "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.docx")
+    ruta_salida = os.path.join(BASE_DIR, "06_Informes_Mensuales", "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.docx")
     compilar_informe_mensual_master(ruta_salida)
     
     # Exportar a PDF

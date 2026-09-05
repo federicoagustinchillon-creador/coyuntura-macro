@@ -2,7 +2,7 @@
 TIPO DE CAMBIO REAL BILATERAL ARS/USD -- INDICADOR DE ATRASO/COMPETITIVIDAD CAMBIARIA
 =============================================================================
 Autor: Federico Agustin Chillon
-Facultad de Ciencias Economicas -- UNCUYO / OERU
+Facultad de Ciencias Economicas -- UNCUYO
 
 Por que existe este modulo: "brecha cambiaria" (CCL vs. oficial, ya cubierta
 en datos_del_dia.json) y "atraso cambiario" son conceptos DISTINTOS que el

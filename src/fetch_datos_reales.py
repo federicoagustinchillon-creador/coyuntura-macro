@@ -2,7 +2,7 @@
 CONECTORES DE DATOS REALES: BCRA (API oficial) Y MERCADO (yfinance)
 =============================================================================
 Autor: Federico Agustin Chillon
-Facultad de Ciencias Economicas -- UNCUYO / OERU
+Facultad de Ciencias Economicas -- UNCUYO
 
 Fuente oficial verificable para cambiario/tasas: API estadisticas del BCRA
 (api.bcra.gob.ar, v4.0, publica y gratuita, sin autenticacion). Fuente para

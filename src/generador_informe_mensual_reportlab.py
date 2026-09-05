@@ -39,7 +39,7 @@ MESES_ES = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
             "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
 DIR_FIG = os.path.join(BASE_DIR, "03_Figuras_HD")
-OUT_DIR_MENSUAL = os.path.join(BASE_DIR, "06_Informes_Mensuales_OERU")
+OUT_DIR_MENSUAL = os.path.join(BASE_DIR, "06_Informes_Mensuales")
 OUT_DIR_CONSOL = os.path.join(BASE_DIR, "07_Reportes_Ejecutivos_PDF")
 os.makedirs(OUT_DIR_MENSUAL, exist_ok=True)
 os.makedirs(OUT_DIR_CONSOL, exist_ok=True)
@@ -353,7 +353,7 @@ class EditorialCanvas(canvas.Canvas):
             self.rect(0, 0, split_x, footer_h, fill=True, stroke=False)
             self.setFont('Sans-Bold', 8.5)
             self.setFillColor(colors.white)
-            self.drawCentredString(split_x / 2.0, 13.0, 'OERU · FCE UNCUYO')
+            self.drawCentredString(split_x / 2.0, 13.0, 'FCE UNCUYO')
 
             # Bloque derecho (ancho 417 pt): Azul Marino Profundo Institucional (#0B2545)
             self.setFillColor(PRIMARY)
@@ -377,7 +377,7 @@ class EditorialCanvas(canvas.Canvas):
 
             self.setFont('Sans', 8.0)
             self.setFillColor(MUTED)
-            self.drawString(38.0, header_top - 46.0, 'Observatorio Económico Regional Urbano (OERU)')
+            self.drawString(38.0, header_top - 46.0, 'Facultad de Ciencias Económicas, UNCUYO')
 
             self.setFont('Sans-Bold', 7.5)
             self.setFillColor(colors.HexColor('#94A3B8'))
@@ -474,7 +474,7 @@ class EditorialCanvas(canvas.Canvas):
 
             self.setFont("Georgia", 6.8)
             self.setFillColor(MUTED)
-            self.drawString(left, cy - 2.5, "Facultad de Ciencias Económicas · UNCUYO · OERU")
+            self.drawString(left, cy - 2.5, "Facultad de Ciencias Económicas · UNCUYO")
             self.drawRightString(right, cy - 2.5, "Research Institucional")
 
         self.restoreState()
@@ -1332,7 +1332,7 @@ def generar_informe_mensual_reportlab(ctx=None):
     ]))
     col_der_p3.append(t_cal_cov)
 
-    t_main_p3 = Table([[col_izq_p3, "", col_der_p3]], colWidths=[330, 10, 192])
+    t_main_p3 = Table([[col_izq_p3, "", col_der_p3]], colWidths=[328, 6, 198])
     t_main_p3.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
         ('LEFTPADDING', (0,0), (-1,-1), 0),
@@ -1346,7 +1346,7 @@ def generar_informe_mensual_reportlab(ctx=None):
 
     # Pull-quote institucional a ancho completo
     p_cita = Paragraph("<i>«El trípode de superávit primario irrestricto, tasa de interés real positiva y saneamiento patrimonial del Banco Central convalida la mayor compresión de primas de riesgo soberano de la última década, transformando el arbitraje financiero y consolidando la normalización de curvas de rendimiento.»</i>", ParagraphStyle('PQuoteP3', fontName='Palatino-Italic', fontSize=8.2, leading=11.2, alignment=TA_JUSTIFY, textColor=PRIMARY))
-    p_aut = Paragraph("<b>— Comité de Estrategia Macroeconómica & Asset Allocation · FCE UNCUYO · OERU</b>", ParagraphStyle('PQuoteAutP3', fontName='Sans-Bold', fontSize=7.0, leading=8.8, alignment=TA_RIGHT, textColor=MUTED))
+    p_aut = Paragraph("<b>— Comité de Estrategia Macroeconómica & Asset Allocation · FCE UNCUYO</b>", ParagraphStyle('PQuoteAutP3', fontName='Sans-Bold', fontSize=7.0, leading=8.8, alignment=TA_RIGHT, textColor=MUTED))
     t_pq = Table([[p_cita], [p_aut]], colWidths=[532])
     t_pq.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
@@ -1364,7 +1364,7 @@ def generar_informe_mensual_reportlab(ctx=None):
     elements.append(HRFlowable(width="100%", thickness=0.8, color=PRIMARY, spaceBefore=0, spaceAfter=3))
     t_imp_p3 = Table([
         [
-            Paragraph("<font color='#0B2545' size=7.0><b>ESTRATEGIA MACROECONÓMICA & ASSET ALLOCATION</b> · FCE UNCUYO · OERU</font>", ParagraphStyle('IL3', fontName='Palatino', leading=8.4)),
+            Paragraph("<font color='#0B2545' size=7.0><b>ESTRATEGIA MACROECONÓMICA & ASSET ALLOCATION</b> · FCE UNCUYO</font>", ParagraphStyle('IL3', fontName='Palatino', leading=8.4)),
             Paragraph("<font color='#64748B' size=6.5>Resumen Ejecutivo · Modelos Nelson-Siegel & CIP Rofex</font>", ParagraphStyle('IR3', fontName='Palatino', alignment=TA_RIGHT, leading=8.4))
         ]
     ], colWidths=[370, 162])
@@ -1601,7 +1601,7 @@ def generar_informe_mensual_reportlab(ctx=None):
         tabla_titulo="Evolución trimestral del ISARC y tracción sectorial en Cuyo (%)",
         tabla_data=p8_tabla_data,
         tabla_col_widths=[140, 44, 44, 44, 44, 44, 45, 45, 45, 45],
-        tabla_footnote="(1) Fuentes: DEIE Mendoza, Dirección Provincial de Estadística de San Juan y San Luis, y OERU FCE UNCUYO. Base 2004=100.",
+        tabla_footnote="(1) Fuentes: DEIE Mendoza, Dirección Provincial de Estadística de San Juan y San Luis, y FCE UNCUYO. Base 2004=100.",
         bloques_tematicos=p8_bloques,
         chart_filename="chart_editorial_regional_cuyo.png",
         chart_footnote="Nota: Evolución comparada del ISARC provincial y contribución por sectores productivos de Cuyo.",
@@ -2017,7 +2017,7 @@ def generar_informe_mensual_reportlab(ctx=None):
         ],
         [
             Paragraph("<b>Federico Agustín Chillón</b><br/><font color='#64748B' size=6.6>Investigador en Métodos Cuantitativos & Macroeconomía Aplicada</font>", ParagraphStyle('GovB1', fontName='Palatino', fontSize=6.8, leading=8.6, textColor=DARK_TEXT)),
-            Paragraph("<b>Facultad de Ciencias Económicas</b><br/><font color='#64748B' size=6.6>Universidad Nacional de Cuyo (UNCUYO)<br/>Observatorio Económico Regional Urbano (OERU)</font>", ParagraphStyle('GovB2', fontName='Palatino', fontSize=6.8, leading=8.6, textColor=DARK_TEXT)),
+            Paragraph("<b>Facultad de Ciencias Económicas</b><br/><font color='#64748B' size=6.6>Universidad Nacional de Cuyo (UNCUYO)<br/>Facultad de Ciencias Económicas, UNCUYO</font>", ParagraphStyle('GovB2', fontName='Palatino', fontSize=6.8, leading=8.6, textColor=DARK_TEXT)),
             Paragraph("<b>Protocolo Institucional Anti-Alucinación</b><br/><font color='#64748B' size=6.6>Modelos validados en Python / ECharts / ReportLab<br/>Series oficiales INDEC, BCRA, ByMA, INV, DEIE</font>", ParagraphStyle('GovB3', fontName='Palatino', fontSize=6.8, leading=8.6, textColor=DARK_TEXT))
         ]
     ], colWidths=[177, 177, 178])
@@ -2037,7 +2037,7 @@ def generar_informe_mensual_reportlab(ctx=None):
         [Paragraph(
             "<font color='#0B2545' size=7.5><b>RESPONSABILIDAD INSTITUCIONAL & REGLAS DE DIFUSIÓN:</b></font><br/>"
             "<font color='#64748B' size=6.8>Este informe ha sido elaborado por Federico Agustín Chillón en el marco del Instituto de Investigaciones Económicas "
-            "de la Facultad de Ciencias Económicas, Universidad Nacional de Cuyo (UNCUYO) y el Observatorio Económico Regional Urbano (OERU). "
+            "de la Facultad de Ciencias Económicas, Universidad Nacional de Cuyo (UNCUYO). "
             "Las estimaciones econométricas, proyecciones y asignaciones tácticas reflejan el criterio analítico y no constituyen una recomendación vinculante "
             "de inversión financiera. Reproducción permitida citando fuente institucional oficial. Mendoza, Argentina, 2026.</font>",
             ParagraphStyle('ImpLeg', fontName='Palatino', leading=9.2)

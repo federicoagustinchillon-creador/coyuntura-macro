@@ -114,7 +114,7 @@ def ejecutar_pipeline_completo():
         "03_Figuras_HD",
         "04_Informes_Diarios",
         "05_Informes_Semanales_APA7",
-        "06_Informes_Mensuales_OERU",
+        "06_Informes_Mensuales",
         "07_Reportes_Ejecutivos_PDF",
     ]
     
@@ -138,7 +138,7 @@ def ejecutar_pipeline_completo():
             "03_Figuras_HD": [os.path.join(gdrive_g_base, "03_Figuras_HD"), os.path.join(gdrive_g_base, "Figuras_HD")],
             "04_Informes_Diarios": [os.path.join(gdrive_g_base, "Monitores_Diarios")],
             "05_Informes_Semanales_APA7": [os.path.join(gdrive_g_base, "Papers_Semanales")],
-            "06_Informes_Mensuales_OERU": [os.path.join(gdrive_g_base, "06_Informes_Mensuales_OERU"), os.path.join(gdrive_g_base, "Informes_Mensuales")],
+            "06_Informes_Mensuales": [os.path.join(gdrive_g_base, "06_Informes_Mensuales"), os.path.join(gdrive_g_base, "Informes_Mensuales")],
             "07_Reportes_Ejecutivos_PDF": [os.path.join(gdrive_g_base, "07_Reportes_Ejecutivos_PDF")],
         }
         for src_name, dst_targets in mapeo_g.items():

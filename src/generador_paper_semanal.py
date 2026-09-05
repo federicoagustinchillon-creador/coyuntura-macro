@@ -2,7 +2,7 @@
 GENERADOR DEL PAPER SEMANAL DE INVESTIGACIÓN MACROECONÓMICA (4 PÁGINAS APA 7 ALTA DENSIDAD)
 ==========================================================================================
 Autor: Federico Agustín Chillón
-Facultad de Ciencias Económicas — UNCUYO / OERU
+Facultad de Ciencias Económicas — UNCUYO
 Genera el paper semanal en 4 páginas completas de alta densidad analítica, tipografía Georgia 8.8 pt,
 paleta Oxford Navy / Deep Wine, matrices de sensibilidad de retorno total, descomposición Nelson-Siegel,
 atribución de cartera y referencias bibliográficas formales APA 7, sin espacios en blanco residuales.
@@ -268,7 +268,7 @@ def compilar_paper_semanal_completo(ruta_salida_docx: str, periodo_str=None):
     p_tit.paragraph_format.space_before = Pt(0); p_tit.paragraph_format.space_after = Pt(1.5)
     
     p_meta = doc.add_paragraph()
-    r_m = p_meta.add_run(f"Período: {periodo_str} | Autor: Federico Agustín Chillón | FCE UNCUYO / OERU\nMarco Institucional: Análisis de Renta Fija Soberana, Microestructura Cambiaria y Régimen Monetario")
+    r_m = p_meta.add_run(f"Período: {periodo_str} | Autor: Federico Agustín Chillón | FCE UNCUYO\nMarco Institucional: Análisis de Renta Fija Soberana, Microestructura Cambiaria y Régimen Monetario")
     r_m.font.name = "Georgia"; r_m.font.size = Pt(8.0); r_m.font.italic = True; r_m.font.color.rgb = COLOR_MUTED
     p_meta.paragraph_format.space_after = Pt(2.5)
     

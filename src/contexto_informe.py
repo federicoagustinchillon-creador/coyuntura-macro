@@ -2,7 +2,7 @@
 CONTEXTO UNICO DE DATOS REALES PARA LOS GENERADORES DE INFORMES
 =============================================================================
 Autor: Federico Agustin Chillon
-Facultad de Ciencias Economicas -- UNCUYO / OERU
+Facultad de Ciencias Economicas -- UNCUYO
 
 Garantiza la disponibilidad inmediata y 100% consistente de todos los
 indicadores macroeconomicos y financieros para los 10 modulos analiticos.

@@ -97,7 +97,7 @@ def setup_dual_fig(title_center: str):
 def finalize_dual_fig(fig, filename: str, fuente: str):
     """Agrega pie y guarda la figura en alta resolución con marco perimetral institucional."""
     fig.text(0.035, 0.035, f"Fuente: {fuente}", fontsize=6.8, color=C_MUTED, ha="left", va="bottom")
-    fig.text(0.965, 0.035, "Federico Agustín Chillón · FCE-UNCUYO · OERU", fontsize=6.8, color=C_MUTED, ha="right", va="bottom")
+    fig.text(0.965, 0.035, "Federico Agustín Chillón · FCE UNCUYO", fontsize=6.8, color=C_MUTED, ha="right", va="bottom")
     
     # Borde perimetral exterior idéntico a Management Solutions
     rect = plt.Rectangle((0.005, 0.012), 0.99, 0.976, fill=False, color=C_BORDER, linewidth=0.6,
@@ -158,7 +158,7 @@ def gen_dual_emae():
     ax2.set_title("Variación Interanual por Sector (% i.a. · INDEC)", fontsize=7.8, fontweight="bold", color=C_TEXT, pad=5)
     ax2.set_xlim(-8, 20)
     
-    return finalize_dual_fig(fig, "chart_editorial_emae.png", "INDEC (EMAE Nacional) y OERU UNCUYO.")
+    return finalize_dual_fig(fig, "chart_editorial_emae.png", "INDEC (EMAE Nacional) y FCE UNCUYO.")
 
 
 # ==============================================================================
@@ -473,7 +473,7 @@ def gen_dual_cuyo():
     ax2.text(x2[-1], petroleo[-1] + 3000, f"{petroleo[-1]:,} m³".replace(",", "."), fontsize=7.0,
              fontweight="bold", color=C_GREEN, ha="center", path_effects=WHITE_HALO)
              
-    return finalize_dual_fig(fig, "chart_editorial_cuyo.png", "Instituto Nacional de Vitivinicultura (INV), Min. Energía Mza y OERU UNCUYO.")
+    return finalize_dual_fig(fig, "chart_editorial_cuyo.png", "Instituto Nacional de Vitivinicultura (INV), Min. Energía Mza y FCE UNCUYO.")
 
 
 # ==============================================================================
@@ -518,7 +518,7 @@ def gen_dual_regional_cuyo():
     ax2.set_title("Contribución al Crecimiento Regional (% i.a.)", fontsize=7.8, fontweight="bold", color=C_TEXT, pad=5)
     ax2.set_xlim(-4, 11)
     
-    return finalize_dual_fig(fig, "chart_editorial_regional_cuyo.png", "DEIE Mendoza, Direcciones Provinciales de Estadística y OERU UNCUYO.")
+    return finalize_dual_fig(fig, "chart_editorial_regional_cuyo.png", "DEIE Mendoza, Direcciones Provinciales de Estadística y FCE UNCUYO.")
 
 
 # ==============================================================================

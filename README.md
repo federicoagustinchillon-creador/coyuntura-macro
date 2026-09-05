@@ -53,13 +53,14 @@ coyuntura-macro/
 ├── 05_Informes_Semanales_APA7/                # Papers semanales de investigación macro (4 páginas exactas APA 7)
 │   └── 2026-08-25_Paper_Macroeconomico_Semanal.pdf
 │
-├── 06_Informes_Mensuales_OERU/                # Informes mensuales de investigación (15 páginas exactas ReportLab)
+├── 06_Informes_Mensuales/                     # Informes mensuales de investigación (15 páginas exactas ReportLab)
 │   └── Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf
 │
 ├── 07_Reportes_Ejecutivos_PDF/                # Documentos ejecutivos consolidados listos para comités
+│   ├── Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf
+│   ├── Apendice_Econometrico_y_Validacion_Modelos_Agosto_2026.pdf
 │   ├── 2026-08-25_Monitor_Diario_Mercados.pdf
-│   ├── 2026-08-25_Paper_Macroeconomico_Semanal.pdf
-│   └── Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf
+│   └── 2026-08-25_Paper_Macroeconomico_Semanal.pdf
 │
 └── sincronizar_ecosistema_drive.py            # Sincronizador automático a Google Drive (C:\Users\fedea\Google Drive\coyuntura-macro)
 ```
@@ -111,8 +112,8 @@ Para garantizar un estándar visual y analítico a la altura de Goldman Sachs GI
 
 1. **Portada Wall Street Tear-Sheet en 2 Columnas Asimétricas:** Mástil institucional formal, titular hero cuantitativo, diagnóstico ejecutivo macroeconómico denso a la izquierda (330 pt) contrapuesto con la matriz de asignación táctica y el scorecard de mercado a la derecha (192 pt).
 2. **Tablas Estructuradas de Indicadores de 10-12 Filas:** Cabecera azul marino Oxford (`#0B2545`), filas alternadas (`#F8FAFC` y blanco), columna de proyecciones diferenciada y variaciones porcentuales coloreadas en verde/rojo según el impacto macroeconómico.
-3. **Prosa Analítica Justificada con Viñeta Institucional:** Párrafos densos en tipografía Georgia (8.0 pt / leading 11.4 pt) con viñetas en azul cielo (`#0284C7`), conceptos clave en negrita y sin cajas cerradas.
-4. **Figuras Editoriales ECharts 5 de Alta Densidad:** 11 figuras de panel dual calibradas a 205-210 pt de altura y 532 pt de ancho con borde capilar `#CBD5E1`, etiquetas numéricas directas en todos los nodos y barras, sin callouts flotantes ni cajas opacas.
+3. **Prosa Analítica en Palatino Linotype:** Párrafos en tipografía Palatino Linotype (8.7 pt / leading 12.4 pt) con alineación ragged-right (`TA_LEFT`) en viñetas de 3–4 líneas para erradicar ríos de texto forzado, viñetas triangulares institucionales (`▸`) en azul institucional (`#0284C7`), conceptos clave en negrita y sin cajas cerradas.
+4. **Figuras Editoriales ECharts 5 con Barras Rectangulares y Valor Analítico Agregado:** 11 figuras de panel dual calibradas a 532 pt de ancho con borde capilar `#CBD5E1`. Eliminación de bordes redondeados (`borderRadius: 0`), colores profundos (Verde Esmeralda `#047857`, Rojo Burdó `#B91C1C`, Oxford Navy `#0B2545`), etiquetas numéricas directas con halo blanco anticolisión, líneas de referencia histórica (Media EMAE 147,8 pts, Pauta Crawling 2,0% m/m, Banda Paridad Fundamental TCRM 95–105) y visibilidad garantizada del último dato (`showMaxLabel: True`).
 5. **Arquitectura de 4 Arquetipos Editoriales Rítmicos (Páginas 4 a 14):**
    - **Arquetipo Scorecard (Págs. 4 y 8):** Pestaña temática de bloque, tabla comparativa con micro-barras de variación y bloques analíticos temáticos precedidos por viñetas triangulares (`▸`).
    - **Arquetipo Desglose Multicontable (Págs. 5, 7, 9 y 13):** Lead-in con filetes horizontales finos, gran matriz contable agrupada y 3 párrafos de alta densidad.

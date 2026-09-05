@@ -83,7 +83,7 @@ def ejecutar_pipeline_coyuntura_completo():
     dir_fig = os.path.join(BASE_DIR, "03_Figuras_HD")
     dir_dia = os.path.join(BASE_DIR, "04_Informes_Diarios")
     dir_sem = os.path.join(BASE_DIR, "05_Informes_Semanales_APA7")
-    dir_men = os.path.join(BASE_DIR, "06_Informes_Mensuales_OERU")
+    dir_men = os.path.join(BASE_DIR, "06_Informes_Mensuales")
     dir_eje = os.path.join(BASE_DIR, "07_Reportes_Ejecutivos_PDF")
     
     for d in [dir_bd, dir_fig, dir_dia, dir_sem, dir_men, dir_eje]:
@@ -212,7 +212,7 @@ def sincronizar_con_google_drive(base_dir, fecha_ciclo):
                         try: os.remove(os.path.join(root, f))
                         except: pass
             # Espejar carpetas críticas recursivamente
-            for sub in ["src", "03_Figuras_HD", "04_Informes_Diarios", "05_Informes_Semanales_APA7", "06_Informes_Mensuales_OERU", "07_Reportes_Ejecutivos_PDF", "01_Bases_Datos"]:
+            for sub in ["src", "03_Figuras_HD", "04_Informes_Diarios", "05_Informes_Semanales_APA7", "06_Informes_Mensuales", "07_Reportes_Ejecutivos_PDF", "01_Bases_Datos"]:
                 s_orig = os.path.join(base_dir, sub)
                 if not os.path.exists(s_orig):
                     continue
@@ -273,7 +273,7 @@ def sincronizar_con_google_drive(base_dir, fecha_ciclo):
             # PDFs
             p_dia = os.path.join(base_dir, "04_Informes_Diarios", f"{fecha_ciclo}_Monitor_Diario_Mercados.pdf")
             p_sem = os.path.join(base_dir, "05_Informes_Semanales_APA7", f"{fecha_ciclo}_Paper_Macroeconomico_Semanal.pdf")
-            p_men = os.path.join(base_dir, "06_Informes_Mensuales_OERU", "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
+            p_men = os.path.join(base_dir, "06_Informes_Mensuales", "Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf")
 
             if os.path.exists(p_dia):
                 for d in ["Monitores_Diarios", "04_Informes_Diarios"]:
@@ -288,7 +288,7 @@ def sincronizar_con_google_drive(base_dir, fecha_ciclo):
                 shutil.copy2(p_sem, os.path.join(gdrive_g, "2026-08-28_Paper_Macroeconomico_Semanal.pdf"))
 
             if os.path.exists(p_men):
-                for d in ["Informes_Mensuales", "06_Informes_Mensuales_OERU"]:
+                for d in ["Informes_Mensuales", "06_Informes_Mensuales"]:
                     os.makedirs(os.path.join(gdrive_g, d), exist_ok=True)
                     shutil.copy2(p_men, os.path.join(gdrive_g, d, os.path.basename(p_men)))
 

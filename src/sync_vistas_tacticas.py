@@ -2,7 +2,7 @@
 CONECTOR DE VISTAS TACTICAS CUALITATIVAS -> DATOS_DEL_DIA.JSON
 =============================================================================
 Autor: Federico Agustin Chillon
-Facultad de Ciencias Economicas -- UNCUYO / OERU
+Facultad de Ciencias Economicas -- UNCUYO
 
 Sincroniza unicamente black_litterman_tactical_views (juicio de inversion
 cualitativo con tesis, no una serie de mercado) desde un registro macro

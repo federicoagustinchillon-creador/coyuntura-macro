@@ -84,7 +84,7 @@ class NumberedCanvasSemanal(canvas.Canvas):
             header_y = 762
             self.setFont("Georgia", 7.2)
             self.setFillColor(colors.HexColor("#64748B"))
-            self.drawString(left, header_y, "UNIVERSIDAD NACIONAL DE CUYO · FCE · OERU | SERIE DE INVESTIGACIÓN APLICADA (APA 7)")
+            self.drawString(left, header_y, "UNIVERSIDAD NACIONAL DE CUYO · FCE | SERIE DE INVESTIGACIÓN APLICADA (APA 7)")
             self.drawRightString(right, header_y, "FEDERICO AGUSTÍN CHILLÓN")
             
             self.setStrokeColor(colors.HexColor("#CBD5E1"))
@@ -102,7 +102,7 @@ class NumberedCanvasSemanal(canvas.Canvas):
 
         self.setFont("Georgia", 6.8)
         self.setFillColor(MUTED)
-        self.drawString(left, cy - 2.5, "Facultad de Ciencias Económicas · UNCUYO · OERU")
+        self.drawString(left, cy - 2.5, "Facultad de Ciencias Económicas · UNCUYO")
         self.drawRightString(right, cy - 2.5, "Serie de Investigación Aplicada (APA 7)")
         self.restoreState()
 
@@ -295,7 +295,7 @@ def generar_paper_semanal_reportlab(ctx=None):
     hdr_academic = [
         [
             Paragraph(
-                "<font color='#0B2545' size=9.0><b>UNIVERSIDAD NACIONAL DE CUYO</b> · FCE · OERU</font><br/>"
+                "<font color='#0B2545' size=9.0><b>UNIVERSIDAD NACIONAL DE CUYO</b> · FCE</font><br/>"
                 "<font color='#64748B' size=7.0>OBSERVATORIO ECONÓMICO REGIONAL URBANO · INSTITUTO DE INVESTIGACIONES ECONÓMICAS</font>",
                 ParagraphStyle('H_AL', fontName='Georgia', alignment=TA_LEFT, leading=10.0)
             ),
@@ -322,7 +322,7 @@ def generar_paper_semanal_reportlab(ctx=None):
     story.append(Paragraph("<font color='#0B2545' size=7.5><b>INVESTIGACIÓN MACROECONÓMICA CUANTITATIVA · CIERRE SEMANAL</b></font>", ParagraphStyle('K_S', fontName='Georgia-Bold', spaceAfter=2)))
 
     story.append(Paragraph("Dinámica Inflacionaria, Desanclaje de Expectativas y Convergencia de Precios Relativos", h1_style))
-    story.append(Paragraph("<b>Federico Agustín Chillón</b> · <i>Investigador en Métodos Cuantitativos · Facultad de Ciencias Económicas, UNCUYO · OERU</i>", ParagraphStyle('Author_S', fontName='Georgia', fontSize=7.2, leading=9.2, textColor=MUTED, spaceAfter=4)))
+    story.append(Paragraph("<b>Federico Agustín Chillón</b> · <i>Investigador en Métodos Cuantitativos · Facultad de Ciencias Económicas, UNCUYO</i>", ParagraphStyle('Author_S', fontName='Georgia', fontSize=7.2, leading=9.2, textColor=MUTED, spaceAfter=4)))
 
     # Abstract limpio
     abstract_p = (
@@ -637,7 +637,7 @@ def generar_paper_semanal_reportlab(ctx=None):
     ]
     for el in _crear_tabla_estilizada(tabla_fx_data, col_w_4, "Microestructura cambiaria, derivados CIP y métricas de fragilidad financiera multivariada"):
         story.append(el)
-    story.append(Paragraph("<font size=5.5 color='#64748B'>(1) Fuentes: Matba-Rofex, BCRA y estimación econométrica OERU FCE UNCUYO. Ratio de Absorción y Turbulencia computados sobre retornos diarios multiactivo.</font>", caption_style))
+    story.append(Paragraph("<font size=5.5 color='#64748B'>(1) Fuentes: Matba-Rofex, BCRA y estimación econométrica FCE UNCUYO. Ratio de Absorción y Turbulencia computados sobre retornos diarios multiactivo.</font>", caption_style))
     story.append(Spacer(1, 3))
 
     # Párrafos analíticos con bullet azul
@@ -688,7 +688,7 @@ def generar_paper_semanal_reportlab(ctx=None):
     imprint_paper = Table([
         [Paragraph(
             "<font color='#0B2545' size=6.5><b>RESPONSABILIDAD INSTITUCIONAL:</b></font> "
-            "<font color='#64748B' size=5.8>Documento elaborado por Federico Agustín Chillón para el Observatorio Económico Regional Urbano (OERU) "
+            "<font color='#64748B' size=5.8>Documento elaborado por Federico Agustín Chillón "
             "y el Instituto de Investigaciones Económicas de la Facultad de Ciencias Económicas, Universidad Nacional de Cuyo (UNCUYO). "
             "Las estimaciones econométricas tienen fines estrictamente de investigación y no constituyen asesoramiento financiero vinculante. Mendoza, 2026.</font>",
             ParagraphStyle('ImpPap', fontName='Georgia', leading=7.2)

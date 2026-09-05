@@ -2,7 +2,7 @@
 GENERADOR DEL MONITOR DIARIO DE MERCADOS Y COYUNTURA FINANCIERA (2 PÁGINAS TRADING DESK)
 ========================================================================================
 Autor: Federico Agustín Chillón
-Facultad de Ciencias Económicas — UNCUYO / OERU
+Facultad de Ciencias Económicas — UNCUYO
 Genera el monitor diario en 2 páginas institucionales con tipografía Georgia 9.2 pt,
 paleta Oxford Navy / Deep Wine, análisis cuantitativo de cierre de mercados, flujos MULC,
 arbitrajes de tasas y trade ideas ejecutables.
