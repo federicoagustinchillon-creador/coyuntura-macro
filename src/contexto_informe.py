@@ -44,6 +44,10 @@ FALLBACK_DATOS = {
         "indec_regulados_mom": 3.0,
         "indec_servicios_mom": 2.9,
         "indec_nucleo_mom": 1.9,
+        "ipim_mayorista_mom": 1.8,
+        "ipim_mayorista_ia_pct": 28.5,
+        "ipim_nacionales_mom": 1.9,
+        "ipim_importados_mom": 1.2,
         "deie_mendoza_mom": 2.3,
         "canasta_basica_total_mza": 963000,
         "canasta_basica_alimentaria_mza": 433000
@@ -51,9 +55,31 @@ FALLBACK_DATOS = {
     "actividad": {
         "emae_interanual_pct": 3.1,
         "emae_desestacionalizado_mom_pct": 0.6,
+        "isac_construccion_ia_pct": -4.2,
+        "isac_construccion_mom_pct": 1.4,
+        "isac_construccion_nivel": 124.6,
+        "ipi_manufacturero_ia_pct": -1.8,
+        "ipi_manufacturero_mom_pct": 0.8,
+        "ipi_manufacturero_nivel": 132.1,
         "isarc_mendoza_ia_pct": 3.4,
         "isarc_san_juan_ia_pct": 2.1,
         "isarc_san_luis_ia_pct": 5.8
+    },
+    "sector_externo": {
+        "cuenta_corriente_usd_m": 1840.0,
+        "balanza_comercial_bienes_usd_m": 3250.0,
+        "exportaciones_bienes_fob_usd_m": 7120.0,
+        "importaciones_bienes_cif_usd_m": 3870.0,
+        "balanza_servicios_usd_m": -820.0,
+        "cuenta_financiera_usd_m": 1150.0,
+        "variacion_rin_bcra_usd_m": 3650.0,
+        "reservas_netas_bcra_usd_m": 1240.0
+    },
+    "confianza": {
+        "icg_utdt": 2.48,
+        "icg_utdt_var_mom_pct": 4.2,
+        "icc_utdt": 41.8,
+        "icc_utdt_var_mom_pct": 3.1
     },
     "soberano_usd": {
         "al30_tir": 11.2,
@@ -102,13 +128,15 @@ def cargar_contexto(incluir_series_lentas=True):
 
     ctx = {
         "datos": datos,
-        "dolar": datos.get("dolar", FALLBACK_DATOS["dolar"]),
-        "tasas_ars": datos.get("tasas_ars", FALLBACK_DATOS["tasas_ars"]),
-        "inflacion": datos.get("inflacion", FALLBACK_DATOS["inflacion"]),
-        "actividad": datos.get("actividad", FALLBACK_DATOS["actividad"]),
-        "soberano_usd": datos.get("soberano_usd", FALLBACK_DATOS["soberano_usd"]),
+        "dolar": {**FALLBACK_DATOS["dolar"], **datos.get("dolar", {})},
+        "tasas_ars": {**FALLBACK_DATOS["tasas_ars"], **datos.get("tasas_ars", {})},
+        "inflacion": {**FALLBACK_DATOS["inflacion"], **datos.get("inflacion", {})},
+        "actividad": {**FALLBACK_DATOS["actividad"], **datos.get("actividad", {})},
+        "soberano_usd": {**FALLBACK_DATOS["soberano_usd"], **datos.get("soberano_usd", {})},
         "equity": datos.get("equity", FALLBACK_DATOS["equity"]),
-        "tasas_bcra_referencia": datos.get("tasas_bcra_referencia", FALLBACK_DATOS["tasas_bcra_referencia"]),
+        "tasas_bcra_referencia": {**FALLBACK_DATOS["tasas_bcra_referencia"], **datos.get("tasas_bcra_referencia", {})},
+        "sector_externo": {**FALLBACK_DATOS["sector_externo"], **datos.get("sector_externo", {})},
+        "confianza": {**FALLBACK_DATOS["confianza"], **datos.get("confianza", {})},
         "black_litterman_tactical_views": datos.get("black_litterman_tactical_views", []),
         "fecha": datos.get("fecha", "2026-08-25"),
     }

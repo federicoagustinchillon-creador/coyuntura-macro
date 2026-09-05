@@ -1,115 +1,141 @@
 {
-  "fecha": "2026-08-25",
-  "dolar": {
-    "oficial_bna": 1531.07,
-    "mayorista": 1511.5326,
-    "mep": 1532.33,
-    "ccl": 1600.2,
-    "blue": 1615.0,
-    "brecha_ccl_oficial_pct": 4.52
-  },
-  "tasas_ars": {
-    "lecap_corta_tem": 2.95,
-    "lecap_larga_tem": 3.4,
-    "boncer_tzx27_tir_real": 1.1,
-    "breakeven_inflacion_tem": 2.86,
-    "inflacion_esperada_rem_tem": 2.0,
-    "premio_tasa_fija_pbs": 86
-  },
-  "inflacion": {
-    "indec_general_mom": 2.2,
-    "indec_regulados_mom": 3.0,
-    "indec_servicios_mom": 2.9,
-    "indec_nucleo_mom": 1.9,
-    "deie_mendoza_mom": 2.3,
-    "canasta_basica_total_mza": 963000,
-    "canasta_basica_alimentaria_mza": 433000
-  },
-  "actividad": {
-    "emae_interanual_pct": 3.1,
-    "emae_desestacionalizado_mom_pct": 0.6,
-    "isarc_mendoza_ia_pct": 3.4,
-    "isarc_san_juan_ia_pct": 2.1,
-    "isarc_san_luis_ia_pct": 5.8
-  },
-  "soberano_usd": {
-    "al30_tir": 11.2,
-    "gd30_tir": 9.8,
-    "gd35_tir": 9.65,
-    "gd38_tir": 9.7,
-    "embi_riesgo_pais_pbs": 506,
-    "nelson_siegel": {
-      "beta0": 9.4,
-      "beta1": 5.6,
-      "beta2": -3.2,
-      "tau": 2.4,
-      "r2": 0.984
+    "fecha": "2026-08-25",
+    "dolar": {
+        "oficial_bna": 1531.07,
+        "mayorista": 1511.5326,
+        "mep": 1532.33,
+        "ccl": 1600.2,
+        "blue": 1615.0,
+        "brecha_ccl_oficial_pct": 4.52
+    },
+    "tasas_ars": {
+        "lecap_corta_tem": 2.95,
+        "lecap_larga_tem": 3.4,
+        "boncer_tzx27_tir_real": 1.1,
+        "breakeven_inflacion_tem": 2.86,
+        "inflacion_esperada_rem_tem": 2.0,
+        "premio_tasa_fija_pbs": 86
+    },
+    "inflacion": {
+        "indec_general_mom": 2.2,
+        "indec_regulados_mom": 3.0,
+        "indec_servicios_mom": 2.9,
+        "indec_nucleo_mom": 1.9,
+        "ipim_mayorista_mom": 1.8,
+        "ipim_mayorista_ia_pct": 28.5,
+        "ipim_nacionales_mom": 1.9,
+        "ipim_importados_mom": 1.2,
+        "deie_mendoza_mom": 2.3,
+        "canasta_basica_total_mza": 963000,
+        "canasta_basica_alimentaria_mza": 433000
+    },
+    "actividad": {
+        "emae_interanual_pct": 3.1,
+        "emae_desestacionalizado_mom_pct": 0.6,
+        "isac_construccion_ia_pct": -4.2,
+        "isac_construccion_mom_pct": 1.4,
+        "isac_construccion_nivel": 124.6,
+        "ipi_manufacturero_ia_pct": -1.8,
+        "ipi_manufacturero_mom_pct": 0.8,
+        "ipi_manufacturero_nivel": 132.1,
+        "isarc_mendoza_ia_pct": 3.4,
+        "isarc_san_juan_ia_pct": 2.1,
+        "isarc_san_luis_ia_pct": 5.8
+    },
+    "soberano_usd": {
+        "al30_tir": 11.2,
+        "gd30_tir": 9.8,
+        "gd35_tir": 9.65,
+        "gd38_tir": 9.7,
+        "embi_riesgo_pais_pbs": 506,
+        "nelson_siegel": {
+            "beta0": 9.4,
+            "beta1": 5.6,
+            "beta2": -3.2,
+            "tau": 2.4,
+            "r2": 0.984
+        }
+    },
+    "equity": {
+        "merval_ars": 3044675.75,
+        "merval_usd_ccl": 1976.92,
+        "var_semanal_pct": 1.3,
+        "lideres": [
+            {
+                "ticker": "YPFD",
+                "ev_ebitda": 3.8,
+                "margen_ebitda": 32.4,
+                "recom": "SOBREPONDERAR"
+            },
+            {
+                "ticker": "PAMP",
+                "ev_ebitda": 4.1,
+                "margen_ebitda": 38.5,
+                "recom": "SOBREPONDERAR"
+            },
+            {
+                "ticker": "GGAL",
+                "ev_ebitda": 6.2,
+                "margen_ebitda": 28.5,
+                "recom": "SOBREPONDERAR"
+            }
+        ]
+    },
+    "black_litterman_tactical_views": [
+        {
+            "asset": "ALUA.BA",
+            "view_type": "ABSOLUTE",
+            "view_return_annual": 0.265,
+            "confidence_omega": 0.00045,
+            "thesis": "Contrato hidroeléctrico Futaleufú (10.6 USD/MWh hasta 2050) + Capex eólico 332 MW genera ventaja de costo en aluminio primario."
+        },
+        {
+            "asset": "GD30.BA",
+            "view_type": "ABSOLUTE",
+            "view_return_annual": 0.21,
+            "confidence_omega": 0.0006,
+            "thesis": "Compresión de curva soberana por ancla fiscal (superávit primario) y pago de cupones."
+        },
+        {
+            "asset": "GGAL.BA",
+            "view_type": "RELATIVE_TO_BENCHMARK",
+            "relative_benchmark": "SPY",
+            "excess_return_annual": 0.085,
+            "confidence_omega": 0.00075,
+            "thesis": "Crecimiento de crédito privado real desplazando exposición a títulos públicos."
+        }
+    ],
+    "tasas_bcra_referencia": {
+        "badlar_privados_tna": {
+            "valor": 23.625,
+            "fecha": "2026-08-25",
+            "fuente": "registro interno"
+        },
+        "pases_1d_tna": {
+            "valor": 23.12,
+            "fecha": "2026-08-25",
+            "fuente": "registro interno"
+        },
+        "reservas_brutas_usd_m": {
+            "valor": 50660.0,
+            "fecha": "2026-08-25",
+            "fuente": "registro interno"
+        }
+    },
+    "sector_externo": {
+        "cuenta_corriente_usd_m": 1840.0,
+        "balanza_comercial_bienes_usd_m": 3250.0,
+        "exportaciones_bienes_fob_usd_m": 7120.0,
+        "importaciones_bienes_cif_usd_m": 3870.0,
+        "balanza_servicios_usd_m": -820.0,
+        "cuenta_financiera_usd_m": 1150.0,
+        "variacion_rin_bcra_usd_m": 3650.0,
+        "reservas_netas_bcra_usd_m": 1240.0
+    },
+    "confianza": {
+        "icg_utdt": 2.48,
+        "icg_utdt_var_mom_pct": 4.2,
+        "icc_utdt": 41.8,
+        "icc_utdt_var_mom_pct": 3.1
     }
-  },
-  "equity": {
-    "merval_ars": 3044675.75,
-    "merval_usd_ccl": 1976.92,
-    "var_semanal_pct": 1.3,
-    "lideres": [
-      {
-        "ticker": "YPFD",
-        "ev_ebitda": 3.8,
-        "margen_ebitda": 32.4,
-        "recom": "SOBREPONDERAR"
-      },
-      {
-        "ticker": "PAMP",
-        "ev_ebitda": 4.1,
-        "margen_ebitda": 38.5,
-        "recom": "SOBREPONDERAR"
-      },
-      {
-        "ticker": "GGAL",
-        "ev_ebitda": 6.2,
-        "margen_ebitda": 28.5,
-        "recom": "SOBREPONDERAR"
-      }
-    ]
-  },
-  "black_litterman_tactical_views": [
-    {
-      "asset": "ALUA.BA",
-      "view_type": "ABSOLUTE",
-      "view_return_annual": 0.265,
-      "confidence_omega": 0.00045,
-      "thesis": "Contrato hidroeléctrico Futaleufú (10.6 USD/MWh hasta 2050) + Capex eólico 332 MW genera ventaja de costo en aluminio primario."
-    },
-    {
-      "asset": "GD30.BA",
-      "view_type": "ABSOLUTE",
-      "view_return_annual": 0.21,
-      "confidence_omega": 0.0006,
-      "thesis": "Compresión de curva soberana por ancla fiscal (superávit primario) y pago de cupones."
-    },
-    {
-      "asset": "GGAL.BA",
-      "view_type": "RELATIVE_TO_BENCHMARK",
-      "relative_benchmark": "SPY",
-      "excess_return_annual": 0.085,
-      "confidence_omega": 0.00075,
-      "thesis": "Crecimiento de crédito privado real desplazando exposición a títulos públicos."
-    }
-  ],
-  "tasas_bcra_referencia": {
-    "badlar_privados_tna": {
-      "valor": 23.625,
-      "fecha": "2026-08-25",
-      "fuente": "registro interno"
-    },
-    "pases_1d_tna": {
-      "valor": 23.12,
-      "fecha": "2026-08-25",
-      "fuente": "registro interno"
-    },
-    "reservas_brutas_usd_m": {
-      "valor": 50660.0,
-      "fecha": "2026-08-25",
-      "fuente": "registro interno"
-    }
-  }
 }

@@ -293,9 +293,10 @@ def gen_echarts_emae():
                 "symbolSize": 6,
                 "itemStyle": {"color": "#64748B", "borderColor": "#FFFFFF", "borderWidth": 1.5},
                 "label": {
-                    "show": True, "position": "top", "offset": [0, -4],
+                    "show": True, "position": "top", "offset": [0, -6],
                     "formatter": f"Inicio: {str(v).replace('.', ',')}",
-                    "color": "#64748B", "fontSize": 8.5
+                    "color": "#475569", "fontSize": 8.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
                 }
             })
         elif i == idx_min:
@@ -304,9 +305,10 @@ def gen_echarts_emae():
                 "symbolSize": 6,
                 "itemStyle": {"color": "#B91C1C", "borderColor": "#FFFFFF", "borderWidth": 1.5},
                 "label": {
-                    "show": True, "position": "bottom", "offset": [0, 4],
+                    "show": True, "position": "bottom", "offset": [0, 8],
                     "formatter": f"Piso: {str(v).replace('.', ',')} (-4,5% i.a.)",
-                    "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5
+                    "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5
                 }
             })
         elif i == len(desest) - 1:
@@ -315,9 +317,10 @@ def gen_echarts_emae():
                 "symbolSize": 7,
                 "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
                 "label": {
-                    "show": True, "position": [-75, -18],
+                    "show": True, "position": [-75, -22],
                     "formatter": f"{str(v).replace('.', ',')} pts (+3,1% i.a.)",
-                    "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5
+                    "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 6], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
                 }
             })
         else:
@@ -361,7 +364,7 @@ def gen_echarts_emae():
                     "silent": True, "symbol": ["none", "none"],
                     "data": [
                         {"yAxis": 147.8, "lineStyle": {"color": "#64748B", "type": [3, 3], "width": 1.1},
-                         "label": {"formatter": "Media Histórica (147,8 pts)", "position": "insideEndTop", "color": "#64748B", "fontSize": 8.0}}
+                         "label": {"formatter": "Media Histórica (147,8 pts)", "position": "insideEndTop", "color": "#475569", "fontSize": 8.5, "fontWeight": "600", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}}
                     ]
                 },
                 "type": "line",
@@ -390,7 +393,7 @@ def gen_echarts_emae():
 
     opt2 = {
         "animation": False,
-        "grid": {"top": 10, "right": 50, "bottom": 24, "left": 105},
+        "grid": {"top": 10, "right": 55, "bottom": 24, "left": 135},
         "xAxis": {
             "type": "value", "min": -8, "max": 18, "interval": 6,
             "splitLine": {"lineStyle": {"color": "#F1F5F9", "type": [3, 3]}},
@@ -398,19 +401,19 @@ def gen_echarts_emae():
         },
         "yAxis": {
             "type": "category",
-            "data": ["Construcción", "Industria", "Comercio", "Minería & Petr.", "Agropecuario"],
+            "data": ["Construcción (ISAC)", "Industria (IPI)", "Comercio", "Minería & Petr.", "Agropecuario"],
             "axisLine": {"show": True, "lineStyle": {"color": "#94A3B8", "width": 1.2}},
             "axisTick": {"show": False},
-            "axisLabel": {"color": "#1E293B", "fontSize": 10, "fontWeight": "600"}
+            "axisLabel": {"color": "#1E293B", "fontSize": 9.5, "fontWeight": "600"}
         },
         "series": [{
             "type": "bar",
             "data": [
-                {"value": -4.2, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "formatter": "-4,2%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": -1.8, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "formatter": "-1,8%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 2.8,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+2,8%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 8.5,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+8,5%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 14.2, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+14,2%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}}
+                {"value": -4.2, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "formatter": "-4,2%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.0, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5}},
+                {"value": -1.8, "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "left", "formatter": "-1,8%", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.0, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5}},
+                {"value": 2.8,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+2,8%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}},
+                {"value": 8.5,  "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+8,5%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}},
+                {"value": 14.2, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "+14,2%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
             ],
             "barWidth": 12
         }]
@@ -477,29 +480,49 @@ def gen_echarts_ipc():
         if i == 0:
             data_g_chart.append({
                 "value": v, "symbolSize": 6,
-                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Pico: 25,5%", "color": "#64748B", "fontWeight": "bold", "fontSize": 8.5}
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -6],
+                    "formatter": "Pico: 25,5%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+                }
             })
         elif i == 5:  # May-24: first drop to ~4%
             data_g_chart.append({
                 "value": v,
-                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "4,2%", "color": "#64748B", "fontSize": 8.0}
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -4],
+                    "formatter": "4,2%", "color": "#475569", "fontSize": 8.0,
+                    "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1, 3], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+                }
             })
         elif i == idx_min_g:
             data_g_chart.append({
                 "value": v, "symbolSize": 6,
                 "itemStyle": {"color": "#047857"},
-                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Mínimo: 1,5%", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5}
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -6],
+                    "formatter": "Mínimo: 1,5%", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5
+                }
             })
         elif i == 27:  # Mar-26 rebound
             data_g_chart.append({
                 "value": v,
-                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "3,4%", "color": "#64748B", "fontSize": 8.0}
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -4],
+                    "formatter": "3,4%", "color": "#475569", "fontSize": 8.0,
+                    "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1, 3], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+                }
             })
         elif i == len(var_g) - 1:
             data_g_chart.append({
                 "value": v, "symbolSize": 7,
                 "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
-                "label": {"show": True, "position": [-45, -16], "formatter": f"{str(v).replace('.', ',')}% m/m", "color": "#0B2545", "fontWeight": "bold", "fontSize": 10}
+                "label": {
+                    "show": True, "position": "top", "offset": [-35, -14],
+                    "formatter": f"Gral: {str(v).replace('.', ',')}%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
+                }
             })
         else:
             data_g_chart.append(v)
@@ -510,18 +533,30 @@ def gen_echarts_ipc():
         if i == 0:
             data_n_chart.append({
                 "value": v, "symbolSize": 5,
-                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Núcleo: 28,3%", "color": "#0284C7", "fontSize": 8.0}
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -6],
+                    "formatter": "Núcleo: 28,3%", "color": "#0284C7", "fontSize": 8.0,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BAE6FD", "borderWidth": 0.5
+                }
             })
         elif i == idx_min_n:
             data_n_chart.append({
                 "value": v, "symbolSize": 5,
-                "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "1,5%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 8.0}
+                "label": {
+                    "show": True, "position": "bottom", "offset": [0, 5],
+                    "formatter": "1,5%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 8.0,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1, 3], "borderRadius": 2, "borderColor": "#BAE6FD", "borderWidth": 0.5
+                }
             })
         elif i == len(var_n) - 1:
             data_n_chart.append({
                 "value": v, "symbolSize": 7,
                 "itemStyle": {"color": "#0284C7", "borderColor": "#FFFFFF", "borderWidth": 2},
-                "label": {"show": True, "position": [-45, 12], "formatter": f"{str(v).replace('.', ',')}% m/m", "color": "#0284C7", "fontWeight": "bold", "fontSize": 9.5}
+                "label": {
+                    "show": True, "position": "top", "offset": [25, -14],
+                    "formatter": f"Núcleo: {str(v).replace('.', ',')}%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 9.0,
+                    "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#0284C7", "borderWidth": 0.8
+                }
             })
         else:
             data_n_chart.append(v)
@@ -552,7 +587,7 @@ def gen_echarts_ipc():
                     "silent": True, "symbol": ["none", "none"],
                     "data": [
                         {"yAxis": 2.0, "lineStyle": {"color": "#047857", "type": [3, 3], "width": 1.2},
-                         "label": {"formatter": "Pauta Crawling (2,0%)", "position": "insideEndTop", "color": "#047857", "fontSize": 8.0, "fontWeight": "bold"}}
+                         "label": {"formatter": "Pauta Crawling (2,0% m/m)", "position": "insideEndTop", "offset": [-15, -8], "color": "#047857", "fontSize": 8.5, "fontWeight": "bold", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
                     ]
                 },
                 "markArea": {
@@ -600,18 +635,18 @@ def gen_echarts_ipc():
                 "data": [
                     {
                         "value": 117.8, "symbolSize": 6,
-                        "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "117,8% i.a.", "color": "#0B2545", "fontSize": 8.5}
+                        "label": {"show": True, "position": "top", "offset": [0, -6], "formatter": "117,8% i.a.", "color": "#0B2545", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}
                     },
                     55.9, 39.4, 31.8,
                     {
                         "value": 31.5, "symbolSize": 6,
-                        "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "Piso: 31,5%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}
+                        "label": {"show": True, "position": "bottom", "offset": [0, 6], "formatter": "Piso: 31,5%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}
                     },
                     32.6, 33.5,
                     {
                         "value": 33.8, "symbolSize": 7,
                         "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
-                        "label": {"show": True, "position": [-45, -16], "formatter": "33,8% i.a.", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}
+                        "label": {"show": True, "position": [-35, -18], "formatter": "33,8% i.a.", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8}
                     }
                 ],
                 "lineStyle": {"width": 2.5, "color": "#0B2545"},
@@ -625,18 +660,18 @@ def gen_echarts_ipc():
                 "data": [
                     {
                         "value": 116.2, "symbolSize": 6,
-                        "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "116,2% i.a.", "color": "#047857", "fontSize": 8.5}
+                        "label": {"show": True, "position": "bottom", "offset": [0, 6], "formatter": "116,2% i.a.", "color": "#047857", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}
                     },
                     54.2, 38.2, 31.2,
                     {
                         "value": 31.0, "symbolSize": 6,
-                        "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "31,0%", "color": "#047857", "fontSize": 8.5}
+                        "label": {"show": True, "position": "top", "offset": [0, -6], "formatter": "31,0%", "color": "#047857", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}
                     },
                     32.1, 33.0,
                     {
                         "value": 33.2, "symbolSize": 7,
                         "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 2},
-                        "label": {"show": True, "position": [-45, 14], "formatter": "33,2% i.a.", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}
+                        "label": {"show": True, "position": [-35, 14], "formatter": "33,2% i.a.", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#047857", "borderWidth": 0.8}
                     }
                 ],
                 "lineStyle": {"width": 2.0, "color": "#047857", "type": "dashed"},
@@ -757,18 +792,30 @@ def gen_echarts_rates():
             curva_be.append({
                 "value": v, "symbolSize": 7,
                 "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 2},
-                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": f"Premio: +{premio} pb ({str(v).replace('.', ',')}%)", "color": "#047857", "fontWeight": "bold", "fontSize": 9.0}
+                "label": {
+                    "show": True, "position": "top", "offset": [25, -12],
+                    "formatter": f"Premio: +{premio} pb ({str(v).replace('.', ',')}%)", "color": "#047857", "fontWeight": "bold", "fontSize": 9.0,
+                    "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 6], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.8
+                }
             })
         elif i == 2 or i == 3:
             curva_be.append({
                 "value": v, "symbolSize": 5,
-                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": f"{str(v).replace('.', ',')}%", "color": "#0B2545", "fontSize": 8.5}
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -5],
+                    "formatter": f"{str(v).replace('.', ',')}%", "color": "#0B2545", "fontSize": 8.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+                }
             })
         elif i == len(be_vals) - 1:
             curva_be.append({
                 "value": v, "symbolSize": 6,
                 "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 1.5},
-                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": f"{str(v).replace('.', ',')}%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.0}
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -5],
+                    "formatter": f"{str(v).replace('.', ',')}%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.0,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+                }
             })
         else:
             curva_be.append(v)
@@ -885,17 +932,18 @@ def gen_echarts_sovereign():
                 "name": "Bonos ByMA",
                 "type": "scatter",
                 "data": [
-                    {"value": [2.8, al30_tir], "name": f"AL30 ({str(al30_tir).replace('.', ',')}%)", "label": {"show": True, "position": "top", "offset": [0, -6]}},
-                    {"value": [3.0, gd30_tir], "name": f"GD30 ({str(gd30_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [0, 6]}},
-                    {"value": [6.8, gd35_tir], "name": f"GD35 ({str(gd35_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [0, 6]}},
-                    {"value": [8.4, gd38_tir], "name": f"GD38 ({str(gd38_tir).replace('.', ',')}%)", "label": {"show": True, "position": "top", "offset": [0, -6]}},
-                    {"value": [14.5, gd46_tir], "name": f"GD46 ({str(gd46_tir).replace('.', ',')}%)", "label": {"show": True, "position": "top", "offset": [0, -6]}}
+                    {"value": [2.8, al30_tir], "name": f"AL30 ({str(al30_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [0, 8]}},
+                    {"value": [3.0, gd30_tir], "name": f"GD30 ({str(gd30_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [0, 8]}},
+                    {"value": [6.8, gd35_tir], "name": f"GD35 ({str(gd35_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [0, 8]}},
+                    {"value": [8.4, gd38_tir], "name": f"GD38 ({str(gd38_tir).replace('.', ',')}%)", "label": {"show": True, "position": "bottom", "offset": [0, 8]}},
+                    {"value": [14.5, gd46_tir], "name": f"GD46 ({str(gd46_tir).replace('.', ',')}%)", "label": {"show": True, "position": "top", "offset": [0, -8]}}
                 ],
                 "symbolSize": 8,
                 "itemStyle": {"color": "#0284C7", "borderColor": "#FFFFFF", "borderWidth": 2},
                 "label": {
                     "show": True,
-                    "formatter": "{b}", "fontSize": 9.0, "fontWeight": "bold", "color": "#0B2545"
+                    "formatter": "{b}", "fontSize": 9.0, "fontWeight": "bold", "color": "#0B2545",
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.6
                 }
             }
         ]
@@ -986,7 +1034,10 @@ def gen_echarts_fx():
                     {
                         "value": ccl, "symbolSize": 7,
                         "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
-                        "label": {"show": True, "position": [-95, -18], "formatter": f"{ccl_fmt} (Brecha: {brecha_fmt})", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}
+                        "label": {
+                            "show": True, "position": [-85, -20], "formatter": f"{ccl_fmt} (Brecha: {brecha_fmt})", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5,
+                            "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 6], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
+                        }
                     }
                 ],
                 "lineStyle": {"width": 2.5, "color": "#0B2545"},
@@ -1003,12 +1054,15 @@ def gen_echarts_fx():
                 "name": f"Oficial BNA ({oficial_fmt})",
                 "type": "line", "smooth": False,
                 "data": [
-                    {"value": 820, "symbolSize": 5, "label": {"show": True, "position": "bottom", "offset": [0, 3], "formatter": "$820", "color": "#64748B", "fontSize": 8.5}},
+                    {"value": 820, "symbolSize": 5, "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "$820", "color": "#64748B", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
                     890, 960, 1040, 1180, 1310, 1420,
                     {
                         "value": oficial, "symbolSize": 6,
                         "itemStyle": {"color": "#64748B", "borderColor": "#FFFFFF", "borderWidth": 1.5},
-                        "label": {"show": True, "position": [-45, 14], "formatter": oficial_fmt, "color": "#64748B", "fontWeight": "bold", "fontSize": 9.0}
+                        "label": {
+                            "show": True, "position": [-35, 14], "formatter": oficial_fmt, "color": "#475569", "fontWeight": "bold", "fontSize": 9.0,
+                            "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 5], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.6
+                        }
                     }
                 ],
                 "lineStyle": {"width": 1.8, "color": "#64748B", "type": "dashed"},
@@ -1035,12 +1089,12 @@ def gen_echarts_fx():
             "name": "Futuros CIP",
             "type": "line", "smooth": False,
             "data": [
-                {"value": round(oficial, 2), "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": f"${int(round(oficial))} (Spot)", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5}},
-                {"value": 1576.0, "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$1.576 (35,4%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}},
-                {"value": 1622.0, "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$1.622 (36,0%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}},
-                {"value": 1670.0, "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$1.670 (36,5%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}},
-                {"value": 1819.0, "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$1.819 (37,9%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}},
-                {"value": 2123.0, "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$2.123 (39,2%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}}
+                {"value": round(oficial, 2), "label": {"show": True, "position": "top", "offset": [0, -7], "formatter": f"${int(round(oficial))} (Spot)", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}},
+                {"value": 1576.0, "label": {"show": True, "position": "top", "offset": [0, -7], "formatter": "$1.576 (35,4%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
+                {"value": 1622.0, "label": {"show": True, "position": "top", "offset": [0, -7], "formatter": "$1.622 (36,0%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
+                {"value": 1670.0, "label": {"show": True, "position": "top", "offset": [0, -7], "formatter": "$1.670 (36,5%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
+                {"value": 1819.0, "label": {"show": True, "position": "top", "offset": [0, -9], "formatter": "$1.819 (37,9%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.6}},
+                {"value": 2123.0, "label": {"show": True, "position": "top", "offset": [0, -9], "formatter": "$2.123 (39,2%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5, "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 5], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.6}}
             ],
             "lineStyle": {"width": 2.5, "color": "#0B2545"},
             "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
@@ -1094,17 +1148,26 @@ def gen_echarts_equity():
                 {
                     "value": 940, "symbolSize": 6,
                     "itemStyle": {"color": "#64748B", "borderColor": "#FFFFFF", "borderWidth": 1.5},
-                    "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "Elecciones (940 USD)", "color": "#64748B", "fontSize": 8.5, "fontWeight": "bold"}
+                    "label": {
+                        "show": True, "position": "bottom", "offset": [0, 8], "formatter": "Elecciones (940 USD)", "color": "#475569", "fontSize": 8.5, "fontWeight": "bold",
+                        "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+                    }
                 },
                 {
                     "value": 1480, "symbolSize": 6,
                     "itemStyle": {"color": "#0284C7", "borderColor": "#FFFFFF", "borderWidth": 1.5},
-                    "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "Ley Bases (1.480 USD)", "color": "#0284C7", "fontSize": 8.5, "fontWeight": "bold"}
+                    "label": {
+                        "show": True, "position": "bottom", "offset": [0, 8], "formatter": "Ley Bases (1.480 USD)", "color": "#0284C7", "fontSize": 8.5, "fontWeight": "bold",
+                        "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BAE6FD", "borderWidth": 0.5
+                    }
                 },
                 {
                     "value": 1720, "symbolSize": 6,
                     "itemStyle": {"color": "#047857", "borderColor": "#FFFFFF", "borderWidth": 1.5},
-                    "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "Acuerdo FMI (1.720 USD)", "color": "#047857", "fontSize": 8.5, "fontWeight": "bold"}
+                    "label": {
+                        "show": True, "position": "bottom", "offset": [0, 8], "formatter": "Acuerdo FMI (1.720 USD)", "color": "#047857", "fontSize": 8.5, "fontWeight": "bold",
+                        "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5
+                    }
                 },
                 {
                     "value": merval_usd,
@@ -1113,7 +1176,8 @@ def gen_echarts_equity():
                     "label": {
                         "show": True, "position": "top",
                         "formatter": f"Récord: {merval_usd:,.2f} USD".replace(",", "@").replace(".", ",").replace("@", "."),
-                        "color": "#0B2545", "fontWeight": "bold", "fontSize": 10.5, "offset": [0, -4]
+                        "color": "#0B2545", "fontWeight": "bold", "fontSize": 10.0, "offset": [-20, -12],
+                        "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 6], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
                     }
                 }
             ],
@@ -1128,31 +1192,31 @@ def gen_echarts_equity():
             },
             "markLine": {
                 "silent": True, "symbol": ["none", "none"],
-                "lineStyle": {"type": [3, 3], "color": "#94A3B8", "width": 1.2},
+                "lineStyle": {"type": [3, 3], "color": "#94A3B8", "width": 1.0},
                 "data": [
-                    {"xAxis": "Nov-23", "label": {"formatter": "Elecciones\\n(940 USD)", "position": "insideStartTop", "color": "#64748B", "fontSize": 8.5}},
-                    {"xAxis": "May-24", "label": {"formatter": "Ley Bases\\n(1.570 USD)", "position": "insideStartTop", "color": "#64748B", "fontSize": 8.5}}
+                    {"xAxis": "Nov-23"},
+                    {"xAxis": "May-24"}
                 ]
             }
         }]
     }
 
     radar_data = [
-        {"name": "VIST (4,5x)", "value": [42.0, 4.5], "itemStyle": {"color": "#0B2545"}},
-        {"name": "PAMP (4,1x)", "value": [38.5, 4.1], "itemStyle": {"color": "#0B2545"}},
-        {"name": "TGS (5,0x)",  "value": [36.5, 5.0], "itemStyle": {"color": "#0B2545"}},
-        {"name": "YPFD (3,8x)", "value": [32.4, 3.8], "itemStyle": {"color": "#0B2545"}},
-        {"name": "CEPU (4,3x)", "value": [30.5, 4.3], "itemStyle": {"color": "#0B2545"}},
-        {"name": "GGAL (6,2x)", "value": [28.5, 6.2], "itemStyle": {"color": "#B91C1C"}},
-        {"name": "BMA (5,8x)",  "value": [26.0, 5.8], "itemStyle": {"color": "#B91C1C"}},
-        {"name": "BBAR (5,4x)", "value": [24.5, 5.4], "itemStyle": {"color": "#B91C1C"}},
-        {"name": "ALUA (5,6x)", "value": [22.0, 5.6], "itemStyle": {"color": "#0284C7"}},
-        {"name": "TXAR (5,1x)", "value": [21.0, 5.1], "itemStyle": {"color": "#0284C7"}}
+        {"name": "VIST (4,5x)", "value": [42.0, 4.5], "itemStyle": {"color": "#0B2545"}, "label": {"position": "right", "offset": [4, 0]}},
+        {"name": "PAMP (4,1x)", "value": [38.5, 4.1], "itemStyle": {"color": "#0B2545"}, "label": {"position": "right", "offset": [4, 0]}},
+        {"name": "TGS (5,0x)",  "value": [36.5, 5.0], "itemStyle": {"color": "#0B2545"}, "label": {"position": "right", "offset": [4, 0]}},
+        {"name": "YPFD (3,8x)", "value": [32.4, 3.8], "itemStyle": {"color": "#0B2545"}, "label": {"position": "right", "offset": [4, 0]}},
+        {"name": "CEPU (4,3x)", "value": [30.5, 4.3], "itemStyle": {"color": "#0B2545"}, "label": {"position": "right", "offset": [4, 0]}},
+        {"name": "GGAL (6,2x)", "value": [28.5, 6.2], "itemStyle": {"color": "#B91C1C"}, "label": {"position": "right", "offset": [4, 0]}},
+        {"name": "BMA (5,8x)",  "value": [26.0, 5.8], "itemStyle": {"color": "#B91C1C"}, "label": {"position": "right", "offset": [4, 0]}},
+        {"name": "BBAR (5,4x)", "value": [24.5, 5.4], "itemStyle": {"color": "#B91C1C"}, "label": {"position": "right", "offset": [4, 0]}},
+        {"name": "ALUA (5,6x)", "value": [22.0, 5.6], "itemStyle": {"color": "#0284C7"}, "label": {"position": "top", "offset": [0, -8]}},
+        {"name": "TXAR (5,1x)", "value": [21.0, 5.1], "itemStyle": {"color": "#0284C7"}, "label": {"position": "bottom", "offset": [0, 8]}}
     ]
 
     opt2 = {
         "animation": False,
-        "grid": {"top": 15, "right": 25, "bottom": 30, "left": 45},
+        "grid": {"top": 15, "right": 35, "bottom": 30, "left": 45},
         "xAxis": {
             "type": "value", "min": 18, "max": 46, "interval": 6,
             "axisLine": {"lineStyle": {"color": "#CBD5E1"}},
@@ -1170,9 +1234,10 @@ def gen_echarts_equity():
             "symbolSize": 9,
             "itemStyle": {"borderColor": "#FFFFFF", "borderWidth": 1.5},
             "label": {
-                "show": True, "position": "right",
+                "show": True,
                 "formatter": "{b}",
-                "fontSize": 9, "fontWeight": "bold", "color": "#1E293B"
+                "fontSize": 8.5, "fontWeight": "bold", "color": "#1E293B",
+                "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
             },
             "markArea": {
                 "silent": True,
@@ -1213,18 +1278,27 @@ def gen_echarts_monetary():
         if i == 0:
             base_series_data.append({
                 "value": v, "symbolSize": 6,
-                "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "$8,5B", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}
+                "label": {
+                    "show": True, "position": "bottom", "offset": [0, 6], "formatter": "$8,5B", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+                }
             })
         elif i == 6:  # Jul-25
             base_series_data.append({
                 "value": v, "symbolSize": 6,
-                "label": {"show": True, "position": "bottom", "offset": [0, 4], "formatter": "$23,4B", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}
+                "label": {
+                    "show": True, "position": "bottom", "offset": [0, 6], "formatter": "$23,4B", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+                }
             })
         elif i == len(base_m) - 1:
             base_series_data.append({
                 "value": v, "symbolSize": 7,
                 "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
-                "label": {"show": True, "position": [-65, -18], "formatter": "$46,8B (100%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}
+                "label": {
+                    "show": True, "position": [-55, -20], "formatter": "$46,8B (100%)", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 6], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
+                }
             })
         else:
             base_series_data.append(v)
@@ -1234,12 +1308,10 @@ def gen_echarts_monetary():
         if i == 0:
             pasivos_series_data.append({
                 "value": v, "symbolSize": 6,
-                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "$34,0B", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5}
-            })
-        elif i == 6:  # Jul-25
-            pasivos_series_data.append({
-                "value": v, "symbolSize": 6,
-                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Extinción: $0", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5}
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -6], "formatter": "$34,0B", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5
+                }
             })
         else:
             pasivos_series_data.append(v)
@@ -1294,7 +1366,10 @@ def gen_echarts_monetary():
                     "silent": True, "symbol": ["none", "none"],
                     "lineStyle": {"type": [3, 3], "color": "#047857", "width": 1.5},
                     "data": [
-                        {"xAxis": "Jul-25", "label": {"formatter": "Extinción Pases: $0", "position": "insideStartTop", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5}}
+                        {"xAxis": "Jul-25", "label": {
+                            "formatter": "Extinción Pases: $0", "position": "insideEndTop", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5,
+                            "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.8
+                        }}
                     ]
                 }
             }
@@ -1442,18 +1517,51 @@ def gen_echarts_regional_cuyo():
     sl_val = act.get("isarc_san_luis_ia_pct", 5.8)
     mza_val = act.get("isarc_mendoza_ia_pct", 3.4)
     sj_val = act.get("isarc_san_juan_ia_pct", 2.1)
-    sl_data = [
-        {"value": v, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": f"+{str(v).replace('.', ',')}%", "color": "#047857", "fontWeight": "bold", "fontSize": 8.5}}
-        for v in [3.2, 4.0, 4.8, 5.2, sl_val]
-    ]
-    mza_data = [
-        {"value": v, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": f"+{str(v).replace('.', ',')}%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 8.5}}
-        for v in [1.8, 2.2, 2.5, 3.1, mza_val]
-    ]
-    sj_data = [
-        {"value": v, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": f"+{str(v).replace('.', ',')}%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 8.5}}
-        for v in [1.2, 1.5, 1.9, 2.0, sj_val]
-    ]
+    sl_raw = [3.2, 4.0, 4.8, 5.2, sl_val]
+    mza_raw = [1.8, 2.2, 2.5, 3.1, mza_val]
+    sj_raw = [1.2, 1.5, 1.9, 2.0, sj_val]
+
+    sl_data = []
+    for i, v in enumerate(sl_raw):
+        if i == len(sl_raw) - 1:
+            sl_data.append({
+                "value": v,
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -6],
+                    "formatter": f"+{str(v).replace('.', ',')}%", "color": "#047857", "fontWeight": "bold", "fontSize": 9.0,
+                    "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.8
+                }
+            })
+        else:
+            sl_data.append(v)
+
+    mza_data = []
+    for i, v in enumerate(mza_raw):
+        if i == len(mza_raw) - 1:
+            mza_data.append({
+                "value": v,
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -18],
+                    "formatter": f"+{str(v).replace('.', ',')}%", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.0,
+                    "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
+                }
+            })
+        else:
+            mza_data.append(v)
+
+    sj_data = []
+    for i, v in enumerate(sj_raw):
+        if i == len(sj_raw) - 1:
+            sj_data.append({
+                "value": v,
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -6],
+                    "formatter": f"+{str(v).replace('.', ',')}%", "color": "#0284C7", "fontWeight": "bold", "fontSize": 9.0,
+                    "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BAE6FD", "borderWidth": 0.8
+                }
+            })
+        else:
+            sj_data.append(v)
 
     opt1 = {
         "animation": False,
@@ -1549,19 +1657,28 @@ def gen_echarts_tcr():
         if i == 0:
             series_tcrm_chart.append({
                 "value": v, "symbolSize": 5,
-                "label": {"show": True, "position": "top", "offset": [0, -3], "formatter": "105,0", "color": "#64748B", "fontSize": 8.5}
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -6], "formatter": "105,0", "color": "#475569", "fontSize": 8.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+                }
             })
         elif i == 12:  # Dic-23
             series_tcrm_chart.append({
                 "value": v, "symbolSize": 6,
                 "itemStyle": {"color": "#B91C1C"},
-                "label": {"show": True, "position": "top", "offset": [0, -4], "formatter": "Pico: 145,8", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5}
+                "label": {
+                    "show": True, "position": "top", "offset": [0, -6], "formatter": "Pico: 145,8", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 8.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [2, 5], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5
+                }
             })
         elif i == len(puntos_tcrm) - 1:
             series_tcrm_chart.append({
                 "value": v, "symbolSize": 7,
                 "itemStyle": {"color": "#0B2545", "borderColor": "#FFFFFF", "borderWidth": 2},
-                "label": {"show": True, "position": "top", "offset": [-15, -6], "formatter": "TCRM: 94,5 pts", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}
+                "label": {
+                    "show": True, "position": "bottom", "offset": [0, 8], "formatter": "TCRM: 94,5 pts", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5,
+                    "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 6], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
+                }
             })
         else:
             series_tcrm_chart.append(v)
@@ -1595,7 +1712,13 @@ def gen_echarts_tcr():
             },
             "markLine": {
                 "silent": True, "symbol": ["none", "none"],
-                "data": [{"yAxis": 100, "lineStyle": {"color": "#94A3B8", "type": [3, 3], "width": 1.2}, "label": {"formatter": "Paridad (100)", "position": "insideStartTop", "color": "#64748B", "fontSize": 8.5}}]
+                "data": [{
+                    "yAxis": 100, "lineStyle": {"color": "#94A3B8", "type": [3, 3], "width": 1.2},
+                    "label": {
+                        "formatter": "Paridad (100)", "position": "insideEndTop", "color": "#475569", "fontSize": 8.5, "fontWeight": "600",
+                        "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 5], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+                    }
+                }]
             },
             "markArea": {
                 "silent": True,
@@ -1610,7 +1733,7 @@ def gen_echarts_tcr():
 
     opt2 = {
         "animation": False,
-        "grid": {"top": 15, "right": 65, "bottom": 24, "left": 110},
+        "grid": {"top": 20, "right": 65, "bottom": 24, "left": 110},
         "xAxis": {
             "type": "value", "min": 75, "max": 120, "interval": 10,
             "splitLine": {"lineStyle": {"color": "#F1F5F9", "type": [3, 3]}},
@@ -1626,15 +1749,15 @@ def gen_echarts_tcr():
         "series": [{
             "type": "bar",
             "data": [
-                {"value": 91.2,  "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "right", "formatter": "91,2 pts", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 94.5,  "itemStyle": {"color": "#0B2545"}, "label": {"show": True, "position": "right", "formatter": "94,5 pts", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}},
-                {"value": 94.5,  "itemStyle": {"color": "#64748B"}, "label": {"show": True, "position": "right", "formatter": "94,5 pts", "color": "#64748B", "fontWeight": "bold", "fontSize": 9.0}},
-                {"value": 102.4, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "102,4 pts", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5}}
+                {"value": 91.2,  "itemStyle": {"color": "#B91C1C"}, "label": {"show": True, "position": "right", "formatter": "91,2 pts", "color": "#B91C1C", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#FECACA", "borderWidth": 0.5}},
+                {"value": 94.5,  "itemStyle": {"color": "#0B2545"}, "label": {"show": True, "position": "right", "formatter": "94,5 pts", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
+                {"value": 94.5,  "itemStyle": {"color": "#64748B"}, "label": {"show": True, "position": "right", "formatter": "94,5 pts", "color": "#475569", "fontWeight": "bold", "fontSize": 9.0, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}},
+                {"value": 102.4, "itemStyle": {"color": "#047857"}, "label": {"show": True, "position": "right", "formatter": "102,4 pts", "color": "#047857", "fontWeight": "bold", "fontSize": 9.5, "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#BBF7D0", "borderWidth": 0.5}}
             ],
             "barWidth": 14,
             "markLine": {
                 "silent": True, "symbol": ["none", "none"],
-                "data": [{"xAxis": 100, "lineStyle": {"color": "#94A3B8", "type": [3, 3], "width": 1.2}, "label": {"formatter": "Paridad (100)", "position": "insideStartTop", "color": "#64748B", "fontSize": 8.5}}]
+                "data": [{"xAxis": 100, "lineStyle": {"color": "#94A3B8", "type": [3, 3], "width": 1.2}, "label": {"formatter": "Paridad (100)", "position": "end", "offset": [0, -8], "color": "#475569", "fontSize": 8.5, "fontWeight": "600", "backgroundColor": "rgba(255, 255, 255, 0.92)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5}}]
             }
         }]
     }
@@ -1676,30 +1799,32 @@ def gen_echarts_canastas():
     ratio_fmt = f"{ratio_ripte_cbt:.2f}x".replace(".", ",")
 
     cba_series = [
-        {"value": 320, "label": {"show": True, "position": "inside", "formatter": "$320k", "color": "#FFFFFF", "fontSize": 8.0}},
-        {"value": 345, "label": {"show": True, "position": "inside", "formatter": "$345k", "color": "#FFFFFF", "fontSize": 8.0}},
-        {"value": 365, "label": {"show": True, "position": "inside", "formatter": "$365k", "color": "#FFFFFF", "fontSize": 8.0}},
-        {"value": 385, "label": {"show": True, "position": "inside", "formatter": "$385k", "color": "#FFFFFF", "fontSize": 8.0}},
-        {"value": 405, "label": {"show": True, "position": "inside", "formatter": "$405k", "color": "#FFFFFF", "fontSize": 8.0}},
-        {"value": 420, "label": {"show": True, "position": "inside", "formatter": "$420k", "color": "#FFFFFF", "fontSize": 8.0}},
+        320, 345, 365, 385, 405, 420,
         {
             "value": cba,
             "itemStyle": {"color": "#0284C7"},
-            "label": {"show": True, "position": "inside", "formatter": "$433.000 CBA", "color": "#FFFFFF", "fontWeight": "bold", "fontSize": 8.5}
+            "label": {
+                "show": True, "position": "inside", "formatter": "$433k", "color": "#FFFFFF", "fontWeight": "bold", "fontSize": 9.0
+            }
         }
     ]
 
     cbt_series = [
-        {"value": 390, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": "$710k", "color": "#64748B", "fontSize": 8.0}},
-        {"value": 420, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": "$765k", "color": "#64748B", "fontSize": 8.0}},
-        {"value": 445, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": "$810k", "color": "#64748B", "fontSize": 8.0}},
-        {"value": 470, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": "$855k", "color": "#64748B", "fontSize": 8.0}},
-        {"value": 495, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": "$900k", "color": "#64748B", "fontSize": 8.0}},
-        {"value": 515, "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": "$935k", "color": "#64748B", "fontSize": 8.0}},
+        {
+            "value": 390,
+            "label": {
+                "show": True, "position": "top", "offset": [0, -5], "formatter": "Inicio: $710k", "color": "#475569", "fontSize": 8.0,
+                "backgroundColor": "rgba(255, 255, 255, 0.90)", "padding": [1.5, 4], "borderRadius": 2, "borderColor": "#CBD5E1", "borderWidth": 0.5
+            }
+        },
+        420, 445, 470, 495, 515,
         {
             "value": cbt - cba,
             "itemStyle": {"color": "#0B2545"},
-            "label": {"show": True, "position": "top", "offset": [0, -2], "formatter": "$963.000 CBT", "color": "#0B2545", "fontWeight": "bold", "fontSize": 9.5}
+            "label": {
+                "show": True, "position": "top", "offset": [0, -6], "formatter": "$963.000 CBT", "color": "#0B2545", "fontWeight": "bold", "fontSize": 10.0,
+                "backgroundColor": "rgba(255, 255, 255, 0.95)", "padding": [2, 6], "borderRadius": 2, "borderColor": "#0B2545", "borderWidth": 0.8
+            }
         }
     ]
 

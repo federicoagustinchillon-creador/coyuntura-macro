@@ -23,7 +23,8 @@ coyuntura-macro/
 │   ├── generador_graficos_echarts.py          # Renderizado Tier-1 con Apache ECharts 5 Headless (Chromium a 300 DPI)
 │   ├── generador_informe_diario_reportlab.py  # Monitor Flash Diario (2 páginas exactas, cobertura 100%, figuras duales)
 │   ├── generador_paper_semanal_reportlab.py   # Paper Semanal Académico APA 7 (4 páginas exactas, tablas de 10 filas, Nelson-Siegel)
-│   ├── generador_informe_mensual_reportlab.py # Informe Mensual Master (15 páginas exactas, portada Wall Street Tear-Sheet, 11 paneles)
+│   ├── generador_informe_mensual_reportlab.py # Informe Mensual Master (16 páginas exactas, portada Wall Street Tear-Sheet, Tablero Integral, 11 paneles)
+│   ├── generador_apendice_econometrico.py     # Apéndice Cuantitativo & Gobernanza Empírica (modelos de curvas, Fisher, Nelson-Siegel, PCA)
 │   ├── compilador_informes.py                 # Orquestador de la suite ReportLab con pre-compilación gráfica ECharts 5
 │   └── contexto_informe.py                    # Carga y estructuración del contexto macrofinanciero dinámico
 │
@@ -53,7 +54,7 @@ coyuntura-macro/
 ├── 05_Informes_Semanales_APA7/                # Papers semanales de investigación macro (4 páginas exactas APA 7)
 │   └── 2026-08-25_Paper_Macroeconomico_Semanal.pdf
 │
-├── 06_Informes_Mensuales/                     # Informes mensuales de investigación (15 páginas exactas ReportLab)
+├── 06_Informes_Mensuales/                     # Informes mensuales de investigación (16 páginas exactas ReportLab)
 │   └── Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf
 │
 ├── 07_Reportes_Ejecutivos_PDF/                # Documentos ejecutivos consolidados listos para comités
