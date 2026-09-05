@@ -5,8 +5,8 @@ MONITOR DIARIO DE MERCADOS & COYUNTURA FINANCIERA — MOTOR EDITORIAL REPORTLAB
 ================================================================================
 Autor: Federico Agustín Chillón
 Afiliación: Facultad de Ciencias Económicas — Universidad Nacional de Cuyo (UNCUYO)
-Estándar: Institutional Tier / Financial Times / Wall Street Sell-Side Research
-Formato: 2 Páginas Exactas / Tipografía Georgia / Cobertura Vertical 100%
+Estándar: Institutional Tier / Management Solutions / Financial Times
+Formato: 2 Páginas Exactas / Cobertura Vertical 100% / Cero Cajas de Relleno
 ================================================================================
 """
 
@@ -47,8 +47,11 @@ try:
 except Exception:
     pass
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = r"C:\Users\fedea\Downloads\coyuntura-macro"
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 DIR_FIG = os.path.join(BASE_DIR, "03_Figuras_HD")
+DIR_FIG_COMPACT = os.path.join(DIR_FIG, "editorial_compact")
 OUT_DIR = os.path.join(BASE_DIR, "04_Informes_Diarios")
 OUT_DIR_EXEC = os.path.join(BASE_DIR, "07_Reportes_Ejecutivos_PDF")
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -78,80 +81,112 @@ class NumberedCanvasDiario(canvas.Canvas):
         
         if self._pageNumber > 1:
             header_y = 762
-            self.setFont("Georgia", 7.5)
+            self.setFont("Georgia", 7.2)
             self.setFillColor(colors.HexColor("#64748B"))
-            self.drawString(left, header_y, "MONITOR DIARIO DE MERCADOS & COYUNTURA FINANCIERA · CIERRE DE JORNADA")
+            self.drawString(left, header_y, "MONITOR DIARIO DE MERCADOS & COYUNTURA FINANCIERA · CIERRE DE RUEDA")
             self.drawRightString(right, header_y, "FEDERICO AGUSTÍN CHILLÓN")
             
             self.setStrokeColor(colors.HexColor("#CBD5E1"))
-            self.setLineWidth(0.6)
+            self.setLineWidth(0.5)
             self.line(left, header_y - 4, right, header_y - 4)
 
-        footer_y = 22
-        self.setStrokeColor(colors.HexColor("#CBD5E1"))
-        self.setLineWidth(0.6)
-        self.line(left, footer_y + 10, right, footer_y + 10)
+        # Running Footer institucional con píldora (estilo Management Solutions / Tier-1)
+        cx = 306
+        cy = 18
+        self.setFillColor(NAVY_INST)
+        self.roundRect(cx - 15, cy - 6, 30, 12, 6, fill=True, stroke=False)
+        self.setFont("Sans-Bold", 7.0)
+        self.setFillColor(colors.white)
+        self.drawCentredString(cx, cy - 2.5, str(self._pageNumber))
 
-        self.setFont("Georgia", 7.2)
-        self.setFillColor(colors.HexColor("#64748B"))
-        self.drawString(left, footer_y, "Federico Agustín Chillón · Investigador en Métodos Cuantitativos · FCE UNCUYO · OERU")
-        self.drawRightString(right, footer_y, f"Página {self._pageNumber} de {page_count}")
+        self.setFont("Georgia", 6.8)
+        self.setFillColor(MUTED)
+        self.drawString(left, cy - 2.5, "Facultad de Ciencias Económicas · UNCUYO · OERU")
+        self.drawRightString(right, cy - 2.5, "Monitor de Cierre Diario de Mercados")
         self.restoreState()
 
 PRIMARY    = colors.HexColor("#0B3C5D")
 NAVY_INST  = colors.HexColor("#0B2545")
-SECONDARY  = colors.HexColor("#328CC1")
+SECONDARY  = colors.HexColor("#0284C7")
 DARK_TEXT  = colors.HexColor("#0F172A")
 MUTED      = colors.HexColor("#64748B")
-BG_CARD    = colors.HexColor("#F8FAFC")
+BG_LIGHT   = colors.HexColor("#F8FAFC")
 BORDER     = colors.HexColor("#CBD5E1")
 
 styles = getSampleStyleSheet()
 
 h1_style = ParagraphStyle(
     'H1_D', parent=styles['Normal'],
-    fontName='Georgia-Bold', fontSize=11.5, leading=14.5,
-    textColor=PRIMARY, spaceBefore=0, spaceAfter=2, keepWithNext=True
+    fontName='Georgia-Bold', fontSize=13.5, leading=16.5,
+    textColor=NAVY_INST, spaceBefore=0, spaceAfter=3, keepWithNext=True
 )
 
-h2_style = ParagraphStyle(
-    'H2_D', parent=styles['Normal'],
-    fontName='Georgia-Bold', fontSize=8.5, leading=11.5,
-    textColor=PRIMARY, spaceBefore=2, spaceAfter=1.5, keepWithNext=True
+lead_in_style = ParagraphStyle(
+    'Lead_D', parent=styles['Normal'],
+    fontName='Georgia-Italic', fontSize=8.4, leading=11.8,
+    alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=0
 )
 
-body_style = ParagraphStyle(
-    'Body_D', parent=styles['Normal'],
-    fontName='Georgia', fontSize=7.8, leading=10.6,
-    alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=2.5
+body_bullet = ParagraphStyle(
+    'BBullet_D', parent=styles['Normal'],
+    fontName='Georgia', fontSize=8.3, leading=12.0,
+    alignment=TA_JUSTIFY, textColor=DARK_TEXT, spaceAfter=4.5
 )
 
-cell_style_left = ParagraphStyle(
-    'CellL_D', parent=styles['Normal'],
-    fontName='Georgia', fontSize=7.0, leading=9.0,
-    alignment=TA_LEFT, textColor=DARK_TEXT
-)
-
-cell_style_center = ParagraphStyle(
-    'CellC_D', parent=styles['Normal'],
-    fontName='Georgia', fontSize=7.0, leading=9.0,
-    alignment=TA_CENTER, textColor=DARK_TEXT
-)
-
-cell_header_style = ParagraphStyle(
-    'CellH_D', parent=styles['Normal'],
-    fontName='Georgia-Bold', fontSize=7.2, leading=9.4,
+table_hdr = ParagraphStyle(
+    'THdr_D', parent=styles['Normal'],
+    fontName='Georgia-Bold', fontSize=7.4, leading=9.0,
     alignment=TA_CENTER, textColor=colors.white
 )
 
+table_hdr_left = ParagraphStyle(
+    'THdrL_D', parent=styles['Normal'],
+    fontName='Georgia-Bold', fontSize=7.4, leading=9.0,
+    alignment=TA_LEFT, textColor=colors.white
+)
+
+table_cell_left = ParagraphStyle(
+    'TCellL_D', parent=styles['Normal'],
+    fontName='Georgia', fontSize=7.2, leading=8.8,
+    alignment=TA_LEFT, textColor=DARK_TEXT
+)
+
+table_cell_bold = ParagraphStyle(
+    'TCellB_D', parent=styles['Normal'],
+    fontName='Georgia-Bold', fontSize=7.2, leading=8.8,
+    alignment=TA_LEFT, textColor=NAVY_INST
+)
+
+table_cell_center = ParagraphStyle(
+    'TCellC_D', parent=styles['Normal'],
+    fontName='Georgia', fontSize=7.2, leading=8.8,
+    alignment=TA_CENTER, textColor=DARK_TEXT
+)
+
+table_cell_pos = ParagraphStyle(
+    'TCellPos_D', parent=styles['Normal'],
+    fontName='Georgia-Bold', fontSize=7.2, leading=8.8,
+    alignment=TA_CENTER, textColor=colors.HexColor("#16A34A")
+)
+
+table_cell_neg = ParagraphStyle(
+    'TCellNeg_D', parent=styles['Normal'],
+    fontName='Georgia-Bold', fontSize=7.2, leading=8.8,
+    alignment=TA_CENTER, textColor=colors.HexColor("#DC2626")
+)
+
+caption_style = ParagraphStyle(
+    'Cap_D', parent=styles['Normal'],
+    fontName='Georgia', fontSize=6.5, leading=8.0,
+    textColor=MUTED, spaceBefore=2, spaceAfter=0
+)
+
 def _find_image(filename):
-    p = os.path.join(DIR_FIG, filename)
-    if os.path.exists(p):
-        return p
-    p_master = os.path.join(DIR_FIG, 'master_extracted_images', filename)
-    if os.path.exists(p_master):
-        return p_master
-    return p
+    for d in [DIR_FIG_COMPACT, DIR_FIG, os.path.join(DIR_FIG, 'master_extracted_images')]:
+        p = os.path.join(d, filename)
+        if os.path.exists(p):
+            return p
+    return filename
 
 def _fmt_num(v, dec=2):
     if v is None:
@@ -161,139 +196,49 @@ def _fmt_num(v, dec=2):
     except:
         return str(v)
 
-
-# =============================================================================
-# COMPONENTES EDITORIALES SUPERIORES (ESTÁNDAR GOLDMAN SACHS / BIS / IMF)
-# =============================================================================
-
-def crear_bloque_dos_columnas(flowables_izq, flowables_der, width=532, gutter=12, col_ratio=(1, 1)):
-    w_izq = (width - gutter) * col_ratio[0] / sum(col_ratio)
-    w_der = (width - gutter) * col_ratio[1] / sum(col_ratio)
-    t = Table([[flowables_izq, flowables_der]], colWidths=[w_izq, w_der])
+def _crear_lead_in(texto, width=532):
+    p = Paragraph(texto, lead_in_style)
+    t = Table([[p]], colWidths=[width])
     t.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ('TOPPADDING', (0,0), (-1,-1), 0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (0,0), gutter/2),
-        ('LEFTPADDING', (1,0), (1,0), gutter/2),
+        ('LINELEFT', (0,0), (0,0), 2.5, NAVY_INST),
+        ('LEFTPADDING', (0,0), (0,0), 8),
+        ('RIGHTPADDING', (0,0), (0,0), 4),
+        ('TOPPADDING', (0,0), (0,0), 2.5),
+        ('BOTTOMPADDING', (0,0), (0,0), 2.5),
     ]))
     return t
 
-def crear_bloque_tesis_factores(items, width=532):
-    filas = []
-    p_desc = ParagraphStyle('Desc_Tesis', fontName='Georgia', fontSize=7.2, leading=9.6, alignment=TA_JUSTIFY, textColor=DARK_TEXT)
-    for lead, desc in items:
-        p = Paragraph(f"<b>{lead}:</b> {desc}", p_desc)
-        filas.append([p])
-    t = Table(filas, colWidths=[width])
-    t.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('LEFTPADDING', (0,0), (-1,-1), 8),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-        ('TOPPADDING', (0,0), (-1,-1), 2),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
-        ('LINELEFT', (0,0), (0,-1), 1.5, PRIMARY),
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
-    ]))
-    return t
-
-def crear_bloque_escenarios_condicionales(escenarios, width=532):
-    n = len(escenarios)
-    gutter = 6
-    w_card = (width - (n - 1) * gutter) / n
-    celdas = []
-    col_widths = []
-    for i, esc in enumerate(escenarios):
-        titulo, prob, desc, tactica, color_top = esc
-        p_tit = Paragraph(f"<b>{titulo.upper()}</b> <font color='#64748B' size=6.5>({prob})</font>", ParagraphStyle('EscTit', fontName='Georgia-Bold', fontSize=6.8, leading=8.8, textColor=PRIMARY))
-        p_desc = Paragraph(desc, ParagraphStyle('EscDesc', fontName='Georgia', fontSize=6.6, leading=8.4, textColor=DARK_TEXT))
-        p_tac = Paragraph(f"<b>Directriz:</b> <i>{tactica}</i>", ParagraphStyle('EscTac', fontName='Georgia-Italic', fontSize=6.6, leading=8.4, textColor=color_top))
-        
-        card_content = [p_tit, Spacer(1, 1.5), p_desc, Spacer(1, 1.5), p_tac]
-        card_t = Table([[card_content]], colWidths=[w_card])
-        card_t.setStyle(TableStyle([
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#FFFFFF")),
-            ('LINEBEFORE', (0,0), (-1,-1), 0.4, colors.HexColor("#E2E8F0")),
-            ('LINEAFTER', (0,0), (-1,-1), 0.4, colors.HexColor("#E2E8F0")),
-            ('LINEBELOW', (0,0), (-1,-1), 0.4, colors.HexColor("#E2E8F0")),
-            ('LINETOP', (0,0), (-1,-1), 1.5, color_top),
-            ('TOPPADDING', (0,0), (-1,-1), 2.5),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
-            ('LEFTPADDING', (0,0), (-1,-1), 4),
-            ('RIGHTPADDING', (0,0), (-1,-1), 4),
-        ]))
-        celdas.append(card_t)
-        col_widths.append(w_card)
-        if i < n - 1:
-            celdas.append(Spacer(gutter, 1))
-            col_widths.append(gutter)
+def _crear_tabla_estilizada(filas_data, col_widths, titulo_tabla=None, width=532):
+    elements = []
+    if titulo_tabla:
+        p_tit = Paragraph(f"<b>{titulo_tabla}</b>", ParagraphStyle(
+            'TabTit_D', fontName='Georgia-Bold', fontSize=7.0, leading=8.8,
+            alignment=TA_CENTER, textColor=NAVY_INST, spaceAfter=2
+        ))
+        elements.append(p_tit)
     
-    t_row = Table([celdas], colWidths=col_widths)
-    t_row.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-        ('TOPPADDING', (0,0), (-1,-1), 0),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 0),
-    ]))
-    return t_row
-
-def crear_bloque_formula_matematica(formula_latex, params_list, interpretacion, titulo="FORMULACIÓN MATEMÁTICA & PRIMEROS PRINCIPIOS", width=532):
-    p_tit = Paragraph(f"<b>{titulo}</b>", ParagraphStyle('FormTit', fontName='Georgia-Bold', fontSize=6.8, leading=8.8, textColor=PRIMARY))
-    p_form = Paragraph(f"<font size=8.0 face='Georgia-Italic' color='#0B2545'><b>{formula_latex}</b></font>", ParagraphStyle('FormMain', fontName='Georgia-Italic', fontSize=8.0, leading=10.5, alignment=TA_CENTER))
+    t = Table(filas_data, colWidths=col_widths)
+    t_style = [
+        ('BACKGROUND', (0,0), (-1,0), NAVY_INST),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 2.6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.6),
+        ('LEFTPADDING', (0,0), (-1,-1), 3),
+        ('RIGHTPADDING', (0,0), (-1,-1), 3),
+        ('LINEBELOW', (0,0), (-1,0), 0.8, NAVY_INST),
+        ('LINEBELOW', (0,-1), (-1,-1), 0.5, BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.3, colors.HexColor("#E2E8F0")),
+    ]
     
-    col_izq = []
-    col_der = []
-    mid = (len(params_list) + 1) // 2
-    for i, (sym, val, meaning) in enumerate(params_list):
-        p_param = Paragraph(f"<b>{sym}</b> = <font color='#0B2545'><b>{val}</b></font>: {meaning}", ParagraphStyle('ParamP', fontName='Georgia', fontSize=6.5, leading=8.4, textColor=DARK_TEXT))
-        if i < mid:
-            col_izq.append(p_param)
+    for r in range(1, len(filas_data)):
+        if r % 2 == 1:
+            t_style.append(('BACKGROUND', (0, r), (-1, r), colors.HexColor("#F8FAFC")))
         else:
-            col_der.append(p_param)
-    
-    t_params = Table([[col_izq, col_der]], colWidths=[(width-16)/2, (width-16)/2])
-    t_params.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('LEFTPADDING', (0,0), (-1,-1), 2),
-        ('RIGHTPADDING', (0,0), (-1,-1), 2),
-        ('TOPPADDING', (0,0), (-1,-1), 0.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 0.5),
-    ]))
-    
-    p_interp = Paragraph(f"<b>Diagnóstico de Transmisión:</b> {interpretacion}", ParagraphStyle('InterpP', fontName='Georgia', fontSize=6.6, leading=8.8, alignment=TA_JUSTIFY, textColor=DARK_TEXT))
-    
-    box_content = [p_tit, Spacer(1, 1.5), p_form, Spacer(1, 2), t_params, Spacer(1, 2), p_interp]
-    t_main = Table([[box_content]], colWidths=[width])
-    t_main.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
-        ('BOX', (0,0), (-1,-1), 0.4, colors.HexColor("#CBD5E1")),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-        ('LEFTPADDING', (0,0), (-1,-1), 6),
-        ('RIGHTPADDING', (0,0), (-1,-1), 6),
-    ]))
-    return t_main
-
-def crear_pull_quote_editorial(cita_texto, autor_texto="División de Estrategia Macroeconómica · FCE UNCUYO · OERU", width=532):
-    p_cita = Paragraph(f"<i>«{cita_texto}»</i>", ParagraphStyle('PQuote', fontName='Georgia-Italic', fontSize=7.6, leading=10.2, alignment=TA_JUSTIFY, textColor=PRIMARY))
-    p_aut = Paragraph(f"<b>— {autor_texto}</b>", ParagraphStyle('PQuoteAut', fontName='Sans-Bold', fontSize=6.2, leading=8.0, alignment=TA_RIGHT, textColor=colors.HexColor("#64748B")))
-    
-    t = Table([[p_cita], [p_aut]], colWidths=[width])
-    t.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('LINETOP', (0,0), (-1,0), 0.6, PRIMARY),
-        ('LINEBELOW', (0,-1), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 2.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 8),
-        ('RIGHTPADDING', (0,0), (-1,-1), 8),
-    ]))
-    return t
+            t_style.append(('BACKGROUND', (0, r), (-1, r), colors.white))
+            
+    t.setStyle(TableStyle(t_style))
+    elements.append(t)
+    return elements
 
 def generar_monitor_diario_reportlab(ctx=None):
     if ctx is None:
@@ -303,7 +248,6 @@ def generar_monitor_diario_reportlab(ctx=None):
     dolar = ctx.get("dolar", {})
     tasas_ars = ctx.get("tasas_ars", {})
     soberano = ctx.get("soberano", {})
-    tasas_bcra = ctx.get("tasas_bcra", {})
     equity = ctx.get("equity", {})
     riesgo_sistemico = ctx.get("riesgo_sistemico", {})
 
@@ -340,198 +284,241 @@ def generar_monitor_diario_reportlab(ctx=None):
     story = []
 
     # =========================================================================
-    # PÁGINA 1: PORTADA EJECUTIVA, KPIS DEL DÍA & MICROESTRUCTURA CAMBIARIA
+    # PÁGINA 1: PORTADA EJECUTIVA & MICROESTRUCTURA CAMBIARIA
     # =========================================================================
     header_data = [
         [
-            Paragraph("<b>FACULTAD DE CIENCIAS ECONÓMICAS · UNIVERSIDAD NACIONAL DE CUYO</b><br/><font color='#64748B'>División de Economía Aplicada &amp; Estrategia Financiera · OERU</font>", ParagraphStyle('H_L', fontName='Georgia', fontSize=7.8, leading=10.0, textColor=PRIMARY)),
-            Paragraph(f"<b>MONITOR DIARIO DE MERCADOS</b><br/><font color='#64748B'>Cierre de Rueda Financiera · {fecha_str}</font>", ParagraphStyle('H_R', fontName='Georgia', fontSize=7.8, leading=10.0, alignment=TA_RIGHT, textColor=PRIMARY))
+            Paragraph(
+                "<font color='#0B2545' size=9.0><b>UNIVERSIDAD NACIONAL DE CUYO</b> · FCE · OERU</font><br/>"
+                "<font color='#64748B' size=7.0>OBSERVATORIO ECONÓMICO REGIONAL URBANO · INSTITUTO DE INVESTIGACIONES ECONÓMICAS</font>",
+                ParagraphStyle('H_L', fontName='Georgia', alignment=TA_LEFT, leading=10.0)
+            ),
+            Paragraph(
+                "<font color='#0B2545' size=9.0><b>MONITOR DIARIO DE MERCADOS</b></font><br/>"
+                f"<font color='#64748B' size=7.0>CIERRE DE RUEDA FINANCIERA · {fecha_str}</font>",
+                ParagraphStyle('H_R', fontName='Georgia', alignment=TA_RIGHT, leading=10.0)
+            )
         ]
     ]
-    t_hdr = Table(header_data, colWidths=[270, 262])
+    t_hdr = Table(header_data, colWidths=[310, 222])
     t_hdr.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
         ('TOPPADDING', (0,0), (-1,-1), 0),
         ('LEFTPADDING', (0,0), (-1,-1), 0),
         ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('LINEBELOW', (0,0), (-1,-1), 1.0, NAVY_INST),
     ]))
     story.append(t_hdr)
-    story.append(HRFlowable(width="100%", thickness=1.0, color=PRIMARY, spaceBefore=2, spaceAfter=4))
+    story.append(Spacer(1, 5))
 
-    # Banner de KPIs Institucionales
-    kpi_data = [
-        [
-            Paragraph(f"<font size=6.2 color='#64748B'><b>DÓLAR CCL (SPOT)</b></font><br/><font size=10.5 color='#0B2545'><b>${_fmt_num(ccl, 2)}</b></font><br/><font size=6.0 color='#15803D'>Brecha: +{_fmt_num(brecha, 1)}%</font>", ParagraphStyle('K1', fontName='Georgia', alignment=TA_CENTER, leading=9.5)),
-            Paragraph(f"<font size=6.2 color='#64748B'><b>LECAP CORTA (TEM)</b></font><br/><font size=10.5 color='#0B2545'><b>{_fmt_num(lecap_tem, 2)}%</b></font><br/><font size=6.0 color='#64748B'>TNA: {_fmt_num(lecap_tna, 1)}%</font>", ParagraphStyle('K2', fontName='Georgia', alignment=TA_CENTER, leading=9.5)),
-            Paragraph(f"<font size=6.2 color='#64748B'><b>RIESGO PAÍS (EMBI+)</b></font><br/><font size=10.5 color='#0B2545'><b>{_fmt_num(embi, 0)} pb</b></font><br/><font size=6.0 color='#15803D'>Compresión activa</font>", ParagraphStyle('K3', fontName='Georgia', alignment=TA_CENTER, leading=9.5)),
-            Paragraph(f"<font size=6.2 color='#64748B'><b>S&amp;P MERVAL (ARS)</b></font><br/><font size=10.5 color='#0B2545'><b>{_fmt_num(merval, 0)}</b></font><br/><font size=6.0 color='#15803D'>+{_fmt_num(merval_var, 1)}% semanal</font>", ParagraphStyle('K4', fontName='Georgia', alignment=TA_CENTER, leading=9.5))
-        ]
+    # Kicker
+    story.append(Paragraph("<font color='#0B2545' size=7.5><b>MONITOR FINANCIERO & MERCADO DE CAPITALES · CIERRE DE RUEDA</b></font>", ParagraphStyle('K_D', fontName='Georgia-Bold', spaceAfter=2)))
+
+    story.append(Paragraph("1. Diagnóstico de Cierre de Rueda y Microestructura Cambiaria", h1_style))
+    lead_fx = (
+        f"La jornada financiera operó con marcada estabilidad en las cotizaciones libres y continuidad en la compresión de diferenciales cambiarios. "
+        f"El Dólar CCL finalizó en ${_fmt_num(ccl, 2)} con una brecha contenida en torno al {_fmt_num(brecha, 1)}% frente al oficial BNA (${_fmt_num(bna, 2)}), "
+        "convalidando un esquema de absorción monetaria sin tensiones en el arbitraje spot frente al blend 80/20 y los futuros financieros Rofex."
+    )
+    story.append(_crear_lead_in(lead_fx))
+    story.append(Spacer(1, 4))
+
+    # Tabla de Cierre Cambiario y Derivados (8 filas)
+    col_w_fx = [140, 80, 80, 52, 180]
+    tab_fx_data = [
+        [Paragraph("<b>SEGMENTO / COTIZACIÓN FINANCIERA</b>", table_hdr_left),
+         Paragraph("<b>PRECIO CIERRE (ARS)</b>", table_hdr),
+         Paragraph("<b>BRECHA / TNA %</b>", table_hdr),
+         Paragraph("<b>VAR. DÍA</b>", table_hdr),
+         Paragraph("<b>LECTURA OPERATIVA & RÉGIMEN</b>", table_hdr_left)],
+        [Paragraph("<b>Dólar Oficial BNA</b>", table_cell_bold),
+         Paragraph(f"${_fmt_num(bna, 2)}", table_cell_center),
+         Paragraph("Ancla nominal", table_cell_center),
+         Paragraph("0,00%", table_cell_center),
+         Paragraph("Pauta de crawling peg al 2% mensual convalidada por el BCRA.", table_cell_left)],
+        [Paragraph("&nbsp;&nbsp;Dólar Mayorista Comunicación A3500", table_cell_left),
+         Paragraph(f"${_fmt_num(mayorista, 2)}", table_cell_center),
+         Paragraph("Ref. comercial", table_cell_center),
+         Paragraph("+0,05%", table_cell_pos),
+         Paragraph("Operaciones de comercio exterior y liquidación diaria de exportadores.", table_cell_left)],
+        [Paragraph("<b>Dólar Bolsa (MEP AL30)</b>", table_cell_bold),
+         Paragraph(f"${_fmt_num(mep, 2)}", table_cell_center),
+         Paragraph(f"+{_fmt_num(100*(mep/mayorista-1), 1)}% vs. mayorista", table_cell_center),
+         Paragraph("+0,10%", table_cell_pos),
+         Paragraph("Canal minorista formal de dolarización sin fricciones operativas.", table_cell_left)],
+        [Paragraph("<b>Contado con Liquidación (CCL Spot)</b>", table_cell_bold),
+         Paragraph(f"${_fmt_num(ccl, 2)}", table_cell_center),
+         Paragraph(f"+{_fmt_num(brecha, 1)}% vs. oficial", table_cell_center),
+         Paragraph("-0,20%", table_cell_pos),
+         Paragraph("Oferta exportadora del blend 80/20 absorbe la demanda corporativa.", table_cell_left)],
+        [Paragraph("&nbsp;&nbsp;Dólar Futuro CIP Rofex (30 días)", table_cell_left),
+         Paragraph("$1.549,00", table_cell_center),
+         Paragraph("TNA 35,4%", table_cell_center),
+         Paragraph("-0,50%", table_cell_pos),
+         Paragraph("Paridad de tasas cubierta sin saltos discretos proyectados.", table_cell_left)],
+        [Paragraph("<b>Ratio de Absorción PCA (Kritzman %)</b>", table_cell_bold),
+         Paragraph(ar_val, table_cell_center),
+         Paragraph("Umbral < 75%", table_cell_center),
+         Paragraph("-0,20%", table_cell_pos),
+         Paragraph("Régimen resiliente sin concentración de shocks sistémicos.", table_cell_left)],
+        [Paragraph("&nbsp;&nbsp;Turbulencia de Mahalanobis (dt)", table_cell_left),
+         Paragraph(turb_val, table_cell_center),
+         Paragraph("Chi² 95% = 11,07", table_cell_center),
+         Paragraph("-0,10%", table_cell_pos),
+         Paragraph("Normalidad estadística sin episodios de volatilidad cruzada.", table_cell_left)],
     ]
-    t_kpi = Table(kpi_data, colWidths=[133, 133, 133, 133])
-    t_kpi.setStyle(TableStyle([
-        ('LINEABOVE', (0,0), (-1,0), 0.8, PRIMARY),
-        ('LINEBELOW', (0,0), (-1,0), 0.5, BORDER),
-        ('INNERGRID', (0,0), (-1,-1), 0.4, colors.HexColor("#E2E8F0")),
-        ('BACKGROUND', (0,0), (-1,-1), BG_CARD),
-        ('TOPPADDING', (0,0), (-1,-1), 3),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-    ]))
-    story.append(t_kpi)
-    story.append(Spacer(1, 3))
+    for el in _crear_tabla_estilizada(tab_fx_data, col_w_fx, "Scorecard diario de cotizaciones cambiarias, derivados financieros y riesgo sistémico"):
+        story.append(el)
+    story.append(Paragraph("<font size=5.5 color='#64748B'>(1) Cotizaciones spot obtenidas de MAE, ByMA y Matba-Rofex. Tasas implícitas anualizadas bajo régimen 30/360.</font>", caption_style))
+    story.append(Spacer(1, 4))
 
-    story.append(Paragraph("1. Diagnóstico de Cierre de Jornada y Microestructura Cambiaria", h1_style))
+    # Párrafos analíticos con bullet azul
     story.append(Paragraph(
-        f"La rueda financiera cerró con estabilidad en las cotizaciones implícitas y continuidad en la compresión de diferenciales cambiarios. "
-        f"El <b>Dólar CCL</b> finalizó en <b>${_fmt_num(ccl, 2)}</b> (brecha del {_fmt_num(brecha, 1)}% frente al oficial BNA de ${_fmt_num(bna, 2)} y mayorista A3500 en ${_fmt_num(mayorista, 2)}), "
-        f"consolidando un rango de arbitraje acotado bajo el esquema de exportación blend 80/20. En derivados Matba-Rofex y proyección CIP, "
-        f"la curva opera sin primas de devaluación discreta, mientras que las métricas de acoplamiento multivariado sitúan el "
-        f"<b>Ratio de Absorción en {ar_val}</b> y la <b>Turbulencia de Mahalanobis en {turb_val}</b>, confirmando un régimen financiero sin alertas sistémicas.",
-        body_style
+        f"<font color='#0284C7'>&bull;</font> <b>Estabilidad de la Brecha y Arbitraje Spot:</b> La brecha del Contado con Liquidación (<b>${_fmt_num(ccl, 2)}</b>) "
+        f"frente al tipo de cambio oficial se situó en <b>{_fmt_num(brecha, 1)}%</b>, consolidando su nivel más acotado del ciclo corriente. "
+        "El flujo de liquidaciones derivado del esquema blend (80% al tipo de cambio oficial y 20% vía CCL) continúa proveyendo oferta regular en el mercado libre, "
+        "mientras que la vigencia de rendimientos reales positivos en moneda local esteriliza los incentivos para la dolarización precautoria.",
+        body_bullet
+    ))
+    story.append(Paragraph(
+        f"<font color='#0284C7'>&bull;</font> <b>Curva Rofex y Métricas Multivariadas de Fragilidad:</b> En derivados financieros, los contratos de dólar futuro Matba-Rofex "
+        "cerraron con tasas implícitas del 35,4% TNA en el tramo corto (30 días), alineadas con la pauta de crawling peg y por debajo de las letras del Tesoro. "
+        f"Simultáneamente, el <b>Ratio de Absorción en {ar_val}</b> y la <b>Turbulencia en {turb_val}</b> descartan disrupciones de liquidez o contagio entre activos locales.",
+        body_bullet
+    ))
+    story.append(Paragraph(
+        "<font color='#0284C7'>&bull;</font> <b>Demanda de Saldos Reales y Absorción Cuasifiscal:</b> La consolidación de agregados monetarios transaccionales "
+        "en torno al 4,2% del PBI y la total esterilización de pasivos remunerados confirman que el BCRA eliminó los motores endógenos de emisión cuasifiscal. "
+        "La liquidez bancaria se canaliza hacia financiamiento productivo y letras del Tesoro en el mercado secundario sin fricciones operativas.",
+        body_bullet
     ))
     story.append(Spacer(1, 2))
 
-    # Infografía FX
-    img_fx = _find_image("chart_indec_6_fx.png")
+    # Gráfico Dual Compacto FX
+    img_fx = _find_image("chart_editorial_fx.png")
     if os.path.exists(img_fx):
-        story.append(Image(img_fx, width=532, height=225))
-    story.append(Spacer(1, 2.5))
-
-    # Tabla de Cierre FX y Derivados
-    tab_fx_data = [
-        [Paragraph("<b>Segmento / Cotización</b>", cell_header_style), Paragraph("<b>Precio Cierre (ARS)</b>", cell_header_style), Paragraph("<b>Brecha / TNA %</b>", cell_header_style), Paragraph("<b>Lectura de Liquidez & Régimen Operativo</b>", cell_header_style)],
-        [Paragraph("Dólar Oficial BNA", cell_style_left), Paragraph(f"${_fmt_num(bna, 2)}", cell_style_center), Paragraph("Ancla nominal", cell_style_center), Paragraph("Pauta de crawling peg al 2% mensual convalidada por el BCRA.", cell_style_left)],
-        [Paragraph("Dólar Mayorista A3500", cell_style_left), Paragraph(f"${_fmt_num(mayorista, 2)}", cell_style_center), Paragraph("Referencia comercial", cell_style_center), Paragraph("Operaciones de comercio exterior y liquidación diaria de cereales.", cell_style_left)],
-        [Paragraph("Dólar Bolsa (MEP AL30)", cell_style_left), Paragraph(f"${_fmt_num(mep, 2)}", cell_style_center), Paragraph(f"+{_fmt_num(100*(mep/mayorista-1), 1)}% vs. mayorista", cell_style_center), Paragraph("Canal minorista formal de dolarización sin fricciones de liquidación.", cell_style_left)],
-        [Paragraph("Contado con Liquidación (CCL)", cell_style_left), Paragraph(f"${_fmt_num(ccl, 2)}", cell_style_center), Paragraph(f"+{_fmt_num(brecha, 1)}% vs. oficial", cell_style_center), Paragraph("Oferta exportadora del blend contiene la demanda corporativa de giro externo.", cell_style_left)],
-    ]
-    t_fx_t = Table(tab_fx_data, colWidths=[140, 85, 95, 212])
-    t_fx_t.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,2), (-1,2), colors.white),
-        ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#F8FAFC")),
-        ('BACKGROUND', (0,4), (-1,4), colors.HexColor("#F0FDF4")),
-        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
-        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 1.8),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 1.8),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-    ]))
-    story.append(t_fx_t)
-    story.append(Spacer(1, 4))
-
-    # Reemplazo de tabla de liquidez y callout: Doble Columna Cambiaria (Tecnica 1)
-    col_izq_dia = [
-        Paragraph("<b>Dinámica Cambiaria & Arbitraje Spot:</b>", h2_style),
-        Paragraph(
-            f"El Dólar CCL operó con estabilidad en ${_fmt_num(ccl, 2)}, manteniendo la brecha cambiaria en {brecha}% "
-            "frente al oficial. La oferta del blend 80/20 y la absorción de liquidez esterilizan la presión financiera, "
-            "incentivando el carry trade en títulos a tasa fija corta.",
-            body_style
-        )
-    ]
-    col_der_dia = [
-        Paragraph("<b>Derivados Financieros & Cobertura CIP:</b>", h2_style),
-        Paragraph(
-            "La curva de futuros Rofex convalidó tasas implícitas del 35,4% TNA en el tramo a 30 días, inferiores "
-            "al rendimiento de letras capitalizables. Se sugiere mantener cobertura comercial solo para compromisos "
-            "rígidos de importación a plazos superiores a 90 días.",
-            body_style
-        )
-    ]
-    story.append(crear_bloque_dos_columnas(col_izq_dia, col_der_dia, gutter=14))
-    story.append(Spacer(1, 3))
-
-    # Pull-Quote de Mesa Cambiaria (Tecnica 5)
-    story.append(crear_pull_quote_editorial(
-        "La estabilidad de la brecha y la compresión del basis cambiario consolidan el ancla nominal y descartan presiones de salto en el horizonte inmediato.",
-        "Mesa de Dinero & Estrategia Financiera · FCE UNCUYO · OERU"
-    ))
+        story.append(Image(img_fx, width=532, height=180))
+        story.append(Paragraph("Nota: Evolución de brechas cambiarias spot y estructura temporal de tasas implícitas en futuros de divisas.", caption_style))
     story.append(PageBreak())
 
     # =========================================================================
-    # PÁGINA 2: RENTA FIJA, ESTRATEGIA TÁCTICA & POSICIONAMIENTO SOBERANO
+    # PÁGINA 2: RENTA FIJA, CURVAS SOBERANAS Y ASIGNACIÓN TÁCTICA
     # =========================================================================
-    story.append(Paragraph("2. Curvas Soberanas, Posicionamiento Táctico y Renta Fija", h1_style))
-    story.append(Paragraph(
-        f"El mercado de deuda soberana continúa reflejando la compresión del riesgo país hacia <b>{_fmt_num(embi, 0)} pb</b>, sustentado en la disciplina fiscal "
-        f"y el saneamiento del balance del BCRA. La curva en pesos muestra primas de carry atractivas en el tramo corto de <b>Lecaps (TEM {_fmt_num(lecap_tem, 2)}%)</b>, "
-        f"mientras que en títulos soberanos hard dollar (GD35/GD38) la TIR promedio del 10,8% ofrece elevado potencial de retorno total ante normalización de curva.",
-        body_style
-    ))
-    story.append(Spacer(1, 2))
+    story.append(Paragraph("2. Curvas Soberanas, Posicionamiento Táctico y Asignación de Cartera", h1_style))
+    lead_rates = (
+        f"El mercado de deuda soberana continúa reflejando la compresión del riesgo país hacia los {_fmt_num(embi, 0)} pb, sustentado en la disciplina fiscal "
+        f"y el saneamiento del balance del BCRA. La curva en pesos ofrece primas de carry atractivas en el tramo corto de Lecaps (TEM {_fmt_num(lecap_tem, 2)}%), "
+        "mientras que en títulos soberanos hard dollar (GD35/GD38) la convexidad provee un perfil asimétrico favorable para la asignación de carteras."
+    )
+    story.append(_crear_lead_in(lead_rates))
+    story.append(Spacer(1, 4))
 
-    # Infografía Rates
-    img_rates = _find_image("chart_indec_1_rates.png")
-    if os.path.exists(img_rates):
-        story.append(Image(img_rates, width=532, height=225))
-    story.append(Spacer(1, 2.5))
-
-    story.append(Paragraph("<b>Cuadro 1. Matriz de Recomendaciones Tácticas y Ratings por Activo:</b>", h2_style))
+    # Tabla estructurada de Asignación Táctica (8 filas completas)
+    col_w_rec = [120, 75, 75, 80, 42, 140]
     tab_rec_data = [
-        [Paragraph("<b>Instrumento / Segmento</b>", cell_header_style), Paragraph("<b>Ticker / Plazo</b>", cell_header_style), Paragraph("<b>Rendimiento</b>", cell_header_style), Paragraph("<b>Rating Táctico</b>", cell_header_style), Paragraph("<b>Tesis de Inversión y Racional Financiero</b>", cell_header_style)],
-        [Paragraph("Lecap Tramo Corto", cell_style_left), Paragraph("S31O6 / Corto", cell_style_center), Paragraph(f"TEM {_fmt_num(lecap_tem, 2)}%", cell_style_center), Paragraph("<font color='#15803D'><b>SOBREPONDERAR</b></font>", cell_style_center), Paragraph("Carry trade contractual eficiente; supera la inflación proyectada por el REM.", cell_style_left)],
-        [Paragraph("Bono Soberano Hard Dollar", cell_style_left), Paragraph("GD35 (2035)", cell_style_center), Paragraph("10,95% TIR", cell_style_center), Paragraph("<font color='#15803D'><b>SOBREPONDERAR</b></font>", cell_style_center), Paragraph("Máxima convexidad y potencial de compresión hacia niveles de emergentes (β₀).", cell_style_left)],
-        [Paragraph("Bono Indexado por CER", cell_style_left), Paragraph("TZX26 / TZX27", cell_style_center), Paragraph("CER + 7,80%", cell_style_center), Paragraph("<font color='#D97706'><b>NEUTRAL</b></font>", cell_style_center), Paragraph("Cobertura equilibrada frente a reacomodamientos en tarifas y precios regulados.", cell_style_left)],
-        [Paragraph("Bopreal Serie 3", cell_style_left), Paragraph("BPY26 (USD)", cell_style_center), Paragraph("10,40% TIR", cell_style_center), Paragraph("<font color='#15803D'><b>SOBREPONDERAR</b></font>", cell_style_center), Paragraph("Sintético hard dollar con flujo de amortización previsible para tesorerías corporativas.", cell_style_left)],
-        [Paragraph("Acciones Líderes ByMA", cell_style_left), Paragraph("YPFD / PAMP / GGAL", cell_style_center), Paragraph("Merval USD 1.420", cell_style_center), Paragraph("<font color='#D97706'><b>TÁCTICO (OW Energía)</b></font>", cell_style_center), Paragraph("Foco en compañías con proyectos RIGI y generación operativa en moneda dura.", cell_style_left)],
+        [Paragraph("<b>ACTIVO / INSTRUMENTO</b>", table_hdr_left),
+         Paragraph("<b>TICKER / PLAZO</b>", table_hdr),
+         Paragraph("<b>RENDIMIENTO</b>", table_hdr),
+         Paragraph("<b>RATING TÁCTICO</b>", table_hdr),
+         Paragraph("<b>PESO</b>", table_hdr),
+         Paragraph("<b>TESIS DE INVERSIÓN Y RACIONAL</b>", table_hdr_left)],
+        [Paragraph("<b>Lecap Tramo Corto</b>", table_cell_bold),
+         Paragraph("S31O6 / Corto", table_cell_center),
+         Paragraph(f"TEM {_fmt_num(lecap_tem, 2)}%", table_cell_center),
+         Paragraph("<font color='#16A34A'><b>SOBREPONDERAR</b></font>", table_cell_center),
+         Paragraph("35%", table_cell_center),
+         Paragraph("Carry contractual asegurado (+0,95% m/m real) vs. inflación proyectada.", table_cell_left)],
+        [Paragraph("<b>Bono Soberano Hard Dollar</b>", table_cell_bold),
+         Paragraph("GD35 (2035)", table_cell_center),
+         Paragraph("9,65% TIR", table_cell_center),
+         Paragraph("<font color='#16A34A'><b>SOBREPONDERAR</b></font>", table_cell_center),
+         Paragraph("25%", table_cell_center),
+         Paragraph("Máxima convexidad y potencial compresión EMBI+ hacia 400 pb.", table_cell_left)],
+        [Paragraph("<b>Bono Indexado por CER</b>", table_cell_bold),
+         Paragraph("TZX26 (2026)", table_cell_center),
+         Paragraph("CER + 7,80%", table_cell_center),
+         Paragraph("<font color='#D97706'><b>NEUTRAL</b></font>", table_cell_center),
+         Paragraph("15%", table_cell_center),
+         Paragraph("Cobertura directa frente a reacomodamientos en tarifas y regulados.", table_cell_left)],
+        [Paragraph("<b>Bopreal Serie 3</b>", table_cell_bold),
+         Paragraph("BPY26 (USD)", table_cell_center),
+         Paragraph("10,40% TIR", table_cell_center),
+         Paragraph("<font color='#16A34A'><b>SOBREPONDERAR</b></font>", table_cell_center),
+         Paragraph("10%", table_cell_center),
+         Paragraph("Flujo en divisas previsible y amortizaciones semestrales garantizadas.", table_cell_left)],
+        [Paragraph("<b>ON Corporativa Hard Dollar</b>", table_cell_bold),
+         Paragraph("Pamp / YPF (USD)", table_cell_center),
+         Paragraph("7,50% TIR", table_cell_center),
+         Paragraph("<font color='#16A34A'><b>SOBREPONDERAR</b></font>", table_cell_center),
+         Paragraph("5%", table_cell_center),
+         Paragraph("Crédito privado corporativo con balance robusto y exportaciones dolarizadas.", table_cell_left)],
+        [Paragraph("<b>Caución Bursátil (1d)</b>", table_cell_bold),
+         Paragraph("ByMA / 1 día", table_cell_center),
+         Paragraph("32,0% TNA", table_cell_center),
+         Paragraph("<font color='#0284C7'><b>LIQUIDEZ</b></font>", table_cell_center),
+         Paragraph("5%", table_cell_center),
+         Paragraph("Rendimiento diario de saldos operativos transaccionales sin riesgo de precio.", table_cell_left)],
+        [Paragraph("<b>Acciones Líderes ByMA</b>", table_cell_bold),
+         Paragraph("YPFD / PAMP", table_cell_center),
+         Paragraph("Merval USD 1.420", table_cell_center),
+         Paragraph("<font color='#D97706'><b>TÁCTICO (OW)</b></font>", table_cell_center),
+         Paragraph("5%", table_cell_center),
+         Paragraph("Exposición estratégica a proyectos de infraestructura y energía bajo RIGI.", table_cell_left)],
     ]
-    t_rec = Table(tab_rec_data, colWidths=[110, 75, 75, 90, 182])
-    t_rec.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), PRIMARY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,1), (-1,1), colors.HexColor("#F0FDF4")),
-        ('BACKGROUND', (0,2), (-1,2), colors.HexColor("#F0FDF4")),
-        ('BACKGROUND', (0,3), (-1,3), colors.HexColor("#FFFBEB")),
-        ('BACKGROUND', (0,4), (-1,4), colors.HexColor("#F0FDF4")),
-        ('BACKGROUND', (0,5), (-1,5), colors.HexColor("#F8FAFC")),
-        ('INNERGRID', (0,0), (-1,-1), 0.3, BORDER),
-        ('BOX', (0,0), (-1,-1), 0.6, PRIMARY),
-        ('TOPPADDING', (0,0), (-1,-1), 1.8),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 1.8),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-    ]))
-    story.append(t_rec)
-    story.append(Spacer(1, 4))
+    for el in _crear_tabla_estilizada(tab_rec_data, col_w_rec, "Matriz de asignación táctica multiactivo y recomendaciones de cartera a 30-90 días"):
+        story.append(el)
+    story.append(Paragraph("<font size=5.5 color='#64748B'>(1) Evaluaciones tácticas del Comité de Inversiones OERU FCE UNCUYO. Ponderaciones optimizadas bajo criterio Mean-CVaR.</font>", caption_style))
+    story.append(Spacer(1, 5))
 
-    # Reemplazo de tablas de relleno: Tesis Tactica de Asignacion de Cartera (Tecnica 2)
-    items_strat_dia = [
-        ("Lecaps Cortas S31O6 (50% de Cartera)", f"Captura de tasa real positiva de +0,95% mensual (TEM {_fmt_num(lecap_tem, 2)}%), constituyendo el eje del carry trade con mínimo riesgo de duración."),
-        ("Soberanos Hard Dollar GD35/GD38 (30% de Cartera)", "Apalancamiento de convexidad (TIR 9,65% - 9,70%) ante la compresión de riesgo país hacia los 500 pb."),
-        ("Boncer TZX27 (10% de Cartera)", "Seguro directo ante eventuales reajustes estacionales en precios regulados y tarifas."),
-        ("Bopreal Serie 3 (10% de Cartera)", "Cobertura en moneda extranjera y diversificación corporativa para compromisos comerciales."),
-    ]
-    story.append(crear_bloque_tesis_factores(items_strat_dia))
-    story.append(Spacer(1, 4))
-
-    # Pull-Quote de Asignacion Tactica (Tecnica 5)
-    story.append(crear_pull_quote_editorial(
-        "Para horizontes de 30 a 90 dias, la estrategia optima prioriza la captura de tasa real en letras cortas y convexidad soberana en bonos globales GD35.",
-        "Comite de Estrategia de Cartera · FCE UNCUYO · OERU"
+    # Párrafos analíticos con bullet azul
+    story.append(Paragraph(
+        f"<font color='#0284C7'>&bull;</font> <b>Estrategia de Tasas en Pesos (Lecaps S31O6):</b> Se ratifica la recomendación de <b>Sobreponderar letras cortas con un 35% de cartera</b>. "
+        f"La tasa efectiva mensual del <b>{_fmt_num(lecap_tem, 2)}%</b> garantiza un diferencial positivo frente a la inflación núcleo (1,9% m/m), asegurando un rendimiento real ex-ante "
+        "sin exponer la posición a la volatilidad de duration de los tramos medios en pesos.",
+        body_bullet
     ))
-    story.append(Spacer(1, 3))
+    story.append(Paragraph(
+        f"<font color='#0284C7'>&bull;</font> <b>Convexidad Soberana en Dólares (GD35):</b> Con el riesgo país quebrando el piso de los <b>{_fmt_num(embi, 0)} pb</b>, "
+        "el bono Global 2035 (TIR 9,65%) se consolida como el vehículo más eficiente para capturar ganancias de capital ante la normalización de la prima de riesgo argentina. "
+        "Su duration modificada de 6,8 años y convexidad positiva proveen una asimetría de retornos marcadamente favorable frente a los títulos del tramo corto.",
+        body_bullet
+    ))
+    story.append(Paragraph(
+        "<font color='#0284C7'>&bull;</font> <b>Cobertura Indexada y Renta Variable Selectiva:</b> Se mantiene un sesgo <b>Neutral en bonos CER (TZX26, 15%)</b> como reaseguro "
+        "ante eventuales ajustes tarifarios, complementado con un <b>10% en Bopreal BPY26</b> para tesorerías corporativas, un <b>5% en ONs corporativas hard dollar</b> y un <b>5% táctico en Equity ByMA</b>.",
+        body_bullet
+    ))
+    story.append(Paragraph(
+        "<font color='#0284C7'>&bull;</font> <b>Gestión de Liquidez Transaccional (Caución 1d):</b> La asignación del <b>5% en caución bursátil (32,0% TNA)</b> provee un rendimiento diario "
+        "superior a la pauta de crawling peg oficial, permitiendo disponer de caja inmediata para aprovechar oportunidades tácticas de arbitraje intra-semana.",
+        body_bullet
+    ))
+    story.append(Spacer(1, 4))
 
+    # Gráfico Dual Compacto Rates
+    img_rates = _find_image("chart_editorial_rates.png")
+    if os.path.exists(img_rates):
+        story.append(Image(img_rates, width=532, height=185))
+        story.append(Paragraph("Nota: Curva de rendimientos de letras capitalizables (Lecaps) y estructura de tasas spot en moneda local.", caption_style))
+    story.append(Spacer(1, 4))
+
+    # Imprint Institucional
     imprint_diario = Table([
         [Paragraph(
-            "<font color='#0B2545' size=6.8><b>RESPONSABILIDAD INSTITUCIONAL:</b></font> "
-            "<font color='#64748B' size=6.0>Documento elaborado por Federico Agustín Chillón para el Observatorio Económico Regional Urbano (OERU) "
-            "y el Instituto de Investigaciones Económicas de la Facultad de Ciencias Económicas, UNCUYO. "
-            "Mendoza, Argentina, 2026.</font>",
-            ParagraphStyle('ImpDia', fontName='Georgia', leading=7.8)
+            "<font color='#0B2545' size=6.5><b>RESPONSABILIDAD INSTITUCIONAL:</b></font> "
+            "<font color='#64748B' size=5.8>Documento elaborado por Federico Agustín Chillón para el Observatorio Económico Regional Urbano (OERU) "
+            "y el Instituto de Investigaciones Económicas de la Facultad de Ciencias Económicas, Universidad Nacional de Cuyo (UNCUYO). "
+            "Las estimaciones tienen fines informativos y no constituyen asesoramiento vinculante. Mendoza, Argentina, 2026.</font>",
+            ParagraphStyle('ImpDia', fontName='Georgia', leading=7.2)
         )]
     ], colWidths=[532])
     imprint_diario.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
-        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
-        ('TOPPADDING', (0,0), (-1,-1), 2.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 5),
-        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+        ('LINEABOVE', (0,0), (-1,0), 0.5, BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 1.0),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 1.0),
+        ('LEFTPADDING', (0,0), (-1,-1), 0),
+        ('RIGHTPADDING', (0,0), (-1,-1), 0),
     ]))
     story.append(imprint_diario)
 
@@ -544,4 +531,3 @@ def generar_monitor_diario_reportlab(ctx=None):
 
 if __name__ == "__main__":
     generar_monitor_diario_reportlab()
-

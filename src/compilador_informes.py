@@ -21,11 +21,15 @@ sys.path.insert(0, SRC_DIR)
 from generador_informe_diario_reportlab import generar_monitor_diario_reportlab
 from generador_paper_semanal_reportlab import generar_paper_semanal_reportlab
 from generador_informe_mensual_reportlab import generar_informe_mensual_reportlab
+from generador_graficos_echarts import generar_todos_los_graficos_echarts
 
 def ejecutar_compilacion_maestra():
     print("=================================================================")
     print("COMPILANDO LA SUITE MAESTRA DE INFORMES REPORTLAB (TIER-1)")
     print("=================================================================")
+    
+    print("\n[0/3] Compilando Suite de Figuras ECharts 5 Headless (Tier-1)...")
+    generar_todos_los_graficos_echarts()
     
     print("\n[1/3] Generando Monitor Diario (2 Páginas Exactas)...")
     p_diario = generar_monitor_diario_reportlab()
@@ -35,7 +39,7 @@ def ejecutar_compilacion_maestra():
     p_semanal = generar_paper_semanal_reportlab()
     print(f"      [OK] Generado: {p_semanal}")
     
-    print("\n[3/3] Generando Informe Mensual Master (14 Páginas Exactas)...")
+    print("\n[3/3] Generando Informe Mensual Master (15 Páginas Exactas)...")
     p_mensual = generar_informe_mensual_reportlab()
     print(f"      [OK] Generado: {p_mensual}")
     

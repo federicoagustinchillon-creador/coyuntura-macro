@@ -31,6 +31,7 @@ from src.sync_datos_del_dia import sincronizar_todo
 from src.fetch_tcr_bilateral import guardar_cache as guardar_cache_tcr
 from src.actualizador_datos import construir_base_datos_macro
 from src.generador_graficos_hd import generar_todas_las_infografias
+from src.generador_graficos_echarts import generar_todos_los_graficos_echarts
 from src.generador_informe_diario import compilar_informe_diario
 from src.generador_paper_semanal import compilar_paper_semanal_completo
 from src.generador_informe_mensual_master import construir_informe_mensual_master_docx
@@ -125,11 +126,13 @@ def ejecutar_pipeline_coyuntura_completo():
     construir_base_datos_macro(ruta_excel)
     print("      -> Base Excel actualizada:", ruta_excel)
     
-    # 2. Infografías Vectoriales en 300 DPI
+    # 2. Infografías Vectoriales en 300 DPI y Suite Editorial Compacta
     print("\n[2/5] Generando Infografías Vectoriales en 300 DPI con Estándar Institucional...")
     figs = generar_todas_las_infografias()
     for f in figs:
         print("      -> Infografía creada:", os.path.basename(f))
+    print("      -> Generando Suite de 11 Figuras Editoriales Tier-1 con Apache ECharts 5...")
+    generar_todos_los_graficos_echarts()
         
     # 3. Compilación de Documentos (3 Niveles - Suite ReportLab Tier-1)
     print("\n[3/5] Compilando Documentos Institucionales ReportLab (3 Niveles)...")
@@ -208,18 +211,25 @@ def sincronizar_con_google_drive(base_dir, fecha_ciclo):
                     if " (1)." in f or " (2)." in f:
                         try: os.remove(os.path.join(root, f))
                         except: pass
-            # Espejar carpetas críticas
-            for sub in ["src", "03_Figuras_HD", "04_Informes_Diarios", "05_Informes_Semanales_APA7", "06_Informes_Mensuales_OERU", "07_Reportes_Ejecutivos_PDF"]:
+            # Espejar carpetas críticas recursivamente
+            for sub in ["src", "03_Figuras_HD", "04_Informes_Diarios", "05_Informes_Semanales_APA7", "06_Informes_Mensuales_OERU", "07_Reportes_Ejecutivos_PDF", "01_Bases_Datos"]:
                 s_orig = os.path.join(base_dir, sub)
-                s_dest = os.path.join(gdrive_c, sub)
-                if os.path.exists(s_orig):
-                    os.makedirs(s_dest, exist_ok=True)
-                    for item in os.listdir(s_orig):
-                        p_item = os.path.join(s_orig, item)
-                        if os.path.isfile(p_item):
-                            shutil.copy2(p_item, os.path.join(s_dest, item))
+                if not os.path.exists(s_orig):
+                    continue
+                for root, dirs, files in os.walk(s_orig):
+                    if "__pycache__" in root or ".git" in root:
+                        continue
+                    rel = os.path.relpath(root, base_dir)
+                    target_dir = os.path.join(gdrive_c, rel)
+                    os.makedirs(target_dir, exist_ok=True)
+                    for f in files:
+                        s_file = os.path.join(root, f)
+                        d_file = os.path.join(target_dir, f)
+                        if not os.path.exists(d_file) or os.path.getmtime(s_file) > os.path.getmtime(d_file) or os.path.getsize(s_file) != os.path.getsize(d_file):
+                            shutil.copy2(s_file, d_file)
             shutil.copy2(os.path.join(base_dir, "pipeline_coyuntura_master.py"), os.path.join(gdrive_c, "pipeline_coyuntura_master.py"))
-            print("      [Drive C OK] Espejado 1:1 completado en Drive C.")
+            shutil.copy2(os.path.join(base_dir, "README.md"), os.path.join(gdrive_c, "README.md"))
+            print("      [Drive C OK] Espejado recursivo 1:1 completado en Drive C.")
         except Exception as e_c:
             print(f"      [Drive C Aviso] {e_c}")
 

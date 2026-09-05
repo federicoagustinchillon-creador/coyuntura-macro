@@ -20,10 +20,14 @@ _backups_*/
 .DS_Store
 Thumbs.db
 desktop.ini
-
 # Logs y Caches de IDE
 .vscode/
 .idea/
 *.log
 
+# Caches y Temporales de Generación de Informes
 03_Figuras_HD/current_pages/
+03_Figuras_HD/_temp_echarts/
+_temp_echarts/
+scratch/
+

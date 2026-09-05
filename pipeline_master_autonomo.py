@@ -66,15 +66,17 @@ def ejecutar_pipeline_completo():
         print(f"  [ERROR] Falla en motor de tesis: {e}")
 
     # -------------------------------------------------------------
-    # PASO 3: Generación de Infografías Vectoriales HD (300 DPI)
+    # PASO 3: Generación de Figuras Editoriales Tier-1 (Apache ECharts 5)
     # -------------------------------------------------------------
-    log_step(3, total_steps, "GENERACION VECTORIAL DE 10 GRAFICOS HD (300 DPI)")
+    log_step(3, total_steps, "GENERACION DE 11 FIGURAS EDITORIALES ECHARTS 5 (DATOS AUTENTICOS)")
     try:
+        from src.generador_graficos_echarts import generar_suite_echarts
+        figuras = generar_suite_echarts()
+        print(f"  [OK] 11 infografías editoriales generadas con Apache ECharts 5 a datos reales.")
+    except Exception as e:
+        print(f"  [WARN] Falla en ECharts 5 ({e}). Ejecutando fallback a gráficos HD vectoriales.")
         from src.generador_graficos_hd import generar_todas_las_infografias
         figuras = generar_todas_las_infografias()
-        print(f"  [OK] 10 infografías HD generadas sin colisiones visuales a 300 DPI.")
-    except Exception as e:
-        print(f"  [ERROR] Falla en generador de gráficos: {e}")
 
     # -------------------------------------------------------------
     # -------------------------------------------------------------

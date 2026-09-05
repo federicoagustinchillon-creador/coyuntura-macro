@@ -20,10 +20,11 @@ coyuntura-macro/
 │
 ├── src/                                       # Módulos de procesamiento analítico y compilación editorial
 │   ├── actualizador_datos.py                  # Ingesta, consolidación y cálculo de tasas reales (Fisher)
-│   ├── generador_graficos_hd.py               # Renderizado de 10 infografías vectoriales a 300 DPI (diseño Tufte / FT)
-│   ├── generador_informe_diario_reportlab.py  # Monitor Flash Diario (2 páginas exactas, doble columna y pull-quote)
-│   ├── generador_paper_semanal_reportlab.py   # Paper Semanal Académico (4 páginas exactas APA 7, Nelson-Siegel, escenarios)
-│   ├── generador_informe_mensual_reportlab.py # Informe Mensual Master (15 páginas exactas, 5 componentes editoriales superiores)
+│   ├── generador_graficos_echarts.py          # Renderizado Tier-1 con Apache ECharts 5 Headless (Chromium a 300 DPI)
+│   ├── generador_informe_diario_reportlab.py  # Monitor Flash Diario (2 páginas exactas, cobertura 100%, figuras duales)
+│   ├── generador_paper_semanal_reportlab.py   # Paper Semanal Académico APA 7 (4 páginas exactas, tablas de 10 filas, Nelson-Siegel)
+│   ├── generador_informe_mensual_reportlab.py # Informe Mensual Master (15 páginas exactas, portada Wall Street Tear-Sheet, 11 paneles)
+│   ├── compilador_informes.py                 # Orquestador de la suite ReportLab con pre-compilación gráfica ECharts 5
 │   └── contexto_informe.py                    # Carga y estructuración del contexto macrofinanciero dinámico
 │
 ├── 01_Bases_Datos/                            # Base de datos centralizada
@@ -33,17 +34,18 @@ coyuntura-macro/
 │   ├── ejecutar_pipeline_completo.bat         # Batch runner para Windows Task Scheduler
 │   └── verificar_estado_ecosistema.py         # Auditor automático de páginas, figuras y cobertura vertical
 │
-├── 03_Figuras_HD/                             # 10 Infografías vectoriales en 300 DPI con diseño de banca privada
-│   ├── chart_indec_emae_master.png            # Serie histórica 32 meses EMAE + Desest. + Tendencia-Ciclo
-│   ├── chart_indec_1_rates.png                # Curva Lecaps vs. Boncer CER + Breakeven vs. REM
-│   ├── chart_indec_2_ipc.png                  # Dispersión minorista/mayorista + Convergencia 2026
-│   ├── chart_indec_3_cuyo.png                 # Vino fraccionado/granel + Petróleo convencional/Vaca Muerta Mza
-│   ├── chart_indec_3b_regional_cuyo.png       # ISARC Mendoza/San Juan/San Luis + Var. i.a. sectorial
-│   ├── chart_indec_4_monetary.png             # Pasivos monetarios Base/Lefi/Pases + Regla de Taylor
-│   ├── chart_indec_5_sovereign.png            # Curva spot Nelson-Siegel Bonares/Globales + Forward f(t)
-│   ├── chart_indec_6_fx.png                   # Cotizaciones y brechas spot + Futuros Matba-Rofex con prob. salto
-│   ├── chart_indec_7_equity.png               # Renta variable líder + Radar EV/EBITDA vs. Margen
-│   └── chart_indec_8_tcr.png                  # Tipo de Cambio Real Bilateral Argentina-EEUU (base 2016=100)
+├── 03_Figuras_HD/                             # 11 Infografías editoriales duales en 300 DPI (estándar Management Solutions / FT)
+│   ├── chart_editorial_emae.png               # Panel dual: Evolución EMAE Desest. + Variación Interanual Sectorial
+│   ├── chart_editorial_ipc.png                # Panel dual: Dispersión por Categorías + Trayectoria Desinflacionaria INDEC
+│   ├── chart_editorial_canastas.png           # Panel dual: Evolución Canastas CBT/CBA + Comparativa Regional
+│   ├── chart_editorial_cuyo.png               # Panel dual: Producción Vitivinícola + Despachos y Extracción de Hidrocarburos Cuyo
+│   ├── chart_editorial_regional_cuyo.png      # Panel dual: Índice Sintético ISARC + Dispersión Sectorial Provincial
+│   ├── chart_editorial_monetary.png           # Panel dual: Pasivos Remunerados BCRA/PBI + Base Monetaria Ampliada
+│   ├── chart_editorial_rates.png              # Panel dual: Curva Lecaps Spot TEM + Breakeven Inflacionario vs. Boncer CER
+│   ├── chart_editorial_sovereign.png          # Panel dual: Curva Soberana Spot Nelson-Siegel USD + Estructura Forward f(t)
+│   ├── chart_editorial_fx.png                 # Panel dual: Cotizaciones Spot CCL/MEP + Curva Teórica de Futuros Matba-Rofex CIP
+│   ├── chart_editorial_tcr.png                # Panel dual: Tipo de Cambio Real Multilateral (TCRM) + Bilateral con Socios
+│   └── chart_editorial_equity.png             # Panel dual: Desempeño S&P Merval + Dispersión Retorno/Volatilidad ByMA
 │
 ├── 04_Informes_Diarios/                       # Monitor Flash Diario de Mercados (2 páginas exactas)
 │   └── 2026-08-25_Monitor_Diario_Mercados.pdf
@@ -54,10 +56,12 @@ coyuntura-macro/
 ├── 06_Informes_Mensuales_OERU/                # Informes mensuales de investigación (15 páginas exactas ReportLab)
 │   └── Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf
 │
-└── 07_Reportes_Ejecutivos_PDF/                # Documentos ejecutivos consolidados listos para comités
-    ├── 2026-08-25_Monitor_Diario_Mercados.pdf
-    ├── 2026-08-25_Paper_Macroeconomico_Semanal.pdf
-    └── Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf
+├── 07_Reportes_Ejecutivos_PDF/                # Documentos ejecutivos consolidados listos para comités
+│   ├── 2026-08-25_Monitor_Diario_Mercados.pdf
+│   ├── 2026-08-25_Paper_Macroeconomico_Semanal.pdf
+│   └── Informe_Coyuntura_Mensual_Agosto_2026_Federico_Chillon_Master.pdf
+│
+└── sincronizar_ecosistema_drive.py            # Sincronizador automático a Google Drive (C:\Users\fedea\Google Drive\coyuntura-macro)
 ```
 
 ---
@@ -101,19 +105,22 @@ Formaliza la elasticidad de la demanda de dinero frente a la tasa nominal de pol
 
 ---
 
-## 3. Arquitectura Editorial Institucional (Estándar Wall Street / BIS)
+## 3. Arquitectura Editorial Institucional (Estándar Management Solutions / Wall Street Sell-Side)
 
-Para garantizar un estándar visual y analítico a la altura de Goldman Sachs GIR, Fondo Monetario Internacional y Bank for International Settlements, se erradicó por completo la redundancia de cuadrículas de relleno ("tablitis"), reemplazándolas por 5 técnicas editoriales superiores calibradas al presupuesto vertical de página:
+Para garantizar un estándar visual y analítico a la altura de Goldman Sachs GIR, Fondo Monetario Internacional, Bank for International Settlements y las publicaciones macroeconómicas de *Management Solutions*, se erradicó por completo el "card-itis" (cajas rectangulares de relleno, banners plásticos y bordes coloreados), adoptando una disciplina de diseño cuantitativo de 5 capas:
 
-1. **Prosa Analítica en Doble Columna Asimétrica:** Descomposición causal de variables contrapuesta con implicancias operativas para tesorerías y carteras.
-2. **Tesis Cuantitativa con Lead-ins en Negrita y Filete Capilar:** Factores críticos y catalizadores sectoriales estructurados jerárquicamente con borde lateral Oxford Navy (`#0B2545`).
-3. **Matrices de Escenarios Condicionales Calibrados:** Proyecciones a 90/180 días con asignación de probabilidades paramétricas (Escenario Base, Tensión y Salida/Convergencia) y directrices tácticas.
-4. **Formulaciones Matemáticas de Primeros Principios:** Bloques LaTeX embebidos para fundamentos teóricos rigurosos (Nelson-Siegel, Fisher Breakeven, Paridad CIP, Cagan/Baumol-Tobin, Mahalanobis).
-5. **Pull-Quotes de Impacto Editorial:** Dictámenes ejecutivos de autor enmarcados por filetes capilares institucionales.
+1. **Portada Wall Street Tear-Sheet en 2 Columnas Asimétricas:** Mástil institucional formal, titular hero cuantitativo, diagnóstico ejecutivo macroeconómico denso a la izquierda (330 pt) contrapuesto con la matriz de asignación táctica y el scorecard de mercado a la derecha (192 pt).
+2. **Tablas Estructuradas de Indicadores de 10-12 Filas:** Cabecera azul marino Oxford (`#0B2545`), filas alternadas (`#F8FAFC` y blanco), columna de proyecciones diferenciada y variaciones porcentuales coloreadas en verde/rojo según el impacto macroeconómico.
+3. **Prosa Analítica Justificada con Viñeta Institucional:** Párrafos densos en tipografía Georgia (8.0 pt / leading 11.4 pt) con viñetas en azul cielo (`#0284C7`), conceptos clave en negrita y sin cajas cerradas.
+4. **Figuras Editoriales Dual-Panel Compactas:** 11 figuras de panel dual calibradas a 165 pt de altura y 532 pt de ancho con borde capilar `#CBD5E1`, sin callouts de texto flotante ni franjas de colores de IA.
+5. **Presupuesto Vertical Estricto (Page Budget):** Cobertura del 100% de cada página, eliminando huecos muertos al pie. Conteos inmutables:
+   - **Informe Mensual:** 15 páginas exactas (Portada Tear-Sheet, Índice, Resumen Ejecutivo, 11 Capítulos temáticos con panel dual y Flash Normativo/Metodología).
+   - **Paper Semanal APA 7:** 4 páginas exactas (Portada académica y resumen, Arbitraje de Tasas, Nelson-Siegel y Microestructura FX con referencias bibliográficas).
+   - **Monitor Diario:** 2 páginas exactas (Diagnóstico y Microestructura Cambiaria spot/Rofex + Curvas Soberanas, Tasas y Asignación Táctica).
 
 ---
 
-## 4. Instrucciones de Ejecución y Automatización Desatendida
+## 4. Instrucciones de Ejecución y Sincronización Automática
 
 Para ejecutar el pipeline completo de forma desatendida y sincronizada:
 
@@ -127,12 +134,12 @@ Para ejecutar el pipeline completo de forma desatendida y sincronizada:
   02_Scripts_Automatizacion\ejecutar_pipeline_completo.bat
   ```
 
-- **Auditoría Automática de Integridad y Cobertura:**
+- **Sincronización Inmediata a Google Drive:**
   ```powershell
-  python 02_Scripts_Automatizacion/verificar_estado_ecosistema.py
+  python sincronizar_ecosistema_drive.py
   ```
 
-El pipeline ejecutará automáticamente la validación de bases, renderizado de las 10 infografías vectoriales a 300 DPI con diseño Tufte / FT, compilación de los 3 niveles de informes en ReportLab (Mensual de 15 páginas exactas, Semanal de 4 páginas y Diario de 2 páginas), exportación oficial de entregables ejecutivos tanto localmente como en el espejo canónico de Google Drive (`C:\Users\fedea\Google Drive\coyuntura-macro`).
+El pipeline ejecuta automáticamente la validación de bases, renderizado de las 11 figuras editoriales compactas a 300 DPI, compilación de los 3 niveles de informes en ReportLab (15, 4 y 2 páginas exactas), y exportación de entregables tanto en disco local como en el repositorio espejo de Google Drive (`C:\Users\fedea\Google Drive\coyuntura-macro`).
 
 ---
 
